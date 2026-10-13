@@ -1,0 +1,87 @@
+// O estado é JSON puro para poder ser salvo/carregado sem perdas.
+import { GENERATORS } from '../data/generators.js';
+
+const HOT = GENERATORS.filter((g) => g.traits.some((tr) => tr.type === 'heat')).map((g) => g.id);
+const hotDefaults = (make) => Object.fromEntries(HOT.map((id) => [id, make()]));
+
+export function newState() {
+  return {
+    money: 0,
+    totalEnergy: 0, // kWh produzidos desde o início
+    rp: 0,
+    owned: Object.fromEntries(GENERATORS.map((g) => [g.id, 0])),
+    labs: 0,
+    techs: {},
+    upgrades: Object.fromEntries(GENERATORS.map((g) => [g.id, 0])),
+    auto: { buy: false, clock: 0 },
+    heat: hotDefaults(() => ({ h: 0, off: 0 })), // off = desligado até s.t
+    cooling: hotDefaults(() => 0),
+    transformers: 0,
+    t: 0,           // tempo de jogo em segundos
+  };
+}
+
+// Saves antigos sobem degrau por degrau (vN -> vN+1), então nunca é preciso converter
+// direto de uma versão muito velha para a atual.
+//   v1 = estado "achatado" + savedAt, sem saveVersion (~/.reactor-ascii.json)
+//   v2 = envelope { saveVersion, savedAt, state }
+//   v3 = state.upgrades
+//   v4 = state.auto
+//   v5 = state.heat, state.cooling, state.transformers
+export const SAVE_VERSION = 5;
+
+const MIGRATIONS = {
+  1: (raw) => {
+    const { savedAt, ...state } = raw;
+    return { saveVersion: 2, savedAt: savedAt ?? null, state };
+  },
+  2: (raw) => ({ ...raw, saveVersion: 3, state: { ...raw.state, upgrades: raw.state?.upgrades ?? {} } }),
+  3: (raw) => ({ ...raw, saveVersion: 4, state: { ...raw.state, auto: raw.state?.auto ?? { buy: false, clock: 0 } } }),
+  // Campos novos ficam ausentes; fromSave() preenche com os padrões (reatores frios).
+  4: (raw) => ({ ...raw, saveVersion: 5 }),
+};
+
+// Lança erro se não for um save: o storage trata isso como arquivo corrompido.
+export function migrate(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('save não é um objeto');
+  let v = raw.saveVersion ?? 1;
+  if (!Number.isInteger(v) || v < 1) throw new Error(`saveVersion inválida: ${v}`);
+  if (v > SAVE_VERSION) throw new Error(`save da versão ${v}, mais nova que este jogo (${SAVE_VERSION})`);
+  let cur = raw;
+  while (v < SAVE_VERSION) {
+    cur = MIGRATIONS[v](cur);
+    v = cur.saveVersion;
+  }
+  return cur;
+}
+
+export const toSave = (state, now) => ({ saveVersion: SAVE_VERSION, savedAt: now, state });
+
+// Mescla com os padrões para que um save sem algum campo/gerador novo continue carregando.
+export function fromSave(raw) {
+  const base = newState();
+  const s = { ...base, ...raw };
+  s.owned = { ...base.owned, ...raw.owned };
+  s.upgrades = { ...base.upgrades, ...raw.upgrades };
+  s.auto = { ...base.auto, ...raw.auto };
+  s.heat = { ...base.heat, ...raw.heat };
+  s.cooling = { ...base.cooling, ...raw.cooling };
+  delete s.savedAt; // metadado do arquivo, não do jogo
+  return s;
+}
+
+// Um NaN/Infinity gravado "envenenaria" o save para sempre, então estados inválidos
+// não são gravados nem aceitos ao carregar.
+const finite = (x) => typeof x === 'number' && Number.isFinite(x);
+const count = (x) => Number.isInteger(x) && x >= 0;
+export function isValidState(s) {
+  if (!s || typeof s !== 'object') return false;
+  if (!finite(s.money) || !finite(s.totalEnergy) || !finite(s.rp) || !finite(s.t)) return false;
+  if (s.totalEnergy < 0 || s.rp < 0 || s.t < 0 || !count(s.labs)) return false;
+  if (!s.owned || typeof s.owned !== 'object' || !Object.values(s.owned).every(count)) return false;
+  if (!s.upgrades || typeof s.upgrades !== 'object' || !Object.values(s.upgrades).every(count)) return false;
+  if (!s.auto || typeof s.auto.buy !== 'boolean' || !finite(s.auto.clock) || s.auto.clock < 0) return false;
+  if (!s.heat || !Object.values(s.heat).every((x) => x && finite(x.h) && x.h >= 0 && finite(x.off))) return false;
+  if (!s.cooling || !Object.values(s.cooling).every(count) || !count(s.transformers)) return false;
+  return !!s.techs && typeof s.techs === 'object';
+}
