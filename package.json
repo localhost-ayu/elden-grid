@@ -1,0 +1,9 @@
+{
+  "name": "reactor-ascii",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test"
+  }
+}
