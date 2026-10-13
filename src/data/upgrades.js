@@ -1,0 +1,44 @@
+// Upgrades por gerador (comprados com dinheiro) e marcos automáticos por quantidade.
+//
+// Efeitos são modificadores { type, mult } compostos no engine (multiplicam entre si):
+//   output  x na produção daquele gerador
+//   cost    x no preço das próximas unidades daquele gerador
+//   upkeep  x no custo de operação daquele gerador
+
+// Marcos: ao ter N unidades de um gerador, a produção dele dobra. Cumulativos.
+export const MILESTONES = [
+  { at: 25, mult: 2 },
+  { at: 50, mult: 2 },
+  { at: 100, mult: 2 },
+];
+
+// Trilha padrão de 5 níveis. Custo = baseCost do gerador × costMult.
+// Produção total com a trilha completa: 2 × 2 × 1.5 × 3 = 18x.
+export const UPGRADE_TRACK = [
+  { costMult: 10, effects: [{ type: 'output', mult: 2 }] },
+  { costMult: 150, effects: [{ type: 'cost', mult: 0.85 }] },
+  { costMult: 2500, effects: [{ type: 'output', mult: 2 }] },
+  { costMult: 4e4, effects: [{ type: 'output', mult: 1.5 }] },
+  { costMult: 6e5, effects: [{ type: 'output', mult: 3 }] },
+];
+
+// Fontes com custo de operação trocam o nível 4 (índice 3) por eficiência de
+// combustível: o upgrade mais útil para elas é gastar menos para operar.
+export const UPGRADE_OVERRIDES = {
+  gas: { 3: [{ type: 'upkeep', mult: 0.5 }, { type: 'output', mult: 1.2 }] },
+  fusion: { 3: [{ type: 'upkeep', mult: 0.5 }, { type: 'output', mult: 1.2 }] },
+};
+
+// Nomes de cada nível, por gerador (só sabor; os efeitos vêm da trilha acima).
+export const UPGRADE_NAMES = {
+  wind: ['Pás de Fibra de Vidro', 'Torres Pré-Moldadas', 'Rotores Gigantes', 'Controle de Passo', 'Turbinas de 15 MW'],
+  solar: ['Vidro Antirreflexo', 'Montagem em Série', 'Células PERC', 'Rastreadores Solares', 'Perovskita'],
+  hydro: ['Comportas Automáticas', 'Obras Padronizadas', 'Turbinas Kaplan', 'Reservatório Ampliado', 'Bombeamento Reversível'],
+  biomass: ['Caldeira Eficiente', 'Logística de Bagaço', 'Gaseificação', 'Cogeração', 'Biorrefinaria'],
+  gas: ['Queimadores Low-NOx', 'Projeto Padrão', 'Ciclo Combinado', 'Recuperação de Calor', 'Turbinas Classe H'],
+  geothermal: ['Brocas de Diamante', 'Poços em Série', 'Ciclo Binário', 'Fluido Supercrítico', 'Rocha Seca Quente'],
+  nuclear: ['Combustível MOX', 'Reatores Modulares', 'Geração III+', 'Recarga Online', 'Reatores Rápidos'],
+  tidal: ['Lâminas Bidirecionais', 'Comportas Pré-Fabricadas', 'Lagoa de Maré', 'Turbinas de Fluxo', 'Barragem Oceânica'],
+  fusion: ['Ímãs Supercondutores', 'Tokamaks em Série', 'Divertor de Tungstênio', 'Reciclagem de Trítio', 'Stellarator Otimizado'],
+  antimatter: ['Armadilhas de Penning', 'Linha de Montagem', 'Aniquilação Dirigida', 'Contenção Magnética', 'Motor de Dirac'],
+};
