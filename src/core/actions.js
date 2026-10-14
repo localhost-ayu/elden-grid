@@ -7,13 +7,22 @@ import {
 } from './engine.js';
 import { isHot, nextCooling } from './heat.js';
 import { shopValue } from './prestige.js';
+import { MILESTONES } from '../data/upgrades.js';
+import { add, crankTap } from './records.js';
 
 // Rende uma fração da produção de 1 s (mínimo 1 kWh): continua útil a partida toda.
 export function crank(s) {
   const e = Math.max(1, power(s) * shopValue(s, 'crank', 0.5));
+  const money = e * price(s);
   s.totalEnergy += e;
-  s.money += e * price(s);
-  s.earned += e * price(s);
+  s.money += money;
+  s.earned += money;
+  add(s, 'cranks');
+  add(s, 'crankEnergy', e);
+  add(s, 'crankMoney', money);
+  add(s, 'energy', e);
+  add(s, 'moneyEarned', money);
+  crankTap(s);
   return e;
 }
 
@@ -23,8 +32,14 @@ export function buyGenBulk(s, id, amount = 1) {
   if (!g || !genUnlocked(g, s)) return 0;
   const b = genBulk(s, g, amount);
   if (!b.ok) return 0;
+  const before = s.owned[id];
   s.money -= b.cost;
   s.owned[id] += b.n;
+  add(s, 'purchases');
+  if (b.n > 1) add(s, 'bulkPurchases');
+  add(s, 'bought', b.n, id);
+  add(s, 'moneySpent', b.cost);
+  add(s, 'milestones', MILESTONES.filter((m) => before < m.at && s.owned[id] >= m.at).length);
   return b.n;
 }
 
@@ -34,6 +49,8 @@ export function buyLabBulk(s, amount = 1) {
   if (!b.ok) return 0;
   s.money -= b.cost;
   s.labs += b.n;
+  add(s, 'labsBought', b.n);
+  add(s, 'moneySpent', b.cost);
   return b.n;
 }
 
@@ -48,6 +65,8 @@ export function buyUpgrade(s, id) {
   if (!u || s.money < u.cost) return false;
   s.money -= u.cost;
   s.upgrades[id] = u.level;
+  add(s, 'upgrades');
+  add(s, 'moneySpent', u.cost);
   return true;
 }
 
@@ -56,6 +75,8 @@ export function buyTech(s, id) {
   if (!t || !techVisible(t, s) || s.rp < t.cost) return false;
   s.rp -= t.cost;
   s.techs[id] = true;
+  add(s, 'techs');
+  add(s, 'rpSpent', t.cost);
   // Quem pesquisa automação quer usá-la: já começa ligada (A desliga na aba Geradores).
   if (t.type === 'auto') s.auto.buy = true;
   return true;
@@ -68,6 +89,8 @@ export function buyCooling(s, id) {
   if (!c || s.money < c.cost) return false;
   s.money -= c.cost;
   s.cooling[id] = c.level;
+  add(s, 'cooling');
+  add(s, 'moneySpent', c.cost);
   return true;
 }
 
@@ -76,5 +99,7 @@ export function buyTransformer(s) {
   if (s.money < c) return false;
   s.money -= c;
   s.transformers++;
+  add(s, 'transformers');
+  add(s, 'moneySpent', c);
   return true;
 }

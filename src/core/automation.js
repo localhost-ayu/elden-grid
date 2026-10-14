@@ -5,6 +5,7 @@ import { TECHS } from '../data/research.js';
 import { bought, genCost, genUnlocked } from './engine.js';
 import { buyGen } from './actions.js';
 import { shopValue } from './prestige.js';
+import { add } from './records.js';
 
 // A automação mais rápida (pesquisa ou Legado) vence; null = nenhuma disponível.
 export function autoInterval(s) {
@@ -40,6 +41,7 @@ export function autoStep(s, dt) {
     n++;
   }
   if (n === MAX_PER_STEP) s.auto.clock = 0;
+  if (n) add(s, 'autoBought', n);
   return n;
 }
 

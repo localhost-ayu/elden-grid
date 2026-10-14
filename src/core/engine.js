@@ -7,6 +7,7 @@ import { envFactor } from './traits.js';
 import { heatFactor, heatStep } from './heat.js';
 import { legacyMult, shopValue } from './prestige.js';
 import { eventMult } from './events.js';
+import { add, peak } from './records.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -142,13 +143,36 @@ export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => boug
 export function tick(s, dt, average = false) {
   const shutdowns = average ? [] : heatStep(s, dt, (g) => genModMult(s, g, 'output'));
   const kw = power(s, average);
-  const net = (sales(s, kw).perSecond - upkeep(s)) * dt;
+  const sold = sales(s, kw);
+  const cost = upkeep(s) * dt;
+  const net = sold.perSecond * dt - cost;
   s.totalEnergy += kw * dt;
   s.money += net;
   s.earned += Math.max(0, net);
   s.rp += rpRate(s) * dt;
+  record(s, dt, average, { kw, sold, cost, net, shutdowns });
   s.t += dt;
   return shutdowns;
+}
+
+function record(s, dt, average, { kw, sold, cost, net, shutdowns }) {
+  add(s, 'energy', kw * dt);
+  add(s, 'excessEnergy', sold.excess * dt);
+  add(s, 'moneyEarned', Math.max(0, net));
+  add(s, 'upkeepPaid', cost);
+  add(s, 'rpEarned', rpRate(s) * dt);
+  // Produção por fonte: a parte de cada uma no total (os multiplicadores globais valem
+  // igual para todas).
+  const raw = GENERATORS.map((g) => genPower(s, g, average));
+  const sum = raw.reduce((a, b) => a + b, 0);
+  if (sum > 0) GENERATORS.forEach((g, i) => raw[i] && add(s, 'produced', (raw[i] / sum) * kw * dt, g.id));
+  if (average) return;
+  add(s, 'playTime', dt);
+  peak(s, 'peakKw', kw);
+  peak(s, 'peakIncome', net / dt);
+  peak(s, 'peakPrice', price(s));
+  peak(s, 'peakMoney', s.money);
+  for (const id of shutdowns) add(s, 'shutdowns', 1, id);
 }
 
 // Retorna null se a ausência foi curta demais para valer a pena mostrar um resumo.
@@ -164,6 +188,7 @@ export function applyOffline(s, awaySeconds, maxSeconds = offlineMax(s)) {
   const rate = offlineRate(s);
   const before = { money: s.money, energy: s.totalEnergy, rp: s.rp };
   tick(s, counted * rate, true);
+  add(s, 'offlineTime', counted);
   return {
     away: awaySeconds, // tempo real fora
     counted,           // quanto disso valeu (limitado pelo teto)

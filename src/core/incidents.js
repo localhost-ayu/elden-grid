@@ -6,6 +6,7 @@ import { rand, eventDef, isActive } from './events.js';
 import { MINIGAMES } from './minigames.js';
 import { power, income, rpRate, gridLoad } from './engine.js';
 import { HOT_GENERATORS } from './heat.js';
+import { add, best } from './records.js';
 
 const hasReactor = (s) => HOT_GENERATORS.some((g) => s.owned[g.id] > 0);
 const REQUIRES = {
@@ -36,6 +37,7 @@ export const currentEvent = (s) => s.events.effects.find((a) => a.id !== REWARD.
 
 function start(s, e) {
   s.events.seen++;
+  add(s, 'events', 1, e.id);
   if (e.crisis) {
     s.events.effects.push({ id: e.id, until: null });
     s.events.crisis = { id: e.id, deadline: s.t + SCHEDULE.crisisDeadline, game: null };
@@ -52,6 +54,17 @@ function resolve(s, outcome) {
   const c = s.events.crisis;
   const cost = outcome === 'won' ? 0 : damage(s);
   s.money -= cost;
+  add(s, 'crises', 1, outcome);
+  add(s, 'crewPaid', cost);
+  if (outcome === 'won') {
+    add(s, 'rewards');
+    add(s, 'streak');
+    for (const st of [s.stats, s.career]) st.bestStreak = Math.max(st.bestStreak, st.streak);
+    best(s, 'bestWin', c.game.kind, c.game.time);
+  } else {
+    s.stats.streak = 0;
+    s.career.streak = 0;
+  }
   s.events.effects = s.events.effects.filter((a) => a.id !== c.id);
   if (outcome === 'won') s.events.effects.push({ id: REWARD.id, until: s.t + REWARD.duration });
   s.events.crisis = null;

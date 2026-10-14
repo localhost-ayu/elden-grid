@@ -2,6 +2,7 @@
 // consulta os efeitos daqui (engine -> prestige, sem ciclo de imports).
 import { LEGACY, SHOP } from '../data/legacy.js';
 import { newState } from './state.js';
+import { peak } from './records.js';
 
 export const pointsFor = (money) => Math.floor(Math.sqrt(Math.max(0, money) / LEGACY.divisor));
 export const lifetimeEarned = (s) => s.legacy.lifetime + s.earned;
@@ -39,6 +40,10 @@ export function buyShop(s, id) {
 export function ascend(s) {
   if (!canAscend(s)) return 0;
   const gain = legacyGain(s);
+  const run = s.stats.playTime;
+  if (s.career.fastestRun === null || run < s.career.fastestRun) s.career.fastestRun = run;
+  peak(s, 'bestGain', gain);
+  const career = s.career;
   const legacy = {
     ...s.legacy,
     lifetime: lifetimeEarned(s),
@@ -49,7 +54,7 @@ export function ascend(s) {
   };
   const rng = s.events.rng; // a sorte continua de onde parou, não repete a 1ª partida
   for (const k of Object.keys(s)) delete s[k];
-  Object.assign(s, newState(rng), { legacy });
+  Object.assign(s, newState(rng), { legacy, career });
   s.owned.wind = shopValue(s, 'start', 0);
   if (shopValue(s, 'auto') !== null) s.auto.buy = true;
   return gain;

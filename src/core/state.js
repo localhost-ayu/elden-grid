@@ -1,6 +1,7 @@
 // O estado é JSON puro para poder ser salvo/carregado sem perdas.
 import { GENERATORS } from '../data/generators.js';
 import { SCHEDULE } from '../data/events.js';
+import { newStats, mergeStats, isValidStats } from './records.js';
 
 const HOT = GENERATORS.filter((g) => g.traits.some((tr) => tr.type === 'heat')).map((g) => g.id);
 const hotDefaults = (make) => Object.fromEntries(HOT.map((id) => [id, make()]));
@@ -25,6 +26,8 @@ export function newState(seed = 1) {
     legacy: { points: 0, earned: 0, lifetime: 0, ascensions: 0, shop: {} },
     // effects: [{ id, until }] (until null = crise em aberto); crisis: { id, deadline, game }
     events: { rng: seed >>> 0, next: SCHEDULE.first, effects: [], crisis: null, seen: 0 },
+    stats: newStats(),  // esta partida
+    career: newStats(), // todas as partidas (sobrevive à ascensão)
   };
 }
 
@@ -37,7 +40,8 @@ export function newState(seed = 1) {
 //   v5 = state.heat, state.cooling, state.transformers
 //   v6 = state.earned, state.legacy
 //   v7 = state.events
-export const SAVE_VERSION = 7;
+//   v8 = state.stats, state.career
+export const SAVE_VERSION = 8;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -52,6 +56,13 @@ const MIGRATIONS = {
   5: (raw) => ({ ...raw, saveVersion: 6, state: { ...raw.state, earned: raw.state?.earned ?? Math.max(0, raw.state?.money ?? 0) } }),
   // O momento do save serve de seed: saves diferentes não sorteiam os mesmos eventos.
   6: (raw) => ({ ...raw, saveVersion: 7, state: { ...raw.state, events: raw.state?.events ?? newState(raw.savedAt ?? 1).events } }),
+  // Fichas começam com o pouco que o save antigo já sabia (ganho e energia).
+  7: (raw) => {
+    const st = raw.state ?? {};
+    const known = { energy: st.totalEnergy ?? 0, moneyEarned: st.earned ?? 0 };
+    const career = { ...known, moneyEarned: (st.legacy?.lifetime ?? 0) + known.moneyEarned };
+    return { ...raw, saveVersion: 8, state: { ...st, stats: { ...newStats(), ...known }, career: { ...newStats(), ...career } } };
+  },
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.
@@ -81,6 +92,8 @@ export function fromSave(raw) {
   s.cooling = { ...base.cooling, ...raw.cooling };
   s.legacy = { ...base.legacy, ...raw.legacy, shop: { ...raw.legacy?.shop } };
   s.events = { ...base.events, ...raw.events };
+  s.stats = mergeStats(base.stats, raw.stats);
+  s.career = mergeStats(base.career, raw.career);
   // Um minijogo pela metade não sobrevive ao save: a crise volta ao alerta.
   if (s.events.crisis) s.events.crisis = { ...s.events.crisis, game: null };
   delete s.savedAt; // metadado do arquivo, não do jogo
@@ -104,6 +117,7 @@ export function isValidState(s) {
   const L = s.legacy;
   if (!L || !count(L.points) || !count(L.earned) || !count(L.ascensions) || !finite(L.lifetime) || L.lifetime < 0) return false;
   if (!L.shop || typeof L.shop !== 'object' || !Object.values(L.shop).every(count)) return false;
+  if (!isValidStats(s.stats) || !isValidStats(s.career)) return false;
   const ev = s.events;
   if (!ev || !Number.isInteger(ev.rng) || ev.rng < 0 || ev.rng > 0xffffffff || !finite(ev.next) || !count(ev.seen)) return false;
   if (!Array.isArray(ev.effects) || !ev.effects.every((a) => a && typeof a.id === 'string' && (a.until === null || finite(a.until)))) return false;

@@ -20,6 +20,7 @@ import * as generators from './screens/generators.js';
 import * as research from './screens/research.js';
 import * as grid from './screens/grid.js';
 import * as legacy from './screens/legacy.js';
+import * as stats from './screens/stats.js';
 import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
 import { placeholder } from './screens/placeholder.js';
@@ -38,9 +39,7 @@ export const TABS = [
   { id: 'research', key: 'p', label: 'Pesquisa', screen: research },
   { id: 'grid', key: 'r', label: 'Rede', screen: grid },
   { id: 'legacy', key: 'l', label: 'Legado', screen: legacy },
-  { id: 'stats', key: 'e', label: 'Estatísticas', screen: placeholder('Estatísticas', [
-    'Tempo jogado, energia e dinheiro totais, recordes por run',
-  ]) },
+  { id: 'stats', key: 'e', label: 'Estatísticas', screen: stats },
   { id: 'options', key: 'o', label: 'Opções', screen: options },
 ];
 
