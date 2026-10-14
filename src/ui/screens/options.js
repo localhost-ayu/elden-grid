@@ -44,7 +44,7 @@ export function render(ctx) {
   ui.sel = Math.max(0, Math.min(ui.sel ?? 0, COUNT - 1));
   ui.importSlot ??= ctx.currentSlot ?? 1;
   const settings = ctx.settings;
-  const lines = ['', '   ' + paint(C.bold, 'Opções') + paint(C.dim, '  (valem na hora e ficam salvas em ~/.reactor-ascii/settings.json)'), ''];
+  const lines = ['', '   ' + paint(C.bold, 'Opções') + paint(C.dim, '  (valem na hora e ficam salvas em ~/.elden-grid/settings.json)'), ''];
   OPTIONS.forEach((opt, i) => {
     const selected = ui.sel === i;
     const locked = opt.key === 'colors' && ctx.noColor;
@@ -57,8 +57,8 @@ export function render(ctx) {
   ACTIONS.forEach((a, j) => {
     const selected = ui.sel === OPTIONS.length + j;
     const detail = a.id === 'export'
-      ? (slot ? `slot ${slot} → ~/.reactor-ascii/export-slot${slot}.txt` : 'nenhum save aberto')
-      : `~/.reactor-ascii/import.txt → ${selected ? paint(C.yellow, '‹ ') : ''}slot ${ui.importSlot}${selected ? paint(C.yellow, ' ›') : ''}`;
+      ? (slot ? `slot ${slot} → ~/.elden-grid/export-slot${slot}.txt` : 'nenhum save aberto')
+      : `~/.elden-grid/import.txt → ${selected ? paint(C.yellow, '‹ ') : ''}slot ${ui.importSlot}${selected ? paint(C.yellow, ' ›') : ''}`;
     lines.push(`   ${selected ? '›' : ' '} ${(a.label).padEnd(22)}${paint(selected ? C.bold : C.dim, detail)}`);
   });
   const sel = OPTIONS[ui.sel];

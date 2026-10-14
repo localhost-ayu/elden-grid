@@ -1,11 +1,11 @@
-# Reactor ASCII
+# Elden Grid
 
 Idle game de geração de energia que roda inteiro no terminal. Você começa girando uma
 manivela e comprando uma turbina eólica, e termina administrando uma rede com reatores de
 fusão, antimatéria, crises para apagar e um legado que atravessa partidas.
 
 ```
- ⚡ REACTOR    Geradores │ Pesquisa │ Rede │ Legado │ Estatísticas │ Opções
+ ⚡ ELDEN GRID    Geradores │ Pesquisa │ Rede │ Legado │ Estatísticas │ Opções
  Dinheiro $1.30B  Produção 17.13M kW  Total 56.03B kWh  Preço $1.92/kWh ▲
  Renda $32.95M/s  PP 12.39k (+21.0/s)  Rede 87%  ☼ 10h  ⟳ auto  ✦ +30%
  ── ⚠ BLECAUTE REGIONAL · [X] manual de crise · equipe em 1:12 ──────────────
@@ -17,6 +17,10 @@ fusão, antimatéria, crises para apagar e um legado que atravessa partidas.
  Eólica      Solar       Hidro       Biomassa    Gás         Geotérmica
  x42         x30   nv1/5 x25   nv2/5 x18   nv3/5 x12   nv4/5 x9    nv5/5
 ```
+
+O nome é uma paródia de *Elden Ring*, e a tela de título brinca com isso; o jogo não tem
+nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone de
+*Reactor – Energy Sector Tycoon* e foi crescendo até virar outro jogo.
 
 ## Como funciona
 
@@ -73,7 +77,8 @@ passou saturada. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`
 
 ## Saves e opções
 
-Tudo fica em `~/.reactor-ascii/`, fora do repositório:
+Tudo fica em `~/.elden-grid/`, fora do repositório (saves da época em que o jogo se
+chamava Reactor ASCII, em `~/.reactor-ascii/`, são movidos para lá na primeira execução):
 
 - `slot1.json` … `slot3.json` (e `.bak`): três saves. A gravação é atômica (`.tmp` +
   `rename`) e um save corrompido é recuperado do backup sem derrubar o jogo. Saves de

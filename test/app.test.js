@@ -41,7 +41,7 @@ const startNew = (press) => press('2', '1');
 test('sem saves: Continuar desabilitado; Novo jogo -> slot vazio começa direto', () => {
   const { app, store, settings, press, text } = make();
   assert.equal(app.mode, 'menu');
-  assert.match(text(), /▸ 2  Novo jogo/); // seleção pula o Continuar desabilitado
+  assert.match(text(), /✦ 2  Novo jogo/); // seleção pula o Continuar desabilitado
   press('1');
   assert.equal(app.mode, 'menu');
   press('enter');

@@ -1,6 +1,7 @@
-import { C, paint } from '../theme.js';
+import { C, paint, glyphs } from '../theme.js';
 import { visibleLength } from '../format.js';
-import { LOGO, SUBTITLE, TAGLINE } from '../art/logo.js';
+import { titleArt, ringOrder, TAGLINE, MOTTO } from '../art/logo.js';
+import { frame } from '../anim.js';
 
 export const help = '↑↓ escolher  Enter confirmar  1-5 atalho  Q sair';
 
@@ -13,6 +14,36 @@ const ITEMS = [
   { label: 'Sair', run: (ctx) => ctx.quit() },
 ];
 const isEnabled = (ctx, it) => !it.enabled || it.enabled(ctx);
+
+const ART = titleArt();
+const RING = ringOrder(ART);
+const GLINT_TRAIL = 4;
+
+// Letras douradas na frente, anel dourado esmaecido atrás, e um brilho com rastro que
+// percorre o anel (parado quando as animações estão desligadas).
+function title(anim) {
+  const head = anim ? frame(anim, 14) % RING.length : -1;
+  const lit = new Map();
+  for (let i = 0; head >= 0 && i < GLINT_TRAIL; i++) {
+    const c = RING[(head - i + RING.length) % RING.length];
+    lit.set(`${c.x},${c.y}`, i);
+  }
+  return ART.map((row, y) => {
+    let out = '';
+    let run = '';
+    let style = null;
+    const flush = () => { if (run) out += paint(style, run); run = ''; };
+    row.forEach((cell, x) => {
+      const glow = lit.get(`${x},${y}`);
+      const st = !cell.ring ? C.bold + C.yellow : glow === 0 ? C.bold + C.yellow + C.inverse : glow !== undefined ? C.bold + C.yellow : C.dim + C.yellow;
+      if (cell.ch === ' ') { flush(); out += ' '; return; }
+      if (st !== style) { flush(); style = st; }
+      run += cell.ch;
+    });
+    flush();
+    return out;
+  });
+}
 
 const center = (text, cols) => ' '.repeat(Math.max(0, Math.floor((cols - visibleLength(text)) / 2))) + text;
 
@@ -28,19 +59,21 @@ export function render(ctx, height, cols) {
   initSel(ctx);
 
   const lines = [
-    ...LOGO.map((l) => center(paint(C.bold + C.green, l), cols)),
-    center(paint(C.cyan, SUBTITLE), cols),
-    center(paint(C.dim, TAGLINE), cols),
+    ...title(ctx.anim).map((l) => center(l, cols)),
+    '',
+    center(paint(C.yellow, TAGLINE), cols),
+    center(paint(C.dim, MOTTO), cols),
     '',
   ];
   // Itens alinhados à esquerda num bloco centralizado (fica mais limpo que centralizar
-  // cada linha, que deixaria o marcador "▸" pulando de coluna).
+  // cada linha, que deixaria o marcador pulando de coluna). O marcador é o ✦ dos locais
+  // de descanso do jogo homenageado.
   const width = 22;
   const left = ' '.repeat(Math.max(0, Math.floor((cols - width) / 2)));
   ITEMS.forEach((it, i) => {
     const on = isEnabled(ctx, it);
     const selected = i === ui.sel;
-    const text = `${selected ? '▸' : ' '} ${i + 1}  ${it.label}`;
+    const text = `${selected ? glyphs().legacy : ' '} ${i + 1}  ${it.label}`;
     const style = !on ? C.dim : selected ? C.bold + C.yellow : '';
     lines.push(left + paint(style, text));
   });

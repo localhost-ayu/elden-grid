@@ -1,4 +1,4 @@
-// Tudo numa pasta temporária: nunca toca ~/.reactor-ascii do jogador.
+// Tudo numa pasta temporária: nunca toca ~/.elden-grid do jogador.
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -6,12 +6,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { newState, migrate, SAVE_VERSION, isValidState } from '../src/core/state.js';
 import {
-  readSlot, writeSlot, deleteSlot, listSlots, importLegacy, slotPath, writeJsonAtomic,
+  readSlot, writeSlot, deleteSlot, listSlots, importLegacy, slotPath, writeJsonAtomic, moveOldSaveDir,
 } from '../src/storage/saves.js';
 import { readSettings, writeSettings, DEFAULT_SETTINGS } from '../src/storage/settings.js';
 
 let dir;
-beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'reactor-')); });
+beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'elden-grid-')); });
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 const stateWith = (money) => Object.assign(newState(), { money });
@@ -145,4 +145,17 @@ test('writeJsonAtomic cria a pasta se não existir', () => {
   const f = path.join(dir, 'a', 'b', 'x.json');
   writeJsonAtomic(f, { ok: 1 });
   assert.deepEqual(JSON.parse(fs.readFileSync(f, 'utf8')), { ok: 1 });
+});
+
+test('pasta de saves do nome antigo é movida uma vez e nunca sobrescreve a nova', () => {
+  const oldDir = path.join(dir, 'old');
+  const newDir = path.join(dir, 'new');
+  assert.equal(moveOldSaveDir(oldDir, newDir), false); // nada para mover
+  writeSlot(1, newState(), oldDir);
+  assert.equal(moveOldSaveDir(oldDir, newDir), true);
+  assert.equal(readSlot(1, newDir).status, 'ok');
+  assert.ok(!fs.existsSync(oldDir));
+  writeSlot(2, newState(), oldDir); // apareceu de novo: a nova já existe, não mexe
+  assert.equal(moveOldSaveDir(oldDir, newDir), false);
+  assert.equal(readSlot(2, newDir).status, 'empty');
 });

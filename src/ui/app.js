@@ -363,7 +363,7 @@ export function createApp({
       const badge = t.id === 'legacy' && canAscend(app.state) ? paint(C.yellow + C.bold, glyphs().legacy) : '';
       return i === app.tab ? paint(C.inverse + C.bold, ` ${t.label} `) + badge : ` ${label}${badge} `;
     });
-    return paint(C.bold + C.green, ' ⚡ REACTOR') + '  ' + parts.join(paint(C.dim, '│'));
+    return paint(C.bold + C.yellow, ' ⚡ ELDEN GRID') + '  ' + parts.join(paint(C.dim, '│'));
   }
 
   function statsLines() {
@@ -435,7 +435,7 @@ export function createApp({
       body = tab.screen.render(ctx(tab.id), room(header), cols);
     } else {
       const f = FULL[app.mode];
-      header = [paint(C.bold + C.green, ' ⚡ REACTOR') + paint(C.dim, `  ·  ${f.title}`), sep(cols)];
+      header = [paint(C.bold + C.yellow, ' ⚡ ELDEN GRID') + paint(C.dim, `  ·  ${f.title}`), sep(cols)];
       const c = ctx(app.mode);
       help = c.ui.confirm && f.screen.confirmHelp ? f.screen.confirmHelp : helpOf(f.screen, c);
       body = f.screen.render(c, room(header), cols);

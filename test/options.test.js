@@ -15,7 +15,7 @@ import { fmt, setNumberFormat, stripAnsi, visibleLength } from '../src/ui/format
 // Tema e formato são globais da UI: cada teste devolve o padrão.
 afterEach(() => { setColorMode('full'); setUnicode(true); setNumberFormat('short'); });
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'reactor-opt-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'elden-grid-opt-'));
 
 test('settings: padrões, ida e volta e valores inválidos descartados campo a campo', () => {
   const dir = tmp();

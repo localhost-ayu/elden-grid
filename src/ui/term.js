@@ -61,7 +61,7 @@ export function guard({ onQuit, onCrash }) {
   const fatal = (err) => {
     restore(); // primeiro o terminal, para a mensagem de erro ficar legível
     try { onCrash?.(err); } catch {}
-    process.stderr.write(`\nReactor ASCII encontrou um erro e foi encerrado (terminal restaurado).\n${err?.stack ?? err}\n`);
+    process.stderr.write(`\nElden Grid encontrou um erro e foi encerrado (terminal restaurado).\n${err?.stack ?? err}\n`);
     process.exit(1);
   };
   process.on('uncaughtException', fatal);

@@ -1,4 +1,6 @@
-import { listSlots, readSlot, writeSlot, deleteSlot, importLegacy, exportSlot, importSlot } from './src/storage/saves.js';
+import {
+  listSlots, readSlot, writeSlot, deleteSlot, importLegacy, exportSlot, importSlot, moveOldSaveDir,
+} from './src/storage/saves.js';
 import { readSettings, writeSettings } from './src/storage/settings.js';
 import * as term from './src/ui/term.js';
 import { parseKeys } from './src/ui/input.js';
@@ -10,7 +12,9 @@ if (!term.isInteractive()) {
   process.exit(1);
 }
 
-// Na primeira execução, o save v1 (~/.reactor-ascii.json) é importado para o slot 1.
+// Saves de versões antigas: a pasta do tempo em que o jogo se chamava Reactor ASCII é
+// movida, e o save único do MVP (~/.reactor-ascii.json) é importado para o slot 1.
+const moved = moveOldSaveDir();
 const imported = importLegacy();
 const settings = readSettings();
 if (imported) { settings.lastSlot = 1; writeSettings(settings); }
@@ -35,6 +39,7 @@ const app = createApp({
   noColor: Boolean(process.env.NO_COLOR),
   copy: term.copy,
 });
+if (moved) app.say('Saves do Reactor ASCII movidos para ~/.elden-grid/.', 'ok', 10000);
 if (imported) app.say('Save antigo encontrado e importado para o Slot 1.', 'ok', 10000);
 const save = () => app.save();
 
@@ -91,8 +96,8 @@ function applyRuntime() {
 }
 applyRuntime();
 
-// Gancho de teste manual: REACTOR_CRASH_TEST=<ms> lança uma exceção depois de <ms>,
+// Gancho de teste manual: ELDEN_GRID_CRASH_TEST=<ms> lança uma exceção depois de <ms>,
 // para verificar que o terminal é restaurado mesmo em erro não tratado.
-if (process.env.REACTOR_CRASH_TEST) {
-  setTimeout(() => { throw new Error('falha forçada (REACTOR_CRASH_TEST)'); }, Number(process.env.REACTOR_CRASH_TEST) || 1000);
+if (process.env.ELDEN_GRID_CRASH_TEST) {
+  setTimeout(() => { throw new Error('falha forçada (ELDEN_GRID_CRASH_TEST)'); }, Number(process.env.ELDEN_GRID_CRASH_TEST) || 1000);
 }

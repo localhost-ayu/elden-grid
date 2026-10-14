@@ -1,5 +1,5 @@
 // Opções do jogador, guardadas separadas do save (trocar de slot ou recomeçar não
-// mexe nelas). Arquivo: ~/.reactor-ascii/settings.json
+// mexe nelas). Arquivo: ~/.elden-grid/settings.json
 import fs from 'node:fs';
 import path from 'node:path';
 import { SAVE_DIR, SLOTS, writeJsonAtomic } from './saves.js';

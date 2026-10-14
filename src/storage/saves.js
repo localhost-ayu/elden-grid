@@ -6,9 +6,23 @@ import os from 'node:os';
 import path from 'node:path';
 import { migrate, toSave, fromSave, isValidState } from '../core/state.js';
 
-export const SAVE_DIR = path.join(os.homedir(), '.reactor-ascii');
+export const SAVE_DIR = path.join(os.homedir(), '.elden-grid');
+// Pasta de quando o jogo se chamava Reactor ASCII; é movida para SAVE_DIR uma vez.
+export const OLD_SAVE_DIR = path.join(os.homedir(), '.reactor-ascii');
 export const LEGACY_PATH = path.join(os.homedir(), '.reactor-ascii.json'); // save v1, antes dos slots
 export const SLOTS = [1, 2, 3];
+
+// Rename quando dá (mesmo disco: instantâneo e sem duplicar); senão, cópia. Nunca mexe se
+// a pasta nova já existe, para não misturar saves. Retorna true se moveu.
+export function moveOldSaveDir(from = OLD_SAVE_DIR, to = SAVE_DIR) {
+  if (fs.existsSync(to) || !fs.existsSync(from)) return false;
+  try {
+    fs.renameSync(from, to);
+  } catch {
+    try { fs.cpSync(from, to, { recursive: true }); } catch { return false; }
+  }
+  return true;
+}
 
 export const slotPath = (n, dir = SAVE_DIR) => path.join(dir, `slot${n}.json`);
 

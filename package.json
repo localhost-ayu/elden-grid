@@ -1,5 +1,5 @@
 {
-  "name": "reactor-ascii",
+  "name": "elden-grid",
   "version": "1.0.0",
   "description": "Idle game de geração de energia para o terminal, sem dependências.",
   "type": "module",
