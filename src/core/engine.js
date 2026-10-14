@@ -66,7 +66,10 @@ export const upkeep = (s) =>
   GENERATORS.reduce((sum, g) => sum + (genUpkeep(g) && s.owned[g.id] * genUpkeep(g) * genModMult(s, g, 'upkeep')), 0);
 export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab');
 // Preço do kWh oscila ±20% numa senoide lenta (dá vida ao contador de dinheiro).
-export const price = (s) => (1 + 0.2 * Math.sin(s.t / 15)) * mult(s, 'price');
+// priceBase é a média da oscilação; priceRising vem da derivada (a seta de tendência).
+export const priceBase = (s) => mult(s, 'price');
+export const price = (s) => (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s);
+export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 
 export const capacity = (s) =>
   GRID.baseCapacity * mult(s, 'capacity') * GRID.transformer.capacityMult ** s.transformers;

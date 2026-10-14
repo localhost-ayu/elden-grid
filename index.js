@@ -46,7 +46,7 @@ const screen = createScreen();
 function draw() {
   const { cols, rows } = term.size();
   screen.resize(cols, rows);
-  term.write(screen.frame(app.lines(cols, rows)));
+  term.write(screen.frame(app.lines(cols, rows), app.overlays(cols, rows)));
 }
 
 // Alguns terminais rearranjam o conteúdo sozinhos ao redimensionar; redesenhar tudo

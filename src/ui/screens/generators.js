@@ -12,9 +12,11 @@ import { autoAvailable, autoInterval, toggleAuto } from '../../core/automation.j
 import { C, paint } from '../theme.js';
 import { fmt, visibleLength } from '../format.js';
 import { scrollWindow } from '../list.js';
-import { BLADES, TOWER } from '../art/wind.js';
+import { CARD_H, sceneCards, sceneRows } from '../scene.js';
 
-export const help = '↑↓/Enter comprar  B lote  U upgrade  0-9 atalho  espaço gira  M menu  Q sair';
+export const help = (ctx) => (ctx.ui.scene
+  ? 'V volta à lista  0-9 comprar  B lote  espaço gira  Tab abas  M menu  Q sair'
+  : '↑↓ Enter comprar  B lote  U upgrade  V cena  0-9 atalho  espaço gira  Q sair');
 
 // Modo de lote é estado de UI por sessão: não vai para o save.
 const BULK = [1, 10, 100, 'max'];
@@ -36,24 +38,11 @@ const condition = (s, g) => (isShutdown(s, g)
   ? `DESLIGADO ${Math.ceil(shutdownLeft(s, g))}s`
   : g.traits.map((tr) => TRAIT_LABEL[tr.type]?.(s, g, tr) ?? '').join(' ') || 'estável');
 
-function windScene(count, now, pw) {
-  const n = Math.max(1, Math.min(count, 5));
-  const speed = Math.min(8, 1.5 + Math.log10(pw + 1) * 2); // mais potência = gira mais rápido
-  const rows = Array.from({ length: 7 }, () => '');
-  for (let i = 0; i < n; i++) {
-    const frame = Math.floor((now / 1000) * speed + i) % 2; // +i desincroniza as turbinas
-    const art = [...BLADES[count === 0 ? 1 : frame], ...TOWER];
-    art.forEach((line, r) => (rows[r] += line + '  '));
-  }
-  const color = count === 0 ? C.dim : C.cyan;
-  return rows.map((r) => ' ' + paint(color, r));
-}
-
-// Eólica fica de fora: tem a cena própria. Com muitas fontes, repete menos ícones por
-// fonte até caber na largura; em último caso corta com "…".
+// Versão de uma linha da cena, para quando não sobra altura para os cards. Com muitas
+// fontes, repete menos ícones por fonte até caber na largura; em último caso corta com "…".
 function plantRow(s, cols) {
-  const owned = GENERATORS.filter((g) => s.owned[g.id] > 0 && g.id !== 'wind');
-  if (!owned.length && !s.labs) return ' ' + paint(C.dim, '(nenhuma outra usina ainda)');
+  const owned = GENERATORS.filter((g) => s.owned[g.id] > 0);
+  if (!owned.length && !s.labs) return ' ' + paint(C.dim, '(nenhuma usina ainda)');
   const room = cols - 2;
   let text = '';
   for (const reps of [6, 3, 1]) {
@@ -151,7 +140,19 @@ function autoLine(s) {
 
 const clampSel = (ui, n) => (ui.sel = Math.max(0, Math.min(ui.sel ?? 0, n - 1)));
 
+function sceneView(ctx, height, width) {
+  const s = ctx.state;
+  const types = sceneCards(s).length;
+  const top = ' ' + paint(C.bold, 'Usinas') + paint(C.dim, `  ${fmt(power(s))} kW · ${types} ${types === 1 ? 'tipo' : 'tipos'}  ·  V volta à lista`);
+  ctx.ui.particleZone = null;
+  if (!types) return [top, '', paint(C.dim, '   Nenhuma usina ainda — compre a primeira turbina na lista (V).')];
+  const rows = sceneRows(s, ctx.now, width, Math.floor((height - 1) / CARD_H));
+  ctx.ui.particleZone = { top: 1, height: rows.length };
+  return [top, ...rows];
+}
+
 export function render(ctx, height, width) {
+  if (ctx.ui.scene) return sceneView(ctx, height, width);
   const s = ctx.state;
   const amount = bulkOf(ctx.ui);
   const list = items(s);
@@ -159,16 +160,19 @@ export function render(ctx, height, width) {
   const rows = list.map((it, i) => row(s, it, i === sel, amount));
   const panel = detail(s, list[sel]);
   // Prioridade de altura: cabeçalho + lista + painel são essenciais; depois entram,
-  // se couber, a prévia/aviso do lab, a linha de ícones e por fim a cena das turbinas.
+  // se couber, a prévia/aviso do lab e a cena (cards inteiros, ou a linha de ícones).
   const extra = [...autoLine(s), ...teaser(s)];
   if (!labUnlocked(s)) extra.push(paint(C.dim, `   Laboratório aparece após ${LAB.unlockAt} kWh produzidos.`));
   let room = height - 1 - panel.length - rows.length;
   const shownExtra = room >= extra.length ? extra : [];
   room -= shownExtra.length;
-  const plant = room >= 1 ? [plantRow(s, width)] : [];
-  room -= plant.length;
-  const scene = room >= 7 ? windScene(s.owned.wind, ctx.now, power(s)) : [];
+  const cardRows = sceneCards(s).length ? Math.floor(room / CARD_H) : 0;
+  const scene = cardRows ? sceneRows(s, ctx.now, width, cardRows) : [];
+  const plant = !scene.length && room >= 1 ? [plantRow(s, width)] : [];
   const listRoom = height - 1 - panel.length - shownExtra.length - plant.length - scene.length;
+  // As partículas de venda/manivela saem das usinas, nunca do meio da lista.
+  const zone = scene.length || plant.length;
+  ctx.ui.particleZone = zone ? { top: 0, height: zone } : null;
   return [
     ...scene, ...plant,
     ' ' + paint(C.dim, header(amount)),
@@ -217,6 +221,7 @@ export function key(ctx, k) {
   if (k === 'up') { ui.sel = Math.max(0, (ui.sel ?? 0) - 1); return true; }
   if (k === 'down') { ui.sel = Math.min(list.length - 1, (ui.sel ?? 0) + 1); return true; }
   if (k === 'enter') { clampSel(ui, list.length); buy(ctx, list[ui.sel]); return true; }
+  if (k === 'v' || k === 'V') { ui.scene = !ui.scene; return true; }
   if (k === 'b' || k === 'B') {
     ui.bulk = ((ui.bulk ?? 0) + 1) % BULK.length;
     ctx.say(`Compra em lote: ${bulkLabel(bulkOf(ui))}`, 'info', 2000);

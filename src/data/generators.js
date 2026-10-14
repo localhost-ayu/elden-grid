@@ -14,7 +14,7 @@
 export const GENERATORS = [
   { id: 'wind',       key: '1', name: 'Turbina Eólica', short: 'Eólica',     baseCost: 15,     growth: 1.15, output: 1,       icon: 'Y',   art: 'wind',       unlock: null,          traits: [{ type: 'wind' }] },
   { id: 'solar',      key: '2', name: 'Painel Solar', short: 'Solar',       baseCost: 150,    growth: 1.15, output: 9,       icon: '[#]', art: 'solar',      unlock: 't_solar',     traits: [{ type: 'daylight', floor: 0.15, peak: 2.6 }] },
-  { id: 'hydro',      key: '3', name: 'Hidrelétrica', short: 'Hidrelétrica',       baseCost: 1600,   growth: 1.15, output: 75,      icon: '~W~', art: 'hydro',      unlock: 't_hydro',     traits: [{ type: 'reservoir', min: 0.9, max: 1.2, period: 720 }] },
+  { id: 'hydro',      key: '3', name: 'Hidrelétrica', short: 'Hidro',              baseCost: 1600,   growth: 1.15, output: 75,      icon: '~W~', art: 'hydro',      unlock: 't_hydro',     traits: [{ type: 'reservoir', min: 0.9, max: 1.2, period: 720 }] },
   { id: 'biomass',    key: '4', name: 'Usina de Biomassa', short: 'Biomassa',  baseCost: 5000,   growth: 1.14, output: 180,     icon: '{&}', art: 'biomass',    unlock: 't_biomass',   traits: [] },
   { id: 'gas',        key: '5', name: 'Termelétrica a Gás', short: 'Gás', baseCost: 18000,  growth: 1.15, output: 650,     icon: '|^|', art: 'gas',        unlock: 't_gas',       traits: [{ type: 'upkeep', money: 120 }] },
   { id: 'geothermal', key: '6', name: 'Geotérmica', short: 'Geotérmica',         baseCost: 70000,  growth: 1.15, output: 2000,    icon: '/^\\', art: 'geothermal', unlock: 't_geo',       traits: [] },

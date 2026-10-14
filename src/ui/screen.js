@@ -47,6 +47,22 @@ export function parseLine(line, cols) {
   return cells;
 }
 
+const MAX_SHIFT = 40;
+
+function freeSpot(line, want, len, cols) {
+  const blank = (c) => c < 0 || c >= cols || (line[c].ch === ' ' && line[c].st === '');
+  const fits = (c) => {
+    if (c < 0 || c + len > cols) return false;
+    for (let x = c - 1; x <= c + len; x++) if (!blank(x)) return false;
+    return true;
+  };
+  for (let d = 0; d <= MAX_SHIFT; d++) {
+    if (fits(want - d)) return want - d;
+    if (fits(want + d)) return want + d;
+  }
+  return null;
+}
+
 export function createScreen() {
   let cols = 0;
   let rows = 0;
@@ -61,9 +77,20 @@ export function createScreen() {
     // rearranjado o conteúdo por conta própria).
     invalidate() { prev = null; },
 
-    frame(lines) {
+    // `overlays` ({ row, col, text, st }) nunca cobrem a interface: o texto inteiro, com
+    // uma coluna de folga de cada lado, precisa cair em células vazias. Se a coluna pedida
+    // está ocupada, usa o vão livre mais próximo na mesma linha; sem vão, a partícula
+    // passa "por trás" naquele quadro.
+    frame(lines, overlays = []) {
       const next = [];
       for (let r = 0; r < rows; r++) next.push(parseLine(lines[r] ?? '', cols));
+      for (const o of overlays) {
+        const line = next[o.row];
+        if (!line) continue;
+        const chars = [...o.text];
+        const col = freeSpot(line, o.col, chars.length, cols);
+        if (col !== null) chars.forEach((ch, i) => { line[col + i] = { ch, st: o.st }; });
+      }
 
       const full = prev === null;
       // Redesenho completo começa limpando: assim células em branco podem ser puladas.

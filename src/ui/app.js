@@ -1,13 +1,14 @@
 // Roteador de telas. Não toca o terminal: recebe nomes de tecla (input.js) e devolve
 // linhas (para o screen.js), por isso dá para testar sem TTY.
 import { newState } from '../core/state.js';
-import { tick, power, price, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
+import { tick, power, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
 import { autoStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
 import { crank } from '../core/actions.js';
 import { hourOfDay, isDay } from '../core/traits.js';
-import { C, paint } from './theme.js';
+import { C, paint, glyphs } from './theme.js';
+import { createParticles, easeTo, spawn, stepParticles } from './anim.js';
 import { fmt, fmtPct } from './format.js';
 import * as menu from './screens/menu.js';
 import * as generators from './screens/generators.js';
@@ -40,6 +41,7 @@ export const TABS = [
 ];
 
 const MAX_MESSAGES = 3;
+const HEADER_H = 4; // abas + 2 linhas de economia + separador (modo jogo)
 const KIND_COLOR = { info: C.yellow, ok: C.green, err: C.red };
 
 // Telas de "tela cheia" (fora do jogo): título no cabeçalho, sem abas nem economia.
@@ -56,7 +58,7 @@ const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 //   list() -> [{ slot, status, savedAt, state }]   load(n) -> { status, savedAt, state }
 //   save(n, state) -> bool                          remove(n)
 // `settings` é o objeto de opções; `onSettings(settings)` persiste quando ele muda.
-export function createApp({ store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now() }) {
+export function createApp({ store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random }) {
   const app = {
     state: null,  // jogo aberto (null = nenhum slot carregado ainda)
     slot: null,   // slot do jogo aberto
@@ -67,6 +69,10 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     offline: null, // resumo do último progresso offline (tela 'offline')
     slotCache: null, // lista de slots; relida só quando algo muda (não a cada quadro)
     history: createHistory(), // últimos 60 s para os gráficos da aba Rede (só em memória)
+    // Valores mostrados no cabeçalho: perseguem os reais em vez de saltar.
+    shown: { money: 0, energy: 0 },
+    particles: createParticles(),
+    saleClock: 0,
     now,
   };
 
@@ -100,6 +106,9 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     app.tab = 0;
     app.ui = {};
     app.history = createHistory(); // histórico é do jogo aberto, não do anterior
+    // Abrir um save não deve "rolar" do zero até o saldo dele.
+    app.shown = { money: state.money, energy: state.totalEnergy };
+    app.particles = createParticles();
     remember(n);
   }
 
@@ -171,12 +180,20 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     const tab = TABS[app.tab];
     if (k === 'tab') { app.tab = (app.tab + 1) % TABS.length; return; }
     if (k === 'shift-tab') { app.tab = (app.tab - 1 + TABS.length) % TABS.length; return; }
-    if (k === 'space') { crank(app.state); return; }
+    if (k === 'space') { crankBurst(); return; }
     if (k === 'escape' || k === 'm' || k === 'M') return toMenu();
     if (k === 'q' || k === 'Q') return onQuit();
     const direct = TABS.findIndex((t) => t.key === k.toLowerCase() && k.length === 1);
     if (direct >= 0) { app.tab = direct; return; }
     tab.screen.key(ctx(tab.id), k);
+  }
+
+  // A partícula nasce da ação: girar a manivela solta o que ela rendeu.
+  function crankBurst() {
+    const kwh = crank(app.state);
+    const x = 0.5 + rng() * 0.35;
+    spawn(app.particles, { text: `+${fmt(kwh)} kWh`, st: C.cyan, x, y: 0, vy: 4, life: 1.6 });
+    spawn(app.particles, { text: `+$${fmt(kwh * price(app.state))}`, st: C.green, x: x + 0.12, y: 0, vy: 3, life: 1.6 });
   }
 
   function key(k) {
@@ -195,11 +212,23 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
       const shutdowns = tick(app.state, dt);
       autoStep(app.state, dt);
       sampleHistory(app.history, app.state);
+      app.shown.money = easeTo(app.shown.money, app.state.money, dt);
+      app.shown.energy = easeTo(app.shown.energy, app.state.totalEnergy, dt);
+      // Uma partícula de venda por segundo: o dinheiro entrando fica visível sem poluir.
+      app.saleClock += dt;
+      if (app.saleClock >= 1) {
+        app.saleClock %= 1;
+        const inc = income(app.state);
+        if (app.mode === 'game' && inc > 0) {
+          spawn(app.particles, { text: `+$${fmt(inc)}`, st: C.green + C.dim, x: 0.45 + rng() * 0.5, y: 0, vy: 4, life: 1.4 });
+        }
+      }
       for (const id of shutdowns) {
         const g = GENERATORS.find((x) => x.id === id);
         say(`⚠ ${g.name} superaqueceu e desligou! Resfrie na aba Rede (visão Calor).`, 'err', 8000);
       }
     }
+    stepParticles(app.particles, dt);
     app.messages = app.messages.filter((m) => m.until > now);
   }
 
@@ -216,17 +245,24 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
   function statsLines() {
     const s = app.state;
     return [
-      ` Dinheiro ${paint(C.green, '$' + fmt(s.money))}   ` +
-      `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}   ` +
-      `Total ${paint(C.cyan, fmt(s.totalEnergy) + ' kWh')}   ` +
-      `Preço ${paint(C.yellow, '$' + price(s).toFixed(2) + '/kWh')}`,
-      ` Renda ${paint(C.green, '$' + fmt(income(s)) + '/s')}   ` +
-      `PP ${paint(C.mag, fmt(s.rp))} ${paint(C.dim, '(+' + fmt(rpRate(s)) + '/s)')}   ` +
-      gridText(s) + '   ' +
+      ` Dinheiro ${paint(C.green, '$' + fmt(app.shown.money))}  ` +
+      `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}  ` +
+      `Total ${paint(C.cyan, fmt(app.shown.energy) + ' kWh')}  ` +
+      priceText(s),
+      ` Renda ${paint(C.green, '$' + fmt(income(s)) + '/s')}  ` +
+      `PP ${paint(C.mag, fmt(s.rp))} ${paint(C.dim, '(+' + fmt(rpRate(s)) + '/s)')}  ` +
+      gridText(s) + '  ' +
       // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
       paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`) +
-      (s.auto.buy ? '   ' + paint(C.cyan, '⟳ auto') : ''),
+      (s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : ''),
     ];
+  }
+
+  // Cor: acima (verde) ou abaixo (amarelo) da média; seta: subindo ou descendo agora.
+  function priceText(s) {
+    const p = price(s);
+    const color = p >= priceBase(s) ? C.green : C.yellow;
+    return `Preço ${paint(color, '$' + p.toFixed(2) + '/kWh ' + (priceRising(s) ? glyphs().up : glyphs().down))}`;
   }
 
   // Uso da rede: verde folgada, amarelo perto do limite, vermelho saturada (vendendo
@@ -267,7 +303,7 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     } else if (app.mode === 'game') {
       header = [tabBar(), ...statsLines(), sep(cols)];
       const tab = TABS[app.tab];
-      help = tab.screen.help;
+      help = typeof tab.screen.help === 'function' ? tab.screen.help(ctx(tab.id)) : tab.screen.help;
       body = tab.screen.render(ctx(tab.id), room(header), cols);
     } else {
       const f = FULL[app.mode];
@@ -280,10 +316,29 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     return [...header, ...fit(body, rows - header.length - footer.length), ...footer];
   }
 
+  // Partículas sobem dentro da região que a aba declara (`ui.particleZone`, em linhas
+  // do corpo): a cena das usinas. Fora dela (outras abas, telas cheias) não aparecem,
+  // para nunca parecerem parte de um número da interface.
+  function overlays(cols, rows) {
+    if (app.mode !== 'game' || tooSmall(cols, rows)) return [];
+    const zone = app.ui[TABS[app.tab].id]?.particleZone;
+    if (!zone) return [];
+    const top = HEADER_H + zone.top;
+    const bottom = top + zone.height - 1;
+    return app.particles.list.flatMap((p) => {
+      const row = bottom - Math.floor(p.y);
+      if (row < top || row > bottom) return [];
+      const col = 1 + Math.floor(Math.max(0, Math.min(1, p.x)) * (cols - 2 - p.text.length));
+      const fading = p.age > p.life * 0.6 && !p.st.includes(C.dim);
+      return [{ row, col, text: p.text, st: fading ? p.st + C.dim : p.st }];
+    });
+  }
+
   return {
     key,
     update,
     lines,
+    overlays,
     say,
     save,
     get state() { return app.state; },
