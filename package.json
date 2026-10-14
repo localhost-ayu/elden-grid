@@ -1,9 +1,14 @@
 {
   "name": "reactor-ascii",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Idle game de geração de energia para o terminal, sem dependências.",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "simulate": "node scripts/simulate.js"
   }
 }

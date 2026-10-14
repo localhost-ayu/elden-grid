@@ -1,6 +1,8 @@
 // Árvore de pesquisa (paga com PP). `req` lista os pré-requisitos; o PRIMEIRO é o pai
 // na árvore desenhada (os demais aparecem como "requer: X" quando faltam).
 // A ordem do array é a ordem dos irmãos na tela.
+// Custos do fim da árvore calibrados com scripts/simulate.js: Fusão chega pouco antes do
+// primeiro Legado (~36 min) e Antimatéria é prêmio de partida longa (~58 min).
 //
 // type: 'unlock'   (só libera algo; o gerador aponta para ela em `unlock`)
 //       'genMult'  (x na geração de um gerador)    'global'   (x em toda a geração)
@@ -26,8 +28,8 @@ export const TECHS = [
   { id: 't_nuclear',     name: 'Fissão Controlada',        cost: 3000,   req: ['t_gas'],         type: 'unlock' },
   { id: 't_nuclear2',    name: 'Enriquecimento a Laser',   cost: 12000,  req: ['t_nuclear'],     type: 'genMult', gen: 'nuclear', mult: 2 },
   { id: 't_tidal',       name: 'Barragens de Maré',        cost: 8000,   req: ['t_nuclear'],     type: 'unlock' },
-  { id: 't_fusion',      name: 'Fusão Magnética',          cost: 40000,  req: ['t_nuclear'],     type: 'unlock' },
-  { id: 't_antimatter',  name: 'Contenção de Antimatéria', cost: 250000, req: ['t_fusion'],      type: 'unlock' },
+  { id: 't_fusion',      name: 'Fusão Magnética',          cost: 15000,  req: ['t_nuclear'],     type: 'unlock' },
+  { id: 't_antimatter',  name: 'Contenção de Antimatéria', cost: 60000,  req: ['t_fusion'],      type: 'unlock' },
 
   // ---- rede e mercado ----
   { id: 't_grid',        name: 'Rede Inteligente',         cost: 20,     req: [],                type: 'price',    mult: 1.25 },
