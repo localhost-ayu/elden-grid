@@ -1,10 +1,12 @@
 // O estado é JSON puro para poder ser salvo/carregado sem perdas.
 import { GENERATORS } from '../data/generators.js';
+import { SCHEDULE } from '../data/events.js';
 
 const HOT = GENERATORS.filter((g) => g.traits.some((tr) => tr.type === 'heat')).map((g) => g.id);
 const hotDefaults = (make) => Object.fromEntries(HOT.map((id) => [id, make()]));
 
-export function newState() {
+// `seed` alimenta o sorteio dos eventos (core/events.js).
+export function newState(seed = 1) {
   return {
     money: 0,
     totalEnergy: 0, // kWh produzidos desde o início
@@ -21,6 +23,8 @@ export function newState() {
     earned: 0,      // dinheiro ganho nesta partida (base do Legado; gastar não desconta)
     // Sobrevive à ascensão. earned = pontos já recebidos; points = não gastos.
     legacy: { points: 0, earned: 0, lifetime: 0, ascensions: 0, shop: {} },
+    // effects: [{ id, until }] (until null = crise em aberto); crisis: { id, deadline, game }
+    events: { rng: seed >>> 0, next: SCHEDULE.first, effects: [], crisis: null, seen: 0 },
   };
 }
 
@@ -32,7 +36,8 @@ export function newState() {
 //   v4 = state.auto
 //   v5 = state.heat, state.cooling, state.transformers
 //   v6 = state.earned, state.legacy
-export const SAVE_VERSION = 6;
+//   v7 = state.events
+export const SAVE_VERSION = 7;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -45,6 +50,8 @@ const MIGRATIONS = {
   4: (raw) => ({ ...raw, saveVersion: 5 }),
   // Saves antigos não registravam o ganho; o saldo atual é o mínimo que se sabe ter ganho.
   5: (raw) => ({ ...raw, saveVersion: 6, state: { ...raw.state, earned: raw.state?.earned ?? Math.max(0, raw.state?.money ?? 0) } }),
+  // O momento do save serve de seed: saves diferentes não sorteiam os mesmos eventos.
+  6: (raw) => ({ ...raw, saveVersion: 7, state: { ...raw.state, events: raw.state?.events ?? newState(raw.savedAt ?? 1).events } }),
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.
@@ -73,6 +80,9 @@ export function fromSave(raw) {
   s.heat = { ...base.heat, ...raw.heat };
   s.cooling = { ...base.cooling, ...raw.cooling };
   s.legacy = { ...base.legacy, ...raw.legacy, shop: { ...raw.legacy?.shop } };
+  s.events = { ...base.events, ...raw.events };
+  // Um minijogo pela metade não sobrevive ao save: a crise volta ao alerta.
+  if (s.events.crisis) s.events.crisis = { ...s.events.crisis, game: null };
   delete s.savedAt; // metadado do arquivo, não do jogo
   return s;
 }
@@ -94,5 +104,9 @@ export function isValidState(s) {
   const L = s.legacy;
   if (!L || !count(L.points) || !count(L.earned) || !count(L.ascensions) || !finite(L.lifetime) || L.lifetime < 0) return false;
   if (!L.shop || typeof L.shop !== 'object' || !Object.values(L.shop).every(count)) return false;
+  const ev = s.events;
+  if (!ev || !Number.isInteger(ev.rng) || ev.rng < 0 || ev.rng > 0xffffffff || !finite(ev.next) || !count(ev.seen)) return false;
+  if (!Array.isArray(ev.effects) || !ev.effects.every((a) => a && typeof a.id === 'string' && (a.until === null || finite(a.until)))) return false;
+  if (ev.crisis !== null && !(ev.crisis && typeof ev.crisis.id === 'string' && finite(ev.crisis.deadline))) return false;
   return !!s.techs && typeof s.techs === 'object';
 }

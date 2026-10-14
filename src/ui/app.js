@@ -10,7 +10,11 @@ import { canAscend, legacyMult } from '../core/prestige.js';
 import { hourOfDay, isDay } from '../core/traits.js';
 import { C, paint, glyphs } from './theme.js';
 import { createParticles, easeTo, spawn, stepParticles } from './anim.js';
-import { fmt, fmtPct } from './format.js';
+import { fmt, fmtPct, fmtClock, visibleLength } from './format.js';
+import { REWARD } from '../data/events.js';
+import { eventDef, isActive } from '../core/events.js';
+import { eventsStep, currentEvent } from '../core/incidents.js';
+import * as crisis from './screens/crisis.js';
 import * as menu from './screens/menu.js';
 import * as generators from './screens/generators.js';
 import * as research from './screens/research.js';
@@ -73,6 +77,7 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     shown: { money: 0, energy: 0 },
     particles: createParticles(),
     saleClock: 0,
+    crisisOpen: false, // manual de crise aberto por cima da aba
     now,
   };
 
@@ -109,6 +114,7 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     // Abrir um save não deve "rolar" do zero até o saldo dele.
     app.shown = { money: state.money, energy: state.totalEnergy };
     app.particles = createParticles();
+    app.crisisOpen = false;
     remember(n);
   }
 
@@ -124,7 +130,7 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
   }
 
   function newGame(n) {
-    open(n, newState());
+    open(n, newState(Math.floor(rng() * 2 ** 32)));
     save(); // ocupa o slot já, para aparecer como usado na lista
     app.mode = 'game';
     say(`Novo jogo no slot ${n}! Gire a manivela (espaço) e compre sua primeira turbina.`, 'ok', 6000);
@@ -173,6 +179,8 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
       app.particles = createParticles();
       save();
     },
+    close: () => { app.crisisOpen = false; },
+    announce,
     quit: () => onQuit(),
   });
 
@@ -186,6 +194,13 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     const tab = TABS[app.tab];
     // Com uma confirmação S/N aberta, a aba decide tudo: "m" ou "q" não podem fugir dela.
     if (app.ui[tab.id]?.confirm) { tab.screen.key(ctx(tab.id), k); return; }
+    // O manual de crise fica com todas as teclas (espaço vira jogada, não manivela).
+    if (app.crisisOpen) { crisis.key(ctx('crisis'), k); return; }
+    if (k === 'x' || k === 'X') {
+      if (app.state.events.crisis) { app.crisisOpen = true; app.ui.crisis = {}; }
+      else say('Nenhuma crise agora. Quando houver, o aviso aparece no topo.', 'info', 3000);
+      return;
+    }
     if (k === 'tab') { app.tab = (app.tab + 1) % TABS.length; return; }
     if (k === 'shift-tab') { app.tab = (app.tab - 1 + TABS.length) % TABS.length; return; }
     if (k === 'space') { crankBurst(); return; }
@@ -204,6 +219,30 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     spawn(app.particles, { text: `+$${fmt(kwh * price(app.state))}`, st: C.green, x: x + 0.12, y: 0, vy: 3, life: 1.6 });
   }
 
+  // Notas do core/incidents.js viram mensagens no rodapé.
+  function announce(note) {
+    if (!note) return;
+    const def = eventDef(note.id);
+    if (note.type === 'crisis') {
+      say(`${glyphs().warn} CRISE: ${def.name} — ${def.desc}. Aperte X para o manual de crise.`, 'err', 10000);
+    } else if (note.type === 'start') {
+      say(`${def.name}: ${def.desc}${note.rp ? ` (+${fmt(note.rp)} PP)` : ''}.`, 'info', 6000);
+    } else if (note.type === 'end') {
+      say(note.id === REWARD.id ? `${REWARD.name} acabou.` : `Fim do evento: ${def.name}.`, 'info', 3000);
+    } else if (note.type === 'resolved') {
+      const cost = `$${fmt(note.cost)}`;
+      const the = `${def.article} ${def.name.toLowerCase()}`;
+      const solved = def.article === 'o' ? 'resolvido' : 'resolvida';
+      const [text, kind] = {
+        won: [`${def.name} ${solved} por você! Sem custo + ${REWARD.name} por ${REWARD.duration} s.`, 'ok'],
+        lost: [`Não deu: a equipe consertou ${the} por ${cost}.`, 'err'],
+        crew: [`Equipe chamada: ${the} foi ${solved} por ${cost}.`, 'info'],
+        timeout: [`Ninguém atendeu: a equipe resolveu ${the} sozinha por ${cost}.`, 'err'],
+      }[note.outcome];
+      say(text, kind, 8000);
+    }
+  }
+
   function key(k) {
     if (k === 'ctrl-c') return onQuit();
     if (app.mode === 'game') return gameKey(k);
@@ -219,6 +258,8 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     if (app.state) {
       const shutdowns = tick(app.state, dt);
       autoStep(app.state, dt);
+      eventsStep(app.state, dt).forEach(announce);
+      if (!app.state.events.crisis) app.crisisOpen = false;
       sampleHistory(app.history, app.state);
       app.shown.money = easeTo(app.shown.money, app.state.money, dt);
       app.shown.energy = easeTo(app.shown.energy, app.state.totalEnergy, dt);
@@ -241,6 +282,36 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
   }
 
   const sep = (cols) => paint(C.dim, ' ' + '─'.repeat(Math.max(0, cols - 2)));
+
+  // O separador do cabeçalho vira o aviso do evento em andamento, com contagem regressiva.
+  // Na crise o ⚠ pisca: é um indicador de estado, o único elemento em loop.
+  function banner(cols) {
+    const s = app.state;
+    const ev = s.events;
+    const cur = currentEvent(s);
+    const reward = ev.effects.find((a) => a.id === REWARD.id && isActive(s, a));
+    if (!cur && !reward) return sep(cols);
+    let text;
+    let color;
+    if (ev.crisis) {
+      const def = eventDef(ev.crisis.id);
+      const blink = Math.floor(app.now / 500) % 2 === 0;
+      // Sem a descrição: o relógio é o que não pode ser cortado.
+      text = `${glyphs().warn} ${def.name.toUpperCase()} · [X] manual de crise · equipe em ${fmtClock(Math.max(0, ev.crisis.deadline - s.t))}`;
+      color = C.red + (blink ? C.bold : '');
+    } else if (cur) {
+      const def = eventDef(cur.id);
+      text = `${def.name} · ${def.desc} · ${fmtClock(cur.until - s.t)}`;
+      color = C.yellow;
+    } else {
+      text = `${REWARD.name} · produção x${REWARD.effects[0].mult} · ${fmtClock(reward.until - s.t)}`;
+      color = C.green;
+    }
+    const room = cols - 7;
+    if (visibleLength(text) > room) text = [...text].slice(0, room - 1).join('') + '…';
+    const rest = Math.max(0, cols - 5 - visibleLength(text) - 1);
+    return paint(C.dim, ' ──') + paint(color, ` ${text} `) + paint(C.dim, '─'.repeat(rest));
+  }
 
   function tabBar() {
     const parts = TABS.map((t, i) => {
@@ -312,8 +383,8 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
       help = menu.help;
       body = menu.render(ctx('menu'), room(header), cols);
     } else if (app.mode === 'game') {
-      header = [tabBar(), ...statsLines(), sep(cols)];
-      const tab = TABS[app.tab];
+      header = [tabBar(), ...statsLines(), banner(cols)];
+      const tab = app.crisisOpen ? { id: 'crisis', screen: crisis } : TABS[app.tab];
       help = typeof tab.screen.help === 'function' ? tab.screen.help(ctx(tab.id)) : tab.screen.help;
       body = tab.screen.render(ctx(tab.id), room(header), cols);
     } else {
@@ -331,7 +402,7 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
   // do corpo): a cena das usinas. Fora dela (outras abas, telas cheias) não aparecem,
   // para nunca parecerem parte de um número da interface.
   function overlays(cols, rows) {
-    if (app.mode !== 'game' || tooSmall(cols, rows)) return [];
+    if (app.mode !== 'game' || app.crisisOpen || tooSmall(cols, rows)) return [];
     const zone = app.ui[TABS[app.tab].id]?.particleZone;
     if (!zone) return [];
     const top = HEADER_H + zone.top;

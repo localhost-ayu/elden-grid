@@ -2,6 +2,7 @@
 // gerador. Assim engine -> heat é uma dependência de mão única (sem ciclo de imports).
 import { GENERATORS } from '../data/generators.js';
 import { HEAT, COOLING } from '../data/heat.js';
+import { eventMult } from './events.js';
 
 const heatTrait = (g) => g.traits.find((tr) => tr.type === 'heat');
 export const isHot = (g) => !!heatTrait(g);
@@ -19,7 +20,7 @@ export function nextCooling(s, g) {
 export function heatTarget(s, g, outputMult) {
   const tr = heatTrait(g);
   if (!tr || s.owned[g.id] < 1) return 0;
-  return (tr.base * (1 + HEAT.intensity * Math.log2(Math.max(1, outputMult)))) / coolingFactor(s, g);
+  return (tr.base * (1 + HEAT.intensity * Math.log2(Math.max(1, outputMult))) * eventMult(s, 'heat')) / coolingFactor(s, g);
 }
 
 export const isShutdown = (s, g) => isHot(g) && s.t < (s.heat[g.id]?.off ?? 0);

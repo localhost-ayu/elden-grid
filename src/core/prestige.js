@@ -47,8 +47,9 @@ export function ascend(s) {
     ascensions: s.legacy.ascensions + 1,
     shop: { ...s.legacy.shop },
   };
+  const rng = s.events.rng; // a sorte continua de onde parou, não repete a 1ª partida
   for (const k of Object.keys(s)) delete s[k];
-  Object.assign(s, newState(), { legacy });
+  Object.assign(s, newState(rng), { legacy });
   s.owned.wind = shopValue(s, 'start', 0);
   if (shopValue(s, 'auto') !== null) s.auto.buy = true;
   return gain;

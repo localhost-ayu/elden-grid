@@ -6,6 +6,7 @@ import { MILESTONES, UPGRADE_TRACK, UPGRADE_OVERRIDES, UPGRADE_NAMES } from '../
 import { envFactor } from './traits.js';
 import { heatFactor, heatStep } from './heat.js';
 import { legacyMult, shopValue } from './prestige.js';
+import { eventMult } from './events.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -59,7 +60,9 @@ export const genModMult = (s, g, type) => modMult(genModifiers(s, g), type);
 export function genPower(s, g, average = false) {
   if (!s.owned[g.id]) return 0;
   const out = genModMult(s, g, 'output');
-  return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average);
+  // Offline não há eventos: um blecaute no instante do save não pune a hora inteira fora.
+  const ev = average ? 1 : eventMult(s, 'output', g.id);
+  return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev;
 }
 export const power = (s, average = false) =>
   GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global') * legacyMult(s);
@@ -71,11 +74,11 @@ export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab') * shopValue(
 // Preço do kWh oscila ±20% numa senoide lenta (dá vida ao contador de dinheiro).
 // priceBase é a média da oscilação; priceRising vem da derivada (a seta de tendência).
 export const priceBase = (s) => mult(s, 'price');
-export const price = (s) => (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s);
+export const price = (s) => (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price');
 export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 
 export const capacity = (s) =>
-  GRID.baseCapacity * mult(s, 'capacity') * GRID.transformer.capacityMult ** s.transformers;
+  GRID.baseCapacity * mult(s, 'capacity') * GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity');
 export const transformerCost = (s) => Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers);
 
 // { full, excess, perSecond }: kW a preço cheio, kW excedentes (com desconto) e $/s.

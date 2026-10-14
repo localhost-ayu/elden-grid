@@ -62,6 +62,8 @@ export function fmtDuration(sec) {
   return h % 24 ? `${d} d ${h % 24} h` : `${d} d`;
 }
 
+export const fmtClock = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+
 export function bar(fraction, width) {
   const g = glyphs();
   const f = Math.max(0, Math.min(1, Number.isFinite(fraction) ? fraction : 0));
