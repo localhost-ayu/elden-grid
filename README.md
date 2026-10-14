@@ -122,3 +122,16 @@ Algumas escolhas que guiam o código:
 Para adicionar uma fonte de energia, um evento ou uma pesquisa, quase sempre basta editar
 `src/data/`: os testes de consistência dos dados avisam se faltar alguma peça (arte da
 fonte, pesquisa que a destrava, símbolo sem equivalente ASCII).
+
+## Licença
+
+Código disponível (*source-available*) sob a
+[PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0) — veja
+[`LICENSE`](LICENSE). Não é open source no sentido da OSI, porque o uso comercial fica de fora.
+
+- **Pode:** estudar, rodar, modificar, publicar e redistribuir, com ou sem mudanças, para
+  qualquer fim não comercial: uso pessoal, estudo, pesquisa, ensino, hobby.
+- **Precisa:** manter as linhas `Required Notice` do `LICENSE` em qualquer cópia ou trabalho
+  derivado, com os créditos ao autor como **Nathã Grazzioli** ou **localhost-ayu**.
+- **Uso comercial:** não é coberto pela licença. Para pedir uma licença comercial, use
+  [este formulário](https://docs.google.com/forms/d/e/1FAIpQLSdDZxbuVtGmUTse3OaSYWKVuH1QsPGMNQyQyKvCVgf5GCXvug/viewform?usp=dialog).

@@ -2,6 +2,8 @@
   "name": "elden-grid",
   "version": "1.0.0",
   "description": "Idle game de geração de energia para o terminal, sem dependências.",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "author": "Nathã Grazzioli (localhost-ayu)",
   "type": "module",
   "engines": {
     "node": ">=18"
