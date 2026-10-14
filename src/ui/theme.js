@@ -22,7 +22,7 @@ const UNICODE = {
   barFull: '█', barEmpty: '░',
   box: { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│', tee: '┤' },
   off: '×', empty: '·',
-  up: '▲', down: '▼',
+  up: '▲', down: '▼', legacy: '✦',
 };
 const ASCII = {
   shade: ['.', ':', '+', '#'],
@@ -30,7 +30,7 @@ const ASCII = {
   barFull: '#', barEmpty: '.',
   box: { tl: '+', tr: '+', bl: '+', br: '+', h: '-', v: '|', tee: '+' },
   off: 'x', empty: '.',
-  up: '^', down: 'v',
+  up: '^', down: 'v', legacy: '*',
 };
 let glyphSet = UNICODE;
 export const glyphs = () => glyphSet;

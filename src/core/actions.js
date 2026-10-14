@@ -6,11 +6,14 @@ import {
   power, price, genUnlocked, labUnlocked, techVisible, genBulk, labBulk, nextUpgrade, transformerCost,
 } from './engine.js';
 import { isHot, nextCooling } from './heat.js';
+import { shopValue } from './prestige.js';
 
+// Rende uma fração da produção de 1 s (mínimo 1 kWh): continua útil a partida toda.
 export function crank(s) {
-  const e = Math.max(1, power(s) * 0.5);
+  const e = Math.max(1, power(s) * shopValue(s, 'crank', 0.5));
   s.totalEnergy += e;
   s.money += e * price(s);
+  s.earned += e * price(s);
   return e;
 }
 

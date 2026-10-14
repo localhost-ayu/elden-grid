@@ -18,6 +18,9 @@ export function newState() {
     cooling: hotDefaults(() => 0),
     transformers: 0,
     t: 0,           // tempo de jogo em segundos
+    earned: 0,      // dinheiro ganho nesta partida (base do Legado; gastar não desconta)
+    // Sobrevive à ascensão. earned = pontos já recebidos; points = não gastos.
+    legacy: { points: 0, earned: 0, lifetime: 0, ascensions: 0, shop: {} },
   };
 }
 
@@ -28,7 +31,8 @@ export function newState() {
 //   v3 = state.upgrades
 //   v4 = state.auto
 //   v5 = state.heat, state.cooling, state.transformers
-export const SAVE_VERSION = 5;
+//   v6 = state.earned, state.legacy
+export const SAVE_VERSION = 6;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -39,6 +43,8 @@ const MIGRATIONS = {
   3: (raw) => ({ ...raw, saveVersion: 4, state: { ...raw.state, auto: raw.state?.auto ?? { buy: false, clock: 0 } } }),
   // Campos novos ficam ausentes; fromSave() preenche com os padrões (reatores frios).
   4: (raw) => ({ ...raw, saveVersion: 5 }),
+  // Saves antigos não registravam o ganho; o saldo atual é o mínimo que se sabe ter ganho.
+  5: (raw) => ({ ...raw, saveVersion: 6, state: { ...raw.state, earned: raw.state?.earned ?? Math.max(0, raw.state?.money ?? 0) } }),
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.
@@ -66,6 +72,7 @@ export function fromSave(raw) {
   s.auto = { ...base.auto, ...raw.auto };
   s.heat = { ...base.heat, ...raw.heat };
   s.cooling = { ...base.cooling, ...raw.cooling };
+  s.legacy = { ...base.legacy, ...raw.legacy, shop: { ...raw.legacy?.shop } };
   delete s.savedAt; // metadado do arquivo, não do jogo
   return s;
 }
@@ -83,5 +90,9 @@ export function isValidState(s) {
   if (!s.auto || typeof s.auto.buy !== 'boolean' || !finite(s.auto.clock) || s.auto.clock < 0) return false;
   if (!s.heat || !Object.values(s.heat).every((x) => x && finite(x.h) && x.h >= 0 && finite(x.off))) return false;
   if (!s.cooling || !Object.values(s.cooling).every(count) || !count(s.transformers)) return false;
+  if (!finite(s.earned) || s.earned < 0) return false;
+  const L = s.legacy;
+  if (!L || !count(L.points) || !count(L.earned) || !count(L.ascensions) || !finite(L.lifetime) || L.lifetime < 0) return false;
+  if (!L.shop || typeof L.shop !== 'object' || !Object.values(L.shop).every(count)) return false;
   return !!s.techs && typeof s.techs === 'object';
 }

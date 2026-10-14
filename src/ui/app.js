@@ -6,6 +6,7 @@ import { autoStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
 import { crank } from '../core/actions.js';
+import { canAscend, legacyMult } from '../core/prestige.js';
 import { hourOfDay, isDay } from '../core/traits.js';
 import { C, paint, glyphs } from './theme.js';
 import { createParticles, easeTo, spawn, stepParticles } from './anim.js';
@@ -14,6 +15,7 @@ import * as menu from './screens/menu.js';
 import * as generators from './screens/generators.js';
 import * as research from './screens/research.js';
 import * as grid from './screens/grid.js';
+import * as legacy from './screens/legacy.js';
 import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
 import { placeholder } from './screens/placeholder.js';
@@ -31,9 +33,7 @@ export const TABS = [
   { id: 'gens', key: 'g', label: 'Geradores', screen: generators },
   { id: 'research', key: 'p', label: 'Pesquisa', screen: research },
   { id: 'grid', key: 'r', label: 'Rede', screen: grid },
-  { id: 'legacy', key: 'l', label: 'Legado', screen: placeholder('Legado', [
-    'Prestígio com prévia de pontos, loja do legado e ascensões',
-  ]) },
+  { id: 'legacy', key: 'l', label: 'Legado', screen: legacy },
   { id: 'stats', key: 'e', label: 'Estatísticas', screen: placeholder('Estatísticas', [
     'Tempo jogado, energia e dinheiro totais, recordes por run',
   ]) },
@@ -167,6 +167,12 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     loadSlot,
     newGame,
     deleteSlot,
+    // A partida mudou por inteiro: gráficos e partículas da anterior não fazem sentido.
+    ascended() {
+      app.history = createHistory();
+      app.particles = createParticles();
+      save();
+    },
     quit: () => onQuit(),
   });
 
@@ -178,6 +184,8 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
 
   function gameKey(k) {
     const tab = TABS[app.tab];
+    // Com uma confirmação S/N aberta, a aba decide tudo: "m" ou "q" não podem fugir dela.
+    if (app.ui[tab.id]?.confirm) { tab.screen.key(ctx(tab.id), k); return; }
     if (k === 'tab') { app.tab = (app.tab + 1) % TABS.length; return; }
     if (k === 'shift-tab') { app.tab = (app.tab - 1 + TABS.length) % TABS.length; return; }
     if (k === 'space') { crankBurst(); return; }
@@ -237,7 +245,9 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
   function tabBar() {
     const parts = TABS.map((t, i) => {
       const label = paint(C.underline, t.label[0]) + t.label.slice(1);
-      return i === app.tab ? paint(C.inverse + C.bold, ` ${t.label} `) : ` ${label} `;
+      // Avisa de qualquer aba que a ascensão ficou disponível.
+      const badge = t.id === 'legacy' && canAscend(app.state) ? paint(C.yellow + C.bold, glyphs().legacy) : '';
+      return i === app.tab ? paint(C.inverse + C.bold, ` ${t.label} `) + badge : ` ${label}${badge} `;
     });
     return paint(C.bold + C.green, ' ⚡ REACTOR') + '  ' + parts.join(paint(C.dim, '│'));
   }
@@ -254,7 +264,8 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
       gridText(s) + '  ' +
       // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
       paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`) +
-      (s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : ''),
+      (s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : '') +
+      (s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${Math.round((legacyMult(s) - 1) * 100)}%`) : ''),
     ];
   }
 

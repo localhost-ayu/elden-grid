@@ -4,10 +4,13 @@ import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import { bought, genCost, genUnlocked } from './engine.js';
 import { buyGen } from './actions.js';
+import { shopValue } from './prestige.js';
 
-// A melhor pesquisa de automação vence; null = nenhuma pesquisada.
+// A automação mais rápida (pesquisa ou Legado) vence; null = nenhuma disponível.
 export function autoInterval(s) {
   const iv = TECHS.filter((t) => t.type === 'auto' && bought(s, t.id)).map((t) => t.interval);
+  const heirloom = shopValue(s, 'auto');
+  if (heirloom !== null) iv.push(heirloom);
   return iv.length ? Math.min(...iv) : null;
 }
 export const autoAvailable = (s) => autoInterval(s) !== null;

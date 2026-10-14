@@ -5,6 +5,7 @@ import { GRID } from '../data/grid.js';
 import { MILESTONES, UPGRADE_TRACK, UPGRADE_OVERRIDES, UPGRADE_NAMES } from '../data/upgrades.js';
 import { envFactor } from './traits.js';
 import { heatFactor, heatStep } from './heat.js';
+import { legacyMult, shopValue } from './prestige.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -47,24 +48,26 @@ export function genModifiers(s, g) {
   for (const m of MILESTONES) {
     if (s.owned[g.id] >= m.at) mods.push({ type: 'output', mult: m.mult, source: `marco ${m.at}` });
   }
+  const contracts = shopValue(s, 'cost');
+  if (contracts) mods.push({ type: 'cost', mult: contracts, source: 'Legado' });
   return mods;
 }
 const modMult = (mods, type) => mods.reduce((m, x) => (x.type === type ? m * x.mult : m), 1);
 export const genModMult = (s, g, type) => modMult(genModifiers(s, g), type);
 
-// O multiplicador global entra em power(), uma vez só.
+// Os multiplicadores globais (pesquisa e Legado) entram em power(), uma vez só.
 export function genPower(s, g, average = false) {
   if (!s.owned[g.id]) return 0;
   const out = genModMult(s, g, 'output');
   return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average);
 }
 export const power = (s, average = false) =>
-  GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global');
+  GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global') * legacyMult(s);
 
 export const genUpkeep = (g) => g.traits.reduce((sum, tr) => sum + (tr.type === 'upkeep' ? tr.money : 0), 0);
 export const upkeep = (s) =>
   GENERATORS.reduce((sum, g) => sum + (genUpkeep(g) && s.owned[g.id] * genUpkeep(g) * genModMult(s, g, 'upkeep')), 0);
-export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab');
+export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab') * shopValue(s, 'lab', 1);
 // Preço do kWh oscila ±20% numa senoide lenta (dá vida ao contador de dinheiro).
 // priceBase é a média da oscilação; priceRising vem da derivada (a seta de tendência).
 export const priceBase = (s) => mult(s, 'price');
@@ -136,26 +139,32 @@ export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => boug
 export function tick(s, dt, average = false) {
   const shutdowns = average ? [] : heatStep(s, dt, (g) => genModMult(s, g, 'output'));
   const kw = power(s, average);
+  const net = (sales(s, kw).perSecond - upkeep(s)) * dt;
   s.totalEnergy += kw * dt;
-  s.money += (sales(s, kw).perSecond - upkeep(s)) * dt;
+  s.money += net;
+  s.earned += Math.max(0, net);
   s.rp += rpRate(s) * dt;
   s.t += dt;
   return shutdowns;
 }
 
 // Retorna null se a ausência foi curta demais para valer a pena mostrar um resumo.
-// `maxSeconds` é parâmetro para bônus permanentes poderem aumentar o teto.
 export const OFFLINE_MAX_S = 3600;
 export const OFFLINE_RATE = 0.5;
 export const OFFLINE_MIN_S = 5;
-export function applyOffline(s, awaySeconds, maxSeconds = OFFLINE_MAX_S) {
+const nightshift = (s) => shopValue(s, 'offline', { hours: OFFLINE_MAX_S / 3600, rate: OFFLINE_RATE });
+export const offlineMax = (s) => nightshift(s).hours * 3600;
+export const offlineRate = (s) => nightshift(s).rate;
+export function applyOffline(s, awaySeconds, maxSeconds = offlineMax(s)) {
   if (!(awaySeconds > OFFLINE_MIN_S)) return null;
   const counted = Math.min(awaySeconds, maxSeconds);
+  const rate = offlineRate(s);
   const before = { money: s.money, energy: s.totalEnergy, rp: s.rp };
-  tick(s, counted * OFFLINE_RATE, true);
+  tick(s, counted * rate, true);
   return {
     away: awaySeconds, // tempo real fora
     counted,           // quanto disso valeu (limitado pelo teto)
+    rate,
     money: s.money - before.money,
     energy: s.totalEnergy - before.energy,
     rp: s.rp - before.rp,
