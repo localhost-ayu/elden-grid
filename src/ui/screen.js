@@ -3,6 +3,7 @@
 // {ch, st} e só as células que mudaram são emitidas — também bem menos bytes em SSH/WSL.
 // Não escreve no terminal, só devolve a string, para poder ser testado.
 import { charWidth } from './format.js';
+import { toAscii } from './theme.js';
 
 const SGR_RE = /\x1b\[[0-9;]*m/y;
 const RESET = '\x1b[0m';
@@ -11,7 +12,7 @@ const BLANK = Object.freeze({ ch: ' ', st: '' });
 // desenhada; existe para a grade continuar alinhada em colunas.
 const CONT = '';
 
-export function parseLine(line, cols) {
+export function parseLine(line, cols, ascii = false) {
   const cells = [];
   let st = '';
   let i = 0;
@@ -28,9 +29,10 @@ export function parseLine(line, cols) {
       }
       continue;
     }
-    const cp = line.codePointAt(i);
-    const ch = String.fromCodePoint(cp);
-    i += ch.length;
+    const raw = String.fromCodePoint(line.codePointAt(i));
+    i += raw.length;
+    const ch = ascii ? toAscii(raw) : raw;
+    const cp = ch.codePointAt(0);
     if (cp < 32 || (cp >= 0x7f && cp < 0xa0)) continue; // controles quebrariam o layout
     const w = charWidth(cp);
     if (w === 0) {
@@ -67,6 +69,7 @@ export function createScreen() {
   let cols = 0;
   let rows = 0;
   let prev = null; // grade do último quadro; null = precisa redesenhar tudo
+  let ascii = false;
 
   return {
     // Chamado a cada quadro: só invalida se o tamanho mudou de fato.
@@ -76,6 +79,7 @@ export function createScreen() {
     // Força redesenho completo (ex.: após resize, quando o terminal pode ter
     // rearranjado o conteúdo por conta própria).
     invalidate() { prev = null; },
+    setAscii(on) { if (on !== ascii) { ascii = on; prev = null; } },
 
     // `overlays` ({ row, col, text, st }) nunca cobrem a interface: o texto inteiro, com
     // uma coluna de folga de cada lado, precisa cair em células vazias. Se a coluna pedida
@@ -83,7 +87,7 @@ export function createScreen() {
     // passa "por trás" naquele quadro.
     frame(lines, overlays = []) {
       const next = [];
-      for (let r = 0; r < rows; r++) next.push(parseLine(lines[r] ?? '', cols));
+      for (let r = 0; r < rows; r++) next.push(parseLine(lines[r] ?? '', cols, ascii));
       for (const o of overlays) {
         const line = next[o.row];
         if (!line) continue;

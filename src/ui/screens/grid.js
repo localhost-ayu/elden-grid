@@ -268,9 +268,9 @@ export function render(ctx, height) {
   const top = [...header(s, view), ''];
   const room = height - top.length;
   const body = view === 'map' ? mapView(s, room)
-    : view === 'flow' ? flowView(s, room, ctx.now)
+    : view === 'flow' ? flowView(s, room, ctx.anim)
     : view === 'chart' ? chartView(s, room, ctx.history)
-    : heatView(s, room, ctx.now, ui);
+    : heatView(s, room, ctx.anim, ui);
   return [...top, ...body];
 }
 

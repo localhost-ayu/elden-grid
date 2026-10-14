@@ -4,11 +4,25 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SAVE_DIR, SLOTS, writeJsonAtomic } from './saves.js';
 
-export const AUTOSAVE_CHOICES = [15, 30, 60];
+// Valores aceitos de cada opção, na ordem em que a tela de Opções os percorre.
+export const CHOICES = Object.freeze({
+  animations: ['on', 'reduced', 'off'],
+  fps: [5, 10, 15],
+  unicode: [true, false],
+  colors: ['full', '16', 'none'],
+  numbers: ['short', 'sci'],
+  autosaveSec: [15, 30, 60],
+});
+export const AUTOSAVE_CHOICES = CHOICES.autosaveSec;
 
 export const DEFAULT_SETTINGS = Object.freeze({
   settingsVersion: 1,
   lastSlot: null,   // slot aberto por último: é o que "Continuar" carrega
+  animations: 'on',
+  fps: 10,
+  unicode: true,
+  colors: 'full',
+  numbers: 'short',
   autosaveSec: 15,
 });
 
@@ -23,7 +37,7 @@ export function readSettings(dir = SAVE_DIR) {
   }
   const s = { ...DEFAULT_SETTINGS };
   if (SLOTS.includes(raw?.lastSlot)) s.lastSlot = raw.lastSlot;
-  if (AUTOSAVE_CHOICES.includes(raw?.autosaveSec)) s.autosaveSec = raw.autosaveSec;
+  for (const [k, values] of Object.entries(CHOICES)) if (values.includes(raw?.[k])) s[k] = raw[k];
   return s;
 }
 

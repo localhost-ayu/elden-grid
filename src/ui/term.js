@@ -38,6 +38,14 @@ export function restore() {
   try { write(LEAVE); } catch {}
 }
 
+// OSC 52: pede ao terminal para copiar o texto. Quem não suporta ignora a sequência em
+// silêncio, então não há como saber se deu certo: retorna só se foi enviado.
+export function copy(text) {
+  if (!active) return false;
+  write(`\x1b]52;c;${Buffer.from(text).toString('base64')}\x07`);
+  return true;
+}
+
 export function onResize(cb) {
   process.stdout.on('resize', cb);
 }

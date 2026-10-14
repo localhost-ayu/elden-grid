@@ -74,7 +74,7 @@ export function render(ctx) {
   if (!c) return ['', paint(C.dim, '   Nenhuma crise agora.')];
   const ev = eventDef(c.id);
   const manual = crisisDef(s);
-  const blink = Math.floor(ctx.now / 500) % 2 === 0;
+  const blink = Math.floor(ctx.anim / 500) % 2 === 0;
   const cost = damage(s);
   const lines = [
     ' ' + paint(C.red + (blink ? C.bold : ''), `${glyphs().warn} ${ev.name.toUpperCase()}`) + paint(C.dim, `  ·  ${ev.desc}`),

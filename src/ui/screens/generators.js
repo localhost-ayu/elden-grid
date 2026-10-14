@@ -146,7 +146,7 @@ function sceneView(ctx, height, width) {
   const top = ' ' + paint(C.bold, 'Usinas') + paint(C.dim, `  ${fmt(power(s))} kW · ${types} ${types === 1 ? 'tipo' : 'tipos'}  ·  V volta à lista`);
   ctx.ui.particleZone = null;
   if (!types) return [top, '', paint(C.dim, '   Nenhuma usina ainda — compre a primeira turbina na lista (V).')];
-  const rows = sceneRows(s, ctx.now, width, Math.floor((height - 1) / CARD_H));
+  const rows = sceneRows(s, ctx.anim, width, Math.floor((height - 1) / CARD_H));
   ctx.ui.particleZone = { top: 1, height: rows.length };
   return [top, ...rows];
 }
@@ -167,7 +167,7 @@ export function render(ctx, height, width) {
   const shownExtra = room >= extra.length ? extra : [];
   room -= shownExtra.length;
   const cardRows = sceneCards(s).length ? Math.floor(room / CARD_H) : 0;
-  const scene = cardRows ? sceneRows(s, ctx.now, width, cardRows) : [];
+  const scene = cardRows ? sceneRows(s, ctx.anim, width, cardRows) : [];
   const plant = !scene.length && room >= 1 ? [plantRow(s, width)] : [];
   const listRoom = height - 1 - panel.length - shownExtra.length - plant.length - scene.length;
   // As partículas de venda/manivela saem das usinas, nunca do meio da lista.

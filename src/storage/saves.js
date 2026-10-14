@@ -75,6 +75,38 @@ export function deleteSlot(n, dir = SAVE_DIR) {
 
 export const listSlots = (dir = SAVE_DIR) => SLOTS.map((n) => ({ slot: n, ...readSlot(n, dir) }));
 
+// Save em texto (Base64 do arquivo): uma linha só, que sobrevive a copiar/colar em chat,
+// e-mail ou nota sem quebrar aspas nem acentos.
+export const encodeSave = (state, savedAt) => Buffer.from(JSON.stringify(toSave(state, savedAt))).toString('base64');
+export const decodeSave = (text) => parseSave(Buffer.from(String(text).trim(), 'base64').toString('utf8'));
+
+export const exportPath = (n, dir = SAVE_DIR) => path.join(dir, `export-slot${n}.txt`);
+export const importPath = (dir = SAVE_DIR) => path.join(dir, 'import.txt');
+
+// Retorna { text, path } ou null se o slot não tem save legível.
+export function exportSlot(n, dir = SAVE_DIR) {
+  const r = readSlot(n, dir);
+  if (r.status !== 'ok' && r.status !== 'recovered') return null;
+  const text = encodeSave(r.state, r.savedAt ?? Date.now());
+  const file = exportPath(n, dir);
+  try { fs.writeFileSync(file, text + '\n'); } catch { return null; }
+  return { text, path: file };
+}
+
+// Lê <pasta>/import.txt e grava no slot `n`. Retorna { ok } ou { ok: false, reason }.
+export function importSlot(n, dir = SAVE_DIR, file = importPath(dir)) {
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return { ok: false, reason: `arquivo não encontrado: ${file}` }; }
+  let parsed;
+  try { parsed = decodeSave(text); } catch { return { ok: false, reason: 'o texto não é um save válido' }; }
+  try {
+    writeJsonAtomic(slotPath(n, dir), toSave(parsed.state, parsed.savedAt ?? Date.now()), isGoodSave);
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: 'falha ao gravar o slot' };
+  }
+}
+
 // O save v1 vira o slot 1. O original não é apagado: é renomeado para .migrated, o que
 // preserva uma cópia e impede uma segunda importação.
 export function importLegacy(dir = SAVE_DIR, legacyPath = LEGACY_PATH) {

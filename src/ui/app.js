@@ -8,9 +8,9 @@ import { GENERATORS } from '../data/generators.js';
 import { crank } from '../core/actions.js';
 import { canAscend, legacyMult } from '../core/prestige.js';
 import { hourOfDay, isDay } from '../core/traits.js';
-import { C, paint, glyphs } from './theme.js';
+import { C, paint, glyphs, setColorMode, setUnicode } from './theme.js';
 import { createParticles, easeTo, spawn, stepParticles } from './anim.js';
-import { fmt, fmtPct, fmtClock, visibleLength } from './format.js';
+import { fmt, fmtPct, fmtClock, visibleLength, setNumberFormat } from './format.js';
 import { REWARD } from '../data/events.js';
 import { eventDef, isActive } from '../core/events.js';
 import { eventsStep, currentEvent } from '../core/incidents.js';
@@ -23,15 +23,9 @@ import * as legacy from './screens/legacy.js';
 import * as stats from './screens/stats.js';
 import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
-import { placeholder } from './screens/placeholder.js';
+import * as options from './screens/options.js';
+import { DEFAULT_SETTINGS } from '../storage/settings.js';
 import { tooSmall, renderTooSmall } from './screens/too-small.js';
-
-const options = placeholder('Opções', [
-  'Animações: ligadas / reduzidas / desligadas',
-  'Taxa de quadros: 5 / 10 / 15 fps',
-  'Unicode ou ASCII puro · cores completas / 16 / sem cor',
-  'Formato de número · intervalo do autosave',
-]);
 
 // A 1ª letra do rótulo é a tecla direta, e é sublinhada na barra de abas.
 export const TABS = [
@@ -45,13 +39,13 @@ export const TABS = [
 
 const MAX_MESSAGES = 3;
 const HEADER_H = 4; // abas + 2 linhas de economia + separador (modo jogo)
-const KIND_COLOR = { info: C.yellow, ok: C.green, err: C.red };
+const kindColor = (kind) => ({ info: C.yellow, ok: C.green, err: C.red })[kind] ?? '';
 
 // Telas de "tela cheia" (fora do jogo): título no cabeçalho, sem abas nem economia.
 const FULL = {
   slots: { screen: slots, title: 'Slots' },
   offline: { screen: offline, title: 'Bem-vindo de volta' },
-  options: { screen: options, title: 'Opções', help: 'Esc voltar ao menu  Q sair' },
+  options: { screen: options, title: 'Opções' },
 };
 
 const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
@@ -61,7 +55,12 @@ const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 //   list() -> [{ slot, status, savedAt, state }]   load(n) -> { status, savedAt, state }
 //   save(n, state) -> bool                          remove(n)
 // `settings` é o objeto de opções; `onSettings(settings)` persiste quando ele muda.
-export function createApp({ store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random }) {
+// `noColor`: NO_COLOR no ambiente (vence a opção de cores). `copy(text)`: tenta pôr o
+// texto na área de transferência do terminal; retorna se conseguiu.
+export function createApp({
+  store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random,
+  noColor = false, copy = () => false,
+}) {
   const app = {
     state: null,  // jogo aberto (null = nenhum slot carregado ainda)
     slot: null,   // slot do jogo aberto
@@ -81,6 +80,41 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
   };
 
   const uiFor = (id) => (app.ui[id] ??= {});
+
+  // Completa no próprio objeto (é ele que vai para o disco) o que faltar.
+  for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) if (settings[k] === undefined) settings[k] = v;
+  function applySettings() {
+    setColorMode(noColor ? 'none' : settings.colors);
+    setUnicode(settings.unicode);
+    setNumberFormat(settings.numbers);
+  }
+  applySettings();
+  const animations = () => settings.animations;
+  // Relógio das animações: desligadas congelam em 0; reduzidas andam na metade.
+  const animClock = () => ({ off: 0, reduced: app.now / 2 })[animations()] ?? app.now;
+
+  function setSetting(k, v) {
+    settings[k] = v;
+    applySettings();
+    onSettings(settings);
+  }
+
+  function exportSave() {
+    const n = app.slot ?? settings.lastSlot;
+    if (!n || !store.exportText) return null;
+    save(); // exporta o jogo como está agora, não o último autosave
+    const r = store.exportText(n);
+    return r && { ...r, copied: copy(r.text) };
+  }
+
+  function importSave(n) {
+    const r = store.importText ? store.importText(n) : { ok: false, reason: 'indisponível' };
+    if (!r.ok) return r;
+    dirty();
+    // O jogo aberto foi substituído: recarrega do disco, sem salvar o antigo por cima.
+    if (n === app.slot) { app.state = null; app.slot = null; loadSlot(n); }
+    return r;
+  }
 
   function say(text, kind = 'info', ms = 4000) {
     app.messages.push({ text, kind, until: app.now + ms });
@@ -161,6 +195,13 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     offline: app.offline,
     ui: uiFor(id),
     now: app.now,
+    anim: animClock(),
+    settings,
+    setSetting,
+    noColor,
+    lastSlot: settings.lastSlot,
+    exportSave,
+    importSave,
     history: app.history,
     say,
     go: (mode) => { app.mode = mode; },
@@ -213,6 +254,7 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
   // A partícula nasce da ação: girar a manivela solta o que ela rendeu.
   function crankBurst() {
     const kwh = crank(app.state);
+    if (animations() !== 'on') return;
     const x = 0.5 + rng() * 0.35;
     spawn(app.particles, { text: `+${fmt(kwh)} kWh`, st: C.cyan, x, y: 0, vy: 4, life: 1.6 });
     spawn(app.particles, { text: `+$${fmt(kwh * price(app.state))}`, st: C.green, x: x + 0.12, y: 0, vy: 3, life: 1.6 });
@@ -260,14 +302,16 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
       eventsStep(app.state, dt).forEach(announce);
       if (!app.state.events.crisis) app.crisisOpen = false;
       sampleHistory(app.history, app.state);
-      app.shown.money = easeTo(app.shown.money, app.state.money, dt);
-      app.shown.energy = easeTo(app.shown.energy, app.state.totalEnergy, dt);
+      // Animações desligadas: os números saltam direto para o valor real.
+      const roll = animations() === 'off' ? (_, target) => target : (cur, target) => easeTo(cur, target, dt);
+      app.shown.money = roll(app.shown.money, app.state.money);
+      app.shown.energy = roll(app.shown.energy, app.state.totalEnergy);
       // Uma partícula de venda por segundo: o dinheiro entrando fica visível sem poluir.
       app.saleClock += dt;
       if (app.saleClock >= 1) {
         app.saleClock %= 1;
         const inc = income(app.state);
-        if (app.mode === 'game' && inc > 0) {
+        if (app.mode === 'game' && inc > 0 && animations() === 'on') {
           spawn(app.particles, { text: `+$${fmt(inc)}`, st: C.green + C.dim, x: 0.45 + rng() * 0.5, y: 0, vy: 4, life: 1.4 });
         }
       }
@@ -294,7 +338,7 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     let color;
     if (ev.crisis) {
       const def = eventDef(ev.crisis.id);
-      const blink = Math.floor(app.now / 500) % 2 === 0;
+      const blink = Math.floor(animClock() / 500) % 2 === 0;
       // Sem a descrição: o relógio é o que não pode ser cortado.
       text = `${glyphs().warn} ${def.name.toUpperCase()} · [X] manual de crise · equipe em ${fmtClock(Math.max(0, ev.crisis.deadline - s.t))}`;
       color = C.red + (blink ? C.bold : '');
@@ -356,7 +400,7 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
 
   function messageLines() {
     const shown = app.messages.slice(-MAX_MESSAGES);
-    const lines = shown.map((m) => ' ' + paint(KIND_COLOR[m.kind] ?? '', m.text));
+    const lines = shown.map((m) => ' ' + paint(kindColor(m.kind), m.text));
     // Linhas vazias em cima: a mensagem mais nova fica sempre na última linha.
     return [...Array(MAX_MESSAGES - lines.length).fill(''), ...lines];
   }
@@ -371,6 +415,9 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     return [...body, ...Array(Math.max(0, height - body.length)).fill('')];
   }
 
+  // A ajuda de uma tela pode depender do estado dela (ex.: pergunta S/N aberta).
+  const helpOf = (screen, c) => (typeof screen.help === 'function' ? screen.help(c) : screen.help);
+
   function lines(cols, rows) {
     if (tooSmall(cols, rows)) return renderTooSmall(cols, rows);
     let header;
@@ -384,13 +431,13 @@ export function createApp({ store, settings = {}, onSettings = () => {}, onQuit 
     } else if (app.mode === 'game') {
       header = [tabBar(), ...statsLines(), banner(cols)];
       const tab = app.crisisOpen ? { id: 'crisis', screen: crisis } : TABS[app.tab];
-      help = typeof tab.screen.help === 'function' ? tab.screen.help(ctx(tab.id)) : tab.screen.help;
+      help = helpOf(tab.screen, ctx(tab.id));
       body = tab.screen.render(ctx(tab.id), room(header), cols);
     } else {
       const f = FULL[app.mode];
       header = [paint(C.bold + C.green, ' ⚡ REACTOR') + paint(C.dim, `  ·  ${f.title}`), sep(cols)];
       const c = ctx(app.mode);
-      help = c.ui.confirm ? f.screen.confirmHelp : f.help ?? f.screen.help;
+      help = c.ui.confirm && f.screen.confirmHelp ? f.screen.confirmHelp : helpOf(f.screen, c);
       body = f.screen.render(c, room(header), cols);
     }
     const footer = [sep(cols), paint(C.dim, ' ' + help), ...messageLines()];

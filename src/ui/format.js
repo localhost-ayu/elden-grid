@@ -6,11 +6,15 @@ const SUFFIX = ['', 'k', 'M', 'B', 'T', 'Qa', 'Qi'];
 // científica (1.23e24), que cabe na mesma largura e continua comparável.
 const SCI_FROM = 1e21;
 
+// 'short' (1.23M) | 'sci' (1.23e6): opção do jogador.
+let numbers = 'short';
+export const setNumberFormat = (mode) => { numbers = mode; };
+
 export function fmt(n) {
   if (!Number.isFinite(n)) return String(n);
   if (n < 0) return '-' + fmt(-n);
   if (n < 1000) return n < 10 ? n.toFixed(2) : n.toFixed(1);
-  if (n >= SCI_FROM) return n.toExponential(2).replace('e+', 'e');
+  if (n >= SCI_FROM || numbers === 'sci') return n.toExponential(2).replace('e+', 'e');
   const i = Math.min(Math.floor(Math.log10(n) / 3), SUFFIX.length - 1);
   return (n / 1000 ** i).toFixed(2) + SUFFIX[i];
 }
