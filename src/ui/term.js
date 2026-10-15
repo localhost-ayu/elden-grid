@@ -1,5 +1,6 @@
 // Aconteça o que acontecer, o terminal do jogador volta ao normal.
 import fs from 'node:fs';
+import { execSync } from 'node:child_process';
 
 //   ?1049h/l  tela alternativa: o jogo não suja o histórico do terminal
 //   ?25l/h    cursor oculto: evita o cursor "passeando" durante o desenho
@@ -8,6 +9,26 @@ const ENTER = '\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[2J';
 const LEAVE = '\x1b[0m\x1b[?7h\x1b[?25h\x1b[?1049l';
 
 let active = false;
+let savedCodePage = null;
+
+// O console clássico do Windows usa a code page OEM (850) e mostra UTF-8 como lixo.
+function chcp(arg = '') {
+  try {
+    const out = execSync(`chcp ${arg}`, { stdio: ['inherit', 'pipe', 'ignore'], encoding: 'latin1', windowsHide: true });
+    return Number(out.match(/(\d+)\s*$/)?.[1]) || null;
+  } catch { return null; }
+}
+
+function useUtf8Console() {
+  if (process.platform !== 'win32') return;
+  const current = chcp();
+  if (current && current !== 65001 && chcp(65001) === 65001) savedCodePage = current;
+}
+
+function restoreConsole() {
+  if (savedCodePage) chcp(savedCodePage);
+  savedCodePage = null;
+}
 
 export const isInteractive = () => !!(process.stdin.isTTY && process.stdout.isTTY);
 
@@ -21,6 +42,7 @@ export function write(s) {
 }
 
 export function enter() {
+  useUtf8Console();
   write(ENTER);
   // Em raw mode Ctrl+C deixa de gerar SIGINT e vira o byte \x03 (tratado pelo input.js).
   process.stdin.setRawMode(true);
@@ -36,6 +58,7 @@ export function restore() {
   try { process.stdin.setRawMode(false); } catch {}
   process.stdin.pause();
   try { write(LEAVE); } catch {}
+  restoreConsole();
 }
 
 // OSC 52: pede ao terminal para copiar o texto. Quem não suporta ignora a sequência em
