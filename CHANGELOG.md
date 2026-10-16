@@ -10,6 +10,10 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [1.2.0] - 2026-10-16
+
+Desafios: partidas com regras próprias, recompensas que se acumulam e a semente do dia.
+
 ### Adicionado
 - Versão do jogo na tela de título e em Opções.
 - Aviso de atualização: uma vez por dia, em segundo plano, o jogo procura a última tag no
@@ -112,7 +116,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/localhost-ayu/elden-grid/releases/tag/v1.0.0
