@@ -1,9 +1,19 @@
 // Pontos totais = floor(sqrt(dinheiro ganho em todas as partidas / divisor)). A raiz faz
 // cada ponto novo custar mais que o anterior, então ascender cedo e sempre rende pouco.
-// Calibrado com o bot: minRunEarned chega por volta de 45 min de jogo ativo (~5 pontos).
+// Ascender pede minRunEarned na partida E uma das condições de `gate` (o fim da árvore
+// atual): a ascensão fecha uma partida completa, em vez de chegar no meio dela. Ficar mais
+// tempo rende mais pontos pela raiz. Tipos de condição (avaliadas em core/prestige.js):
+//   owned  ter ao menos 1 unidade de `gen` nesta partida
+//   techs  todas as pesquisas concluídas
+// `label` vai no checklist da aba Legado; `short`, na mensagem do que falta.
+// Bot (1ª partida): $25B em ~36 min, antimatéria em ~57 min, árvore completa em ~85 min.
 export const LEGACY = {
   divisor: 1e9,
   minRunEarned: 2.5e10,
+  gate: [
+    { type: 'owned', gen: 'antimatter', label: 'uma usina de antimatéria', short: 'antimatéria' },
+    { type: 'techs', label: 'todas as pesquisas', short: 'todas as pesquisas' },
+  ],
   // Por ponto NÃO gasto: gastar na loja troca bônus por vantagens, uma escolha de verdade.
   bonusPerPoint: 0.1,
 };

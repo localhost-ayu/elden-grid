@@ -10,6 +10,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+### Mudado
+- Ascender agora fecha uma partida completa: além de $25B ganhos na partida, é preciso
+  ter uma usina de antimatéria ou concluir todas as pesquisas. A aba Legado mostra as
+  condições com o que falta. Ficar mais tempo na partida continua rendendo mais pontos.
+
 ## [1.2.0] - 2026-10-16
 
 Desafios: partidas com regras próprias, recompensas que se acumulam e a semente do dia.

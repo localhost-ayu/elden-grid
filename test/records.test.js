@@ -100,6 +100,7 @@ test('ascender zera a partida e mantém a carreira, com recorde de partida mais 
   s.owned.wind = 5;
   for (let i = 0; i < 50; i++) tick(s, 0.1);
   s.earned = LEGACY.minRunEarned;
+  s.owned.antimatter = 1;
   const careerEnergy = s.career.energy;
   ascend(s);
   assert.equal(s.stats.playTime, 0);

@@ -73,6 +73,7 @@ test('Brisa Solar: a solar já vem pesquisada ao ascender', () => {
   useProfile(profileWith({ calm: 1 }));
   const s = newState();
   s.earned = LEGACY.minRunEarned;
+  s.owned.antimatter = 1;
   ascend(s);
   assert.equal(s.techs.t_solar, true);
 });
