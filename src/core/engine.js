@@ -24,7 +24,7 @@ function mult(s, type, gen) {
 
 const boughtOf = (s, type) => TECHS.filter((t) => t.type === type && bought(s, t.id));
 // traits.js recebe as pesquisas já filtradas para não depender da árvore.
-const traitCtx = (s) => ({ battery: boughtOf(s, 'battery') });
+const traitCtx = (s) => ({ battery: boughtOf(s, 'battery'), vacuumFloor: boughtOf(s, 'vacuumFloor') });
 
 // `average` = média de longo prazo do ambiente, usada offline.
 export const genEnv = (s, g, average = false) => envFactor(s, g, traitCtx(s), average);

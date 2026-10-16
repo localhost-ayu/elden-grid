@@ -23,6 +23,7 @@ function artInfo(s, g) {
     high: tide ? tideLevel(s, tide) >= 1 : true,
     launch: !!genLaunch(s, g)?.open,
     fed: feedFactor(s, g),
+    surge: trait(g, 'vacuum') ? genEnv(s, g) : 1,
   };
 }
 

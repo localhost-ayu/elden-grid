@@ -44,6 +44,7 @@ const TRAIT_LABEL = {
   // Por unidade, já com desconto de upgrades de eficiência.
   upkeep: (s, g, tr) => `-$${fmt(tr.money * genModMult(s, g, 'upkeep'))}/s`,
   heat: (s, g) => `calor ${Math.round(heatLevel(s, g) * 100)}%`,
+  vacuum: (s, g) => `flutuação ${x(genEnv(s, g))}`,
   feed: (s, g) => `alimentação ${Math.round(feedFactor(s, g) * 100)}%`,
   launch: (s, g) => {
     const w = genLaunch(s, g);

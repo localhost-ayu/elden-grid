@@ -28,6 +28,24 @@ export const reservoirLevel = (s, tr) => 0.5 + 0.5 * Math.sin((TAU * s.t) / tr.p
 
 const sumAdd = (techs) => techs.reduce((sum, t) => sum + t.add, 0);
 
+// Vácuo: duas senoides rápidas de períodos incomensuráveis viram um expoente em [-1, 1];
+// a produção é exponencial nele, entre min e max (simétrica em escala log: 0.2 e 5).
+const vacuumWave = (t) => 0.6 * Math.sin(t / 7) + 0.4 * Math.sin(t / 2.3 + 2);
+const vacuumRaw = (t, tr) => Math.sqrt(tr.min * tr.max) * Math.sqrt(tr.max / tr.min) ** vacuumWave(t);
+export const vacuumLevel = (s, tr, floor = 0) => Math.max(floor, vacuumRaw(s.t, tr));
+// Média de longo prazo (offline), por amostragem, guardada por piso.
+const vacuumAvgs = new Map();
+function vacuumAvg(tr, floor) {
+  const k = `${tr.min}|${tr.max}|${floor}`;
+  if (!vacuumAvgs.has(k)) {
+    let sum = 0;
+    for (let t = 0; t < 20000; t += 0.5) sum += Math.max(floor, vacuumRaw(t, tr));
+    vacuumAvgs.set(k, sum / 40000);
+  }
+  return vacuumAvgs.get(k);
+}
+const maxFloor = (techs) => techs.reduce((m, t) => Math.max(m, t.floor), 0);
+
 // Janela de lançamento: aberta nos primeiros `window` (+ `extra`) s de cada `period` s.
 const phase = (s, tr) => ((s.t % tr.period) + tr.period) % tr.period;
 export const launchOpen = (s, tr, extra = 0) => phase(s, tr) < tr.window + extra;
@@ -50,6 +68,10 @@ export const TRAITS = {
   tide: { factor: (s, tr) => tideLevel(s, tr), avg: () => 1 },
   // Em órbita a produção é fixa: a janela só limita quando se compra.
   launch: { factor: () => 1, avg: () => 1 },
+  vacuum: {
+    factor: (s, tr, ctx) => vacuumLevel(s, tr, maxFloor(ctx.vacuumFloor)),
+    avg: (tr, ctx) => vacuumAvg(tr, maxFloor(ctx.vacuumFloor)),
+  },
   // A alimentação depende das outras fontes: calculada no engine (feedFactor).
   feed: { factor: () => 1, avg: () => 1 },
   // upkeep não mexe na produção: é custo, tratado em engine.upkeep().

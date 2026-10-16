@@ -23,6 +23,9 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   rápido demais, ou perder reatores num desligamento, derruba a alimentação. Pesquisas:
   Colapso Gravitacional (libera), Kugelblitz em Cascata (x2) e Acreção Controlada (precisa
   de metade da alimentação).
+- **Energia do Vácuo**, a última fonte da Fronteira: produção instável que oscila rápido
+  entre x0.2 e x5 (média ~x1.4). Pesquisas: Flutuação do Vácuo (libera), Efeito Casimir
+  Dinâmico (x2) e Volantes de Inércia (a produção nunca cai abaixo de x1).
 - Árvore de pesquisa: ramos muito fundos empurram a coluna do custo em vez de passar da
   largura da tela.
 

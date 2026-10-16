@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newState } from '../src/core/state.js';
 import { GENERATORS } from '../src/data/generators.js';
-import { genLaunch, genBuyable, genPower, power, feedFactor } from '../src/core/engine.js';
+import { genLaunch, genBuyable, genPower, genEnv, power, feedFactor } from '../src/core/engine.js';
 import { buyGenBulk } from '../src/core/actions.js';
 import { cheapestGen } from '../src/core/automation.js';
 import { createApp } from '../src/ui/app.js';
@@ -108,4 +108,26 @@ test('Kugelblitz: rende a fração de alimentação que as outras fontes dão; A
   assert.equal(feedFactor(s, k), 1, 'nunca passa de 100%');
   s.owned.kugelblitz = 0;
   assert.equal(feedFactor(s, k), 1);
+});
+
+test('Energia do Vácuo: oscila entre x0.2 e x5; Volantes de Inércia sobem o piso e a média offline', () => {
+  const s = newState();
+  const v = gen('vacuum');
+  s.techs.t_vacuum = true;
+  s.owned.vacuum = 1;
+  let min = Infinity;
+  let max = 0;
+  for (let t = 0; t < 3000; t += 0.25) {
+    s.t = t;
+    const f = genEnv(s, v);
+    min = Math.min(min, f);
+    max = Math.max(max, f);
+  }
+  assert.ok(min >= 0.2 - 1e-9 && min < 0.25, `mín ${min}`);
+  assert.ok(max <= 5 + 1e-9 && max > 4.5, `máx ${max}`);
+  const avg = genEnv(s, v, true);
+  assert.ok(avg > 1 && avg < 2, `média ${avg}`);
+  s.techs.t_flywheel = true;
+  for (let t = 0; t < 300; t += 0.5) { s.t = t; assert.ok(genEnv(s, v) >= 1); }
+  assert.ok(genEnv(s, v, true) > avg, 'o piso sobe a média do offline');
 });

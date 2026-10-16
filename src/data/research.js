@@ -12,6 +12,7 @@
 //       'auto'     (auto-compra do gerador mais barato a cada `interval` segundos)
 //       'launch'   (+`add` s na janela de lançamento do Enxame)
 //       'feed'     (x no quanto o Kugelblitz precisa ser alimentado)
+//       'vacuumFloor' (piso da flutuação do vácuo: `floor`, o maior vale)
 export const TECHS = [
   // ---- eólica ----
   { id: 't_wind2',       name: 'Pás Aerodinâmicas',        cost: 3,      req: [],                type: 'genMult', gen: 'wind', mult: 2 },
@@ -40,6 +41,9 @@ export const TECHS = [
   { id: 't_kugel',       name: 'Colapso Gravitacional',    cost: 1.2e6,  req: ['t_orbital'],     type: 'unlock' },
   { id: 't_kugel2',      name: 'Kugelblitz em Cascata',    cost: 3e6,    req: ['t_kugel'],       type: 'genMult', gen: 'kugelblitz', mult: 2 },
   { id: 't_feed',        name: 'Acreção Controlada',       cost: 2e6,    req: ['t_kugel'],       type: 'feed', mult: 0.5 },
+  { id: 't_vacuum',      name: 'Flutuação do Vácuo',       cost: 6e6,    req: ['t_kugel'],       type: 'unlock' },
+  { id: 't_vacuum2',     name: 'Efeito Casimir Dinâmico',  cost: 1.5e7,  req: ['t_vacuum'],      type: 'genMult', gen: 'vacuum', mult: 2 },
+  { id: 't_flywheel',    name: 'Volantes de Inércia',      cost: 5e6,    req: ['t_vacuum'],      type: 'vacuumFloor', floor: 1 },
 
   // ---- rede e mercado ----
   { id: 't_grid',        name: 'Rede Inteligente',         cost: 20,     req: [],                type: 'price',    mult: 1.25 },

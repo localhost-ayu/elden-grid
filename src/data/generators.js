@@ -11,6 +11,8 @@
 //   feed      precisa ser alimentado: rende a fração de alimentação, que é a produção das
 //             outras fontes dividida por `share` × a produção dele (no máximo 100%).
 //             Pesquisas 'feed' baixam o `share`.
+//   vacuum    flutuação do vácuo: produção entre x`min` e x`max`, oscilando rápido (sem
+//             padrão óbvio). Pesquisas 'vacuumFloor' sobem o piso.
 //   heat      gera calor (`base` = alvo de calor sem upgrades nem resfriamento; ver heat.js).
 //             base > 1 = superaquece sem resfriamento (o "risco alto" da antimatéria)
 // Invariante testada: upkeep < output × preço mínimo (0.8) × fração paga pelo excedente
@@ -30,6 +32,7 @@ export const GENERATORS = [
   // ---- Fronteira (1.4): página 2 da aba Geradores ----
   { id: 'swarm',      key: '1', name: 'Enxame Solar Orbital', short: 'Enxame',   baseCost: 3e9,    growth: 1.16, output: 3e7,     icon: '-O-', art: 'swarm',      unlock: 't_orbital',   traits: [{ type: 'launch', period: 40, window: 8 }] },
   { id: 'kugelblitz', key: '2', name: 'Kugelblitz', short: 'Kugelblitz',          baseCost: 1.2e11, growth: 1.17, output: 8e8,     icon: '(@)', art: 'kugelblitz', unlock: 't_kugel',     traits: [{ type: 'feed', share: 0.6 }] },
+  { id: 'vacuum',     key: '3', name: 'Energia do Vácuo', short: 'Vácuo',       baseCost: 5e12,   growth: 1.18, output: 1.5e10,  icon: '<~>', art: 'vacuum',     unlock: 't_vacuum',    traits: [{ type: 'vacuum', min: 0.2, max: 5 }] },
 ];
 
 // A aba Geradores mostra PAGE_SIZE fontes por página, com as teclas 1–9 e 0 (`key`) valendo
