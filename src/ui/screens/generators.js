@@ -1,9 +1,8 @@
 import { GENERATORS, LAB } from '../../data/generators.js';
 import { TECHS } from '../../data/research.js';
-import { MILESTONES } from '../../data/upgrades.js';
 import {
   power, genPower, rpRate, genUnlocked, labUnlocked, genEnv, genBulk, labBulk, genAffordable,
-  genModMult, nextMilestone, nextUpgrade, upgradeLevel, upgradeTrack,
+  genModMult, milestones, nextMilestone, nextUpgrade, upgradeLevel, upgradeTrack,
 } from '../../core/engine.js';
 import { isDay, reservoirLevel, tideRising } from '../../core/traits.js';
 import { heatLevel, isShutdown, shutdownLeft } from '../../core/heat.js';
@@ -199,7 +198,7 @@ function buy(ctx, it) {
   if (!n) return ctx.say(`Sem dinheiro para ${bulkLabel(amount)} ${g.name} ($${fmt(genBulk(s, g, amount).cost)}).`, 'err');
   ctx.say(`Comprou ${plural(n, g.name)}!`, 'ok');
   // Um lote grande pode cruzar mais de um marco de uma vez.
-  for (const m of MILESTONES) {
+  for (const m of milestones(s)) {
     if (before < m.at && s.owned[g.id] >= m.at) ctx.say(`Marco! ${m.at}× ${g.name}: produção x${m.mult}`, 'ok', 6000);
   }
 }

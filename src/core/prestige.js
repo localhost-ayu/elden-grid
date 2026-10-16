@@ -1,6 +1,7 @@
 // Só lê e escreve `s.legacy` e reinicia a partida: não importa o engine, que é quem
 // consulta os efeitos daqui (engine -> prestige, sem ciclo de imports).
 import { LEGACY, SHOP } from '../data/legacy.js';
+import { TECHS } from '../data/research.js';
 import { newState } from './state.js';
 import { peak } from './records.js';
 
@@ -55,7 +56,17 @@ export function ascend(s) {
   const rng = s.events.rng; // a sorte continua de onde parou, não repete a 1ª partida
   for (const k of Object.keys(s)) delete s[k];
   Object.assign(s, newState(rng), { legacy, career, achievements });
-  s.owned.wind = shopValue(s, 'start', 0);
-  if (shopValue(s, 'auto') !== null) s.auto.buy = true;
+  startRun(s);
   return gain;
+}
+
+// O que a loja entrega pronto no começo de cada partida. A pesquisa vem como se tivesse
+// sido concluída (sem custo nem ficha); automação herdada ou pesquisada já liga.
+function startRun(s) {
+  s.owned.wind = shopValue(s, 'start', 0);
+  for (const id of shopValue(s, 'techs', [])) s.techs[id] = true;
+  for (const id of Object.keys(s.cooling)) s.cooling[id] = shopValue(s, 'cooling', 0);
+  s.transformers = shopValue(s, 'transformers', 0);
+  const autoTech = TECHS.some((t) => t.type === 'auto' && s.techs[t.id]);
+  if (autoTech || shopValue(s, 'auto') !== null) s.auto.buy = true;
 }

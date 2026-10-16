@@ -22,6 +22,11 @@ const EFFECT = {
   offline: (v) => `offline até ${v.hours} h a ${Math.round(v.rate * 100)}%`,
   auto: (v) => `auto-compra já no início (1 a cada ${v} s)`,
   crank: (v) => `manivela rende ${v} s de produção`,
+  techs: (v) => `começa com ${v.length} pesquisas prontas`,
+  cooling: (v) => `reatores começam com ${v} ${v === 1 ? 'resfriamento' : 'resfriamentos'}`,
+  damage: (v) => (v === 0 ? 'crises perdidas não custam nada' : `crises perdidas custam ${pct(v)}`),
+  milestones: (v) => `marcos com ${pct(v).replace('-', '')} menos unidades`,
+  transformers: (v) => `começa com ${v} ${v === 1 ? 'transformador' : 'transformadores'}`,
 };
 
 const clampSel = (ui) => (ui.sel = Math.max(0, Math.min(ui.sel ?? 0, SHOP.length)));

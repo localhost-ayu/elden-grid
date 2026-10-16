@@ -35,7 +35,12 @@ export const upgradeTrack = (g) => UPGRADE_TRACK.map((lvl, i) => ({
 }));
 export const upgradeLevel = (s, g) => s.upgrades[g.id] ?? 0;
 export const nextUpgrade = (s, g) => upgradeTrack(g)[upgradeLevel(s, g)] ?? null;
-export const nextMilestone = (s, g) => MILESTONES.find((m) => s.owned[g.id] < m.at) ?? null;
+// Marcos Antecipados (Legado) baixam a quantidade exigida por cada marco.
+export const milestones = (s) => {
+  const k = shopValue(s, 'milestones', 1);
+  return MILESTONES.map((m) => ({ ...m, at: Math.max(1, Math.round(m.at * k)) }));
+};
+export const nextMilestone = (s, g) => milestones(s).find((m) => s.owned[g.id] < m.at) ?? null;
 
 // Pesquisas, upgrades e marcos viram uma lista de { type, mult, source }; produção,
 // custo e operação são o produto dos do tipo certo. Uma nova fonte de bônus é só mais
@@ -48,7 +53,7 @@ export function genModifiers(s, g) {
   for (const u of upgradeTrack(g).slice(0, upgradeLevel(s, g))) {
     for (const e of u.effects) mods.push({ ...e, source: u.name });
   }
-  for (const m of MILESTONES) {
+  for (const m of milestones(s)) {
     if (s.owned[g.id] >= m.at) mods.push({ type: 'output', mult: m.mult, source: `marco ${m.at}` });
   }
   const contracts = shopValue(s, 'cost');

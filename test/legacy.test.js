@@ -220,3 +220,59 @@ test('loja do legado rola sob o cabeçalho fixo e mantém a seleção à vista',
   for (let i = 0; i < SHOP.length; i++) legacyScreen.key(ctx, 'up');
   assert.match(plain(10)[3], /› ✦ Ascender/);
 });
+
+test('loja 1.1: listas de Pesquisa Herdada incluem seus pré-requisitos e crescem por nível', async () => {
+  const { TECHS } = await import('../src/data/research.js');
+  const item = SHOP.find((x) => x.type === 'techs');
+  let prev = [];
+  for (const list of item.values) {
+    for (const id of list) {
+      const t = TECHS.find((x) => x.id === id);
+      assert.ok(t, id);
+      for (const r of t.req) assert.ok(list.includes(r), `${id} precisa de ${r}`);
+    }
+    assert.ok(prev.every((id) => list.includes(id)));
+    prev = list;
+  }
+  for (const it of SHOP) {
+    assert.equal(it.costs.length, it.values.length, it.id);
+    assert.ok(it.costs.every((c, i) => i === 0 || c > it.costs[i - 1]), `${it.id}: custos crescentes`);
+  }
+});
+
+test('loja 1.1: a partida começa com pesquisas, resfriamento, transformadores e auto-compra', () => {
+  const s = ready();
+  s.legacy.shop = { research: 3, thermal: 2, inherited: 3, start: 4 };
+  ascend(s);
+  for (const id of ['t_wind2', 't_hydro', 't_auto', 't_substation']) assert.equal(s.techs[id], true, id);
+  assert.equal(s.cooling.nuclear, 2);
+  assert.equal(s.cooling.antimatter, 2);
+  assert.equal(s.transformers, 3);
+  assert.equal(s.owned.wind, 100);
+  assert.equal(s.auto.buy, true); // t_auto veio pronta
+  assert.equal(s.stats.techs, 0); // herdado não conta como pesquisado
+  assert.ok(isValidState(s));
+});
+
+test('loja 1.1: Marcos Antecipados baixam a exigência; Seguro de Rede barateia as crises', async () => {
+  const { milestones, genModMult } = await import('../src/core/engine.js');
+  const { GENERATORS } = await import('../src/data/generators.js');
+  const { damage } = await import('../src/core/incidents.js');
+  const { buyGenBulk } = await import('../src/core/actions.js');
+  const s = newState();
+  assert.deepEqual(milestones(s).map((m) => m.at), [25, 50, 100]);
+  s.legacy.shop.early = 2;
+  assert.deepEqual(milestones(s).map((m) => m.at), [15, 30, 60]);
+  s.money = 1e9;
+  buyGenBulk(s, 'wind', 15);
+  assert.equal(s.stats.milestones, 1);
+  assert.equal(genModMult(s, GENERATORS[0], 'output'), 2);
+
+  s.owned.wind = 100;
+  const full = damage(s);
+  assert.ok(full > 0);
+  s.legacy.shop.insurance = 2;
+  assert.ok(Math.abs(damage(s) - full * 0.5) < 1e-9);
+  s.legacy.shop.insurance = 3;
+  assert.equal(damage(s), 0);
+});

@@ -41,7 +41,9 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   falhar, chamar a equipe ou ignorar custa o menor entre 10% do caixa e 1 min de renda.
 - **Legado.** Depois de ganhar $25B numa partida dá para ascender: a partida recomeça e
   você recebe pontos (+10% de produção cada ponto guardado) que podem ser trocados por
-  vantagens permanentes na loja do legado.
+  vantagens permanentes na loja do legado: começar com usinas, pesquisas, resfriamento
+  e transformadores, construir mais barato, marcos antecipados, seguro contra crises,
+  mais tempo offline e uma manivela que rende muito mais.
 - **Modo disfarce.** Apareceu alguém? `\` (barra invertida) troca a tela inteira, de
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
