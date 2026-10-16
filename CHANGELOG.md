@@ -10,6 +10,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+### Adicionado
+- Páginas na aba Geradores: 10 fontes por página, com as teclas `0`–`9` valendo na página
+  aberta e `←→` (ou `PgUp`/`PgDn`) para trocar. A segunda página aparece quando a
+  primeira fonte dela é liberada.
+
 ## [1.3.0] - 2026-10-16
 
 Pressão: partidas mais longas e crises que endurecem a cada ascensão.

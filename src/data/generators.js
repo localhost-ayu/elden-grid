@@ -24,4 +24,10 @@ export const GENERATORS = [
   { id: 'antimatter', key: '0', name: 'Antimatéria', short: 'Antimatéria',        baseCost: 8e7,    growth: 1.16, output: 1.2e6,   icon: '<@>', art: 'antimatter', unlock: 't_antimatter', traits: [{ type: 'heat', base: 1.05 }] },
 ];
 
+// A aba Geradores mostra PAGE_SIZE fontes por página, com as teclas 1–9 e 0 (`key`) valendo
+// na página aberta. A página vem da posição na lista; a tecla de cada fonte segue a
+// posição dentro da página (testado).
+export const PAGE_SIZE = 10;
+for (const [i, g] of GENERATORS.entries()) g.page = Math.floor(i / PAGE_SIZE);
+
 export const LAB = { name: 'Laboratório', baseCost: 400, growth: 1.25, rpPerSec: 0.25, unlockAt: 200 };
