@@ -138,7 +138,7 @@ test('só joga até o próximo nível; recordes aparecem na tela', () => {
   press('4', 'right', 'right', 'right');
   assert.match(text(), /nível ‹ II ›/);
   assert.match(text(), /Complete o nível II para liberar o próximo/);
-  assert.match(text(), /recordes: I 31 min/);
+  assert.match(text(), /recordes: I 32min/);
   press('left', 'enter');
   assert.deepEqual(app.state.run, { challenge: 'blackout', tier: 1 }); // repetir vale recorde
 });
@@ -185,4 +185,33 @@ test('na partida de desafio: Legado explica que não há ascensão e a manivela 
   press('l', 'enter');
   assert.match(text(), /Sem ascensão nesta partida/);
   assert.match(text(), /Desafios não têm ascensão/);
+});
+
+test('tela de Desafios cabe em 80×24 em qualquer desafio, nível e progresso', () => {
+  const p = newProfile();
+  for (const c of CHALLENGES) for (let t = 1; t <= 5; t++) completeChallenge(p, c.id, t, 3600 * 9.5);
+  for (const profile of [newProfile(), p]) {
+    const { app, press } = make(profile);
+    press('4');
+    for (let i = 0; i < CHALLENGES.length; i++) {
+      for (let t = 0; t < 5; t++) {
+        const lines = app.lines(80, 24);
+        assert.equal(lines.length, 24);
+        for (const l of lines) assert.ok(visibleLength(l) <= 80, stripAnsi(l));
+        press('right');
+      }
+      press('down');
+    }
+  }
+});
+
+test('recompensa vale ao voltar para os slots 1–3: jogo novo já traz a solar (Brisa Solar)', () => {
+  const { app, press, text } = make();
+  press('4', 'down', 'enter'); // Sem Vento I
+  app.state.earned = GOALS[0];
+  app.update(0.1, 100);
+  assert.match(text(), /Nos slots 1–3: produção x1\.1 e \+20% na solar/);
+  press('escape', '2', '1'); // Novo jogo no slot 1
+  assert.equal(app.slot, 1);
+  assert.equal(app.state.techs.t_solar, true);
 });

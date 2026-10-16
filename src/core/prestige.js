@@ -2,6 +2,7 @@
 // consulta os efeitos daqui (engine -> prestige, sem ciclo de imports).
 import { LEGACY, SHOP, MONUMENT } from '../data/legacy.js';
 import { TECHS } from '../data/research.js';
+import { rewardStart } from './rewards.js';
 import { newState } from './state.js';
 import { peak } from './records.js';
 
@@ -91,6 +92,7 @@ function startRun(s) {
   for (const id of [...shopValue(s, 'techs', []), ...(shopPerk(s, 'start').techs ?? [])]) s.techs[id] = true;
   for (const id of Object.keys(s.cooling)) s.cooling[id] = shopValue(s, 'cooling', 0);
   s.transformers = shopValue(s, 'transformers', 0);
+  rewardStart(s);
   const autoTech = TECHS.some((t) => t.type === 'auto' && s.techs[t.id]);
   if (autoTech || shopValue(s, 'auto') !== null) s.auto.buy = true;
 }

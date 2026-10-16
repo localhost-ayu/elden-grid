@@ -53,7 +53,8 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Desafios.** Cinco partidas com regras que mudam o jogo (crises sem parar, sem vento,
   rede velha, mercado em queda, combustível caro), cada uma com 5 níveis de meta. Ficam
   num slot separado (D), começam do zero sem legado e não tocam nos saves 1–3; o
-  progresso e os recordes vão para um perfil compartilhado.
+  progresso e os recordes vão para um perfil compartilhado, e cada nível completo deixa
+  os slots 1–3 mais fortes (x1.1 de produção e uma vantagem temática por nível).
 - **Conquistas.** 82 metas em oito categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).

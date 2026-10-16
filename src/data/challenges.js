@@ -16,17 +16,29 @@
 //   upkeep         x no custo de operação (gás e fusão)
 export const GOALS = [2.5e10, 1e11, 5e11, 2.5e12, 1e13];
 
+// Recompensas (valem nos slots 1–3, nunca dentro de um desafio). Cada nível completo de
+// qualquer desafio multiplica a produção por TIER_MULT (25 níveis: x10.8), e cada desafio
+// dá a sua vantagem temática, `per` por nível, somada (`reward` em cada desafio):
+//   crisisTime   +s de prazo para atender as crises
+//   solar        +fração de produção da solar (e Células Fotovoltaicas pronta no começo)
+//   capacity     +fração de capacidade da rede
+//   price        +fração no preço do kWh
+//   upkeep       -fração no custo de operação
+export const TIER_MULT = 1.1;
+
 const tiers = (make) => [1, 2, 3, 4, 5].map(make);
 
 export const CHALLENGES = [
   {
     id: 'blackout', name: 'Apagão Eterno', icon: '⚠',
     desc: 'eventos e crises chegam sem parar',
+    reward: { type: 'crisisTime', per: 15, name: 'Equipe de Plantão' },
     rules: tiers((n) => ({ eventGap: [0.5, 0.4, 0.3, 0.25, 0.2][n - 1], crisisWeight: [2, 3, 4, 5, 6][n - 1] })),
   },
   {
     id: 'calm', name: 'Sem Vento', icon: '~',
     desc: 'sem eólica e sem manivela; começa com 1 solar',
+    reward: { type: 'solar', per: 0.2, name: 'Brisa Solar' },
     rules: tiers((n) => ({
       disabled: ['wind'], noCrank: true, start: { solar: 1 }, techs: ['t_solar'],
       // Do nível 3 em diante, a hidrelétrica também fica de fora.
@@ -36,16 +48,19 @@ export const CHALLENGES = [
   {
     id: 'oldgrid', name: 'Rede Velha', icon: '#',
     desc: 'pesquisas de capacidade da rede rendem menos',
+    reward: { type: 'capacity', per: 0.25, name: 'Rede Robusta' },
     rules: tiers((n) => ({ capacityExp: [0.7, 0.6, 0.5, 0.4, 0.3][n - 1] })),
   },
   {
     id: 'crash', name: 'Mercado em Queda', icon: 'v',
     desc: 'o preço do kWh cai conforme a partida avança',
+    reward: { type: 'price', per: 0.05, name: 'Contratos Futuros' },
     rules: tiers((n) => ({ priceHalfLife: [2400, 2000, 1800, 1500, 1200][n - 1], priceFloor: [0.4, 0.35, 0.3, 0.25, 0.2][n - 1] })),
   },
   {
     id: 'fuel', name: 'Combustível Caro', icon: '$',
     desc: 'gás e fusão custam muito mais para operar',
+    reward: { type: 'upkeep', per: 0.1, name: 'Eficiência Térmica' },
     rules: tiers((n) => ({ upkeep: [3, 4, 6, 8, 10][n - 1] })),
   },
 ];

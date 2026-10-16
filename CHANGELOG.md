@@ -26,6 +26,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   Combustível Caro (gás e fusão custam muito para operar). Cada um tem 5 níveis, com
   metas de $25B a $10T ganhos na partida e regras mais duras; o melhor tempo de cada
   nível fica registrado. Desafios não têm ascensão nem progresso offline.
+- Recompensas dos desafios, nos slots 1–3: cada nível completo multiplica a produção por
+  1.1 (os 25 níveis dão x10.8) e soma a vantagem do desafio: mais prazo nas crises
+  (Equipe de Plantão), solar mais forte e já pesquisada (Brisa Solar), mais capacidade
+  na rede (Rede Robusta), kWh mais caro (Contratos Futuros) e operação mais barata
+  (Eficiência Térmica).
 
 ### Alterado
 - Perfil compartilhado entre os slots em `~/.elden-grid/profile.json` (níveis de desafio

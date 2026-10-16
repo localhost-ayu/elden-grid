@@ -9,6 +9,7 @@ import { HOT_GENERATORS } from './heat.js';
 import { add, best } from './records.js';
 import { shopValue } from './prestige.js';
 import { rules } from './challenges.js';
+import { reward } from './rewards.js';
 
 const hasReactor = (s) => HOT_GENERATORS.some((g) => s.owned[g.id] > 0);
 const REQUIRES = {
@@ -47,7 +48,7 @@ function start(s, e) {
   add(s, 'events', 1, e.id);
   if (e.crisis) {
     s.events.effects.push({ id: e.id, until: null });
-    s.events.crisis = { id: e.id, deadline: s.t + SCHEDULE.crisisDeadline, game: null };
+    s.events.crisis = { id: e.id, deadline: s.t + SCHEDULE.crisisDeadline + reward(s, 'crisisTime'), game: null };
     return { type: 'crisis', id: e.id };
   }
   s.events.effects.push({ id: e.id, until: s.t + e.duration });

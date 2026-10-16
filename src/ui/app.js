@@ -28,9 +28,11 @@ import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
-import { ROMAN } from './screens/challenges.js';
+import { ROMAN, rewardText } from './screens/challenges.js';
 import { newProfile, completeChallenge } from '../core/profile.js';
 import { applyRunStart, challengeDef, goalReached, runGoal } from '../core/challenges.js';
+import { useProfile, rewardStart } from '../core/rewards.js';
+import { TIER_MULT } from '../data/challenges.js';
 import { DEFAULT_SETTINGS } from '../storage/settings.js';
 import { compareVersions, CHECK_EVERY_MS, RELEASES_URL } from '../storage/update.js';
 import { tooSmall, renderTooSmall } from './screens/too-small.js';
@@ -100,6 +102,7 @@ export function createApp({
     challengeCache: undefined, // resumo do slot D para a tela de Desafios (undefined = reler)
     now,
   };
+  useProfile(app.profile); // as recompensas dos desafios valem a partir daqui
 
   const uiFor = (id) => (app.ui[id] ??= {});
 
@@ -221,9 +224,10 @@ export function createApp({
     const fresh = completeChallenge(app.profile, challenge, tier, s.stats.playTime);
     profileStore?.write(app.profile);
     save();
-    const name = `${challengeDef(challenge).name} ${ROMAN[tier - 1]}`;
+    const def = challengeDef(challenge);
+    const name = `${def.name} ${ROMAN[tier - 1]}`;
     say(`${glyphs().legacy} DESAFIO CONCLUÍDO: ${name} em ${fmtDuration(s.stats.playTime)}!` +
-      (fresh ? ' Novo nível no perfil.' : ' (nível já completo: vale como recorde)'), 'ok', 15000);
+      (fresh ? ` Nos slots 1–3: produção x${TIER_MULT} e ${rewardText(def, 1)}.` : ' (nível já completo: vale como recorde)'), 'ok', 15000);
   }
 
   function save() {
@@ -266,7 +270,9 @@ export function createApp({
   }
 
   function newGame(n) {
-    open(n, newState(Math.floor(rng() * 2 ** 32)));
+    const s = newState(Math.floor(rng() * 2 ** 32));
+    rewardStart(s);
+    open(n, s);
     save(); // ocupa o slot já, para aparecer como usado na lista
     app.mode = 'game';
     say(`Novo jogo no slot ${n}! Gire a manivela (espaço) e compre sua primeira turbina.`, 'ok', 6000);
