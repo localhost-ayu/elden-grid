@@ -2,7 +2,7 @@
 // linhas (para o screen.js), por isso dá para testar sem TTY.
 import { newState } from '../core/state.js';
 import { tick, power, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
-import { autoStep } from '../core/automation.js';
+import { autoStep, autoCrankStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
 import { crank } from '../core/actions.js';
@@ -334,6 +334,7 @@ export function createApp({
     if (app.state) {
       const shutdowns = tick(app.state, dt);
       autoStep(app.state, dt);
+      autoCrankStep(app.state, dt);
       if (app.stealth) holdEvents(app.state, dt);
       else eventsStep(app.state, dt).forEach(announce);
       if (!app.state.events.crisis) app.crisisOpen = false;

@@ -3,6 +3,7 @@
 import { GENERATORS } from '../data/generators.js';
 import { HEAT, COOLING } from '../data/heat.js';
 import { eventMult } from './events.js';
+import { contractDiscount } from './prestige.js';
 
 const heatTrait = (g) => g.traits.find((tr) => tr.type === 'heat');
 export const isHot = (g) => !!heatTrait(g);
@@ -13,7 +14,7 @@ export const coolingFactor = (s, g) => COOLING.factor ** coolingLevel(s, g);
 export function nextCooling(s, g) {
   const lvl = coolingLevel(s, g);
   const def = COOLING.levels[lvl];
-  return def ? { level: lvl + 1, name: def.name, cost: g.baseCost * def.costMult } : null;
+  return def ? { level: lvl + 1, name: def.name, cost: g.baseCost * def.costMult * contractDiscount(s, 'cooling') } : null;
 }
 
 // Sem unidades, o reator esfria até 0.

@@ -37,6 +37,17 @@ export function shopValue(s, type, fallback = null) {
   return lvl ? item.values[lvl - 1] : fallback;
 }
 export const nextShopCost = (s, item) => item.costs[shopLevel(s, item)] ?? null;
+// Vantagem extra do nível comprado de um tipo (`perks` em data/legacy.js), ou {}.
+export function shopPerk(s, type) {
+  const item = SHOP.find((x) => x.type === type);
+  const lvl = item ? shopLevel(s, item) : 0;
+  return (lvl && item.perks?.[lvl - 1]) || {};
+}
+
+// Desconto dos Contratos de Obra para outras compras ('cooling', 'transformers'): só
+// nos níveis cujo perk as inclui. Geradores e laboratórios usam shopValue direto.
+export const contractDiscount = (s, what) =>
+  (shopPerk(s, 'cost').discount?.includes(what) ? shopValue(s, 'cost', 1) : 1);
 
 export function buyShop(s, id) {
   const item = SHOP.find((x) => x.id === id);
@@ -75,7 +86,8 @@ export function ascend(s) {
 // sido concluída (sem custo nem ficha); automação herdada ou pesquisada já liga.
 function startRun(s) {
   s.owned.wind = shopValue(s, 'start', 0);
-  for (const id of shopValue(s, 'techs', [])) s.techs[id] = true;
+  s.labs = shopPerk(s, 'lab').labs ?? 0;
+  for (const id of [...shopValue(s, 'techs', []), ...(shopPerk(s, 'start').techs ?? [])]) s.techs[id] = true;
   for (const id of Object.keys(s.cooling)) s.cooling[id] = shopValue(s, 'cooling', 0);
   s.transformers = shopValue(s, 'transformers', 0);
   const autoTech = TECHS.some((t) => t.type === 'auto' && s.techs[t.id]);

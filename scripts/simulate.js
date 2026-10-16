@@ -7,18 +7,21 @@
 // com mais kW médio por $ (MAX), upgrades, laboratório, resfriamento e transformadores
 // quando custam uma fração pequena do saldo. Ascende quando a prévia rende pelo menos
 // metade dos pontos já recebidos (ascender a cada ponto novo seria pouco humano).
+// Na loja, gasta metade dos pontos e ergue o Monumento só quando ele rende mais que
+// guardar os pontos que custa.
 import { fileURLToPath } from 'node:url';
 import { newState } from '../src/core/state.js';
 import * as E from '../src/core/engine.js';
 import * as A from '../src/core/actions.js';
-import { autoStep } from '../src/core/automation.js';
+import { autoStep, autoCrankStep } from '../src/core/automation.js';
 import * as H from '../src/core/heat.js';
 import * as I from '../src/core/incidents.js';
 import * as P from '../src/core/prestige.js';
 import { checkAchievements } from '../src/core/achievements.js';
 import { GENERATORS } from '../src/data/generators.js';
 import { TECHS } from '../src/data/research.js';
-import { SHOP } from '../src/data/legacy.js';
+import { SHOP, LEGACY, MONUMENT } from '../src/data/legacy.js';
+import { ACHIEVEMENTS } from '../src/data/achievements.js';
 
 const DT = 0.1;
 
@@ -29,13 +32,23 @@ function shop(s) {
     const opts = SHOP.map((it) => ({ it, c: P.nextShopCost(s, it) }))
       .filter((o) => o.c != null && s.legacy.points - o.c >= keep)
       .sort((a, b) => a.c - b.c);
-    if (!opts.length) return;
+    if (!opts.length) break;
     P.buyShop(s, opts[0].it.id);
+  }
+  const b = LEGACY.bonusPerPoint;
+  for (;;) {
+    const c = P.monumentCost(s);
+    const p = s.legacy.points;
+    if (c > p || (1 + b * (p - c)) * MONUMENT.mult <= 1 + b * p) return;
+    P.buyMonument(s);
   }
 }
 
+const shopDone = (s) => SHOP.every((it) => P.shopLevel(s, it) >= it.costs.length);
+
 function botStep(s, crises) {
-  if (s.stats.playTime < 300 && Math.round(s.t / DT) % 3 === 0) A.crank(s);
+  // Com a manivela automática o bot para de girar: um humano também pararia.
+  if (s.stats.playTime < 300 && !P.shopPerk(s, 'crank').autoCrank && Math.round(s.t / DT) % 3 === 0) A.crank(s);
   for (const t of TECHS) if (E.techVisible(t, s) && s.rp >= t.cost) A.buyTech(s, t.id);
   if (E.labUnlocked(s) && E.labCost(s) < s.money * 0.2) A.buyLab(s);
   for (const g of GENERATORS) {
@@ -58,6 +71,7 @@ function botStep(s, crises) {
   if (best) A.buyGenBulk(s, best.id, 'max');
   E.tick(s, DT);
   autoStep(s, DT);
+  autoCrankStep(s, DT);
   checkAchievements(s);
   if (crises === 'off') return;
   I.eventsStep(s, DT);
@@ -82,9 +96,11 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1 } =
     const min = (step * DT) / 60;
     for (const g of GENERATORS) if (s.owned[g.id] > 0 && !(g.id in marks)) marks[g.id] = min;
     if (s.labs > 0 && !('lab' in marks)) marks.lab = min;
+    if (!('shop' in marks) && shopDone(s)) marks.shop = min;
+    if (!('monument' in marks) && s.legacy.monument > 0) marks.monument = min;
     if (P.canAscend(s) && P.legacyGain(s) >= Math.max(1, s.legacy.earned / 2) && ascensions.length < runs) {
       const gain = P.ascend(s);
-      ascensions.push({ at: min, took: min - runStart, gain });
+      ascensions.push({ at: min, took: min - runStart, gain, n: s.legacy.ascensions });
       runStart = min;
       if (crises === 'off') s.events.next = Infinity;
       shop(s);
@@ -93,7 +109,13 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1 } =
   return { s, marks, ascensions, saturated: saturated / (minutes * 60 / DT) };
 }
 
-const clock = (min) => `${Math.floor(min)}:${String(Math.round((min % 1) * 60)).padStart(2, '0')}`;
+const pad = (n) => String(n).padStart(2, '0');
+// m:ss até 1 h; depois XhYY (min).
+function clock(min) {
+  const sec = Math.round(min * 60);
+  if (sec < 3600) return `${Math.floor(sec / 60)}:${pad(sec % 60)}`;
+  return `${Math.floor(sec / 3600)}h${pad(Math.floor((sec % 3600) / 60))}`;
+}
 
 // Rodado direto (não importado): no Node 18 ainda não existe import.meta.main.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -107,10 +129,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const { s, marks, ascensions, saturated } = simulate({ minutes, seed, crises, runs });
     const order = ['solar', 'lab', 'hydro', 'gas', 'nuclear', 'tidal', 'fusion', 'antimatter'];
     const m = order.filter((k) => k in marks).map((k) => `${k} ${clock(marks[k])}`).join('  ');
-    const asc = ascensions.map((a, i) => `#${i + 1} ${clock(a.at)} (+${a.gain})`).join('  ') || 'nenhuma';
+    // Muitas ascensões: mostra as 8 primeiras e as 4 últimas.
+    const list = ascensions.length > 12 ? [...ascensions.slice(0, 8), null, ...ascensions.slice(-4)] : ascensions;
+    const asc = list.map((a) => (a ? `#${a.n} ${clock(a.at)} (+${a.gain})` : '…')).join('  ') || 'nenhuma';
+    const short = ascensions.filter((a) => a.n > 3 && a.took < 10).length;
     const c = s.career.crises;
     console.log(`seed ${seed}: ${m}`);
     console.log(`        legado: ${asc}`);
+    console.log(`        loja completa: ${'shop' in marks ? clock(marks.shop) : 'não'} · monumento nv ${s.legacy.monument}` +
+      `${'monument' in marks ? ` (1º em ${clock(marks.monument)})` : ''} · partidas < 10 min após a 3ª: ${short}` +
+      ` · conquistas ${Object.keys(s.achievements).length}/${ACHIEVEMENTS.length}`);
     console.log(`        crises: ${c.won} vencidas, ${c.timeout} ignoradas, $${s.career.crewPaid.toExponential(2)} pagos · ` +
       `pico ${s.career.peakKw.toExponential(2)} kW · rede saturada ${Math.round(saturated * 100)}% do tempo\n`);
   }

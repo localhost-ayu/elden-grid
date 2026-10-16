@@ -243,13 +243,20 @@ test('loja 1.1: listas de Pesquisa Herdada incluem seus pré-requisitos e cresce
 
 test('loja 1.1: a partida começa com pesquisas, resfriamento, transformadores e auto-compra', () => {
   const s = ready();
-  s.legacy.shop = { research: 3, thermal: 2, inherited: 3, start: 4 };
+  s.legacy.shop = { research: 1, thermal: 2, inherited: 3, start: 5, grants: 4 };
   ascend(s);
-  for (const id of ['t_wind2', 't_hydro', 't_auto', 't_substation']) assert.equal(s.techs[id], true, id);
+  // Pesquisa Herdada 1 + Começo Rápido 5 (alta tensão, solar, hidro, biomassa e gás).
+  for (const id of ['t_wind2', 't_lab', 't_hv', 't_hydro', 't_gas']) assert.equal(s.techs[id], true, id);
+  assert.equal(s.techs.t_auto, undefined);
+  assert.equal(s.labs, 10);
   assert.equal(s.cooling.nuclear, 2);
   assert.equal(s.cooling.antimatter, 2);
   assert.equal(s.transformers, 3);
-  assert.equal(s.owned.wind, 100);
+  assert.equal(s.owned.wind, 50);
+  assert.equal(s.auto.buy, false); // nada de automação herdada
+  s.legacy.shop.research = 3;
+  s.earned = LEGACY.minRunEarned * 100;
+  ascend(s);
   assert.equal(s.auto.buy, true); // t_auto veio pronta
   assert.equal(s.stats.techs, 0); // herdado não conta como pesquisado
   assert.ok(isValidState(s));
@@ -287,16 +294,16 @@ test('Monumento: sem teto, custo crescente, multiplica a produção e sobrevive 
   assert.equal(buyMonument(s), false);
   s.legacy.points = 1000;
   const costs = [];
-  for (let i = 0; i < 15; i++) { costs.push(monumentCost(s)); assert.equal(buyMonument(s), true); }
+  for (let i = 0; i < 6; i++) { costs.push(monumentCost(s)); assert.equal(buyMonument(s), true); }
   assert.equal(costs[0], MONUMENT.baseCost);
   assert.ok(costs.every((c, i) => i === 0 || c >= costs[i - 1]));
   assert.equal(s.legacy.points, 1000 - costs.reduce((a, b) => a + b, 0));
-  assert.ok(Math.abs(monumentMult(s) - MONUMENT.mult ** 15) < 1e-9);
+  assert.ok(Math.abs(monumentMult(s) - MONUMENT.mult ** 6) < 1e-9);
   assert.ok(Math.abs(power(s) / base - legacyMult(s)) < 1e-9);
   assert.ok(legacyMult(s) > 1 + LEGACY.bonusPerPoint * s.legacy.points); // o Monumento entra no total
   s.earned = 1e15;
   ascend(s);
-  assert.equal(s.legacy.monument, 15);
+  assert.equal(s.legacy.monument, 6);
   assert.ok(isValidState(s));
 });
 
@@ -313,5 +320,59 @@ test('Monumento na aba Legado: Enter compra e avisa; sem pontos, diz quanto falt
   assert.equal(s.legacy.monument, 1);
   assert.match(text(), /Monumento nível 1: produção x1\.10/);
   app.key('enter');
-  assert.match(text(), /Faltam 7 pontos para o próximo nível do Monumento/);
+  assert.match(text(), /Faltam 15 pontos para o próximo nível do Monumento/);
+});
+
+test('loja 1.1: Contratos barateiam laboratórios (e, nos níveis 4–5, resfriamento e transformadores)', async () => {
+  const { labCost, transformerCost } = await import('../src/core/engine.js');
+  const { nextCooling } = await import('../src/core/heat.js');
+  const { GENERATORS } = await import('../src/data/generators.js');
+  const nuclear = GENERATORS.find((g) => g.id === 'nuclear');
+  const s = newState();
+  const lab0 = labCost(s);
+  const cool0 = nextCooling(s, nuclear).cost;
+  const tr0 = transformerCost(s);
+  s.legacy.shop.contracts = 3;
+  assert.equal(labCost(s), Math.ceil(lab0 * 0.7));
+  assert.equal(nextCooling(s, nuclear).cost, cool0);
+  s.legacy.shop.contracts = 4;
+  assert.ok(Math.abs(nextCooling(s, nuclear).cost - cool0 * 0.7) < 1e-6);
+  assert.equal(transformerCost(s), tr0);
+  s.legacy.shop.contracts = 5;
+  assert.equal(transformerCost(s), Math.ceil(tr0 * 0.7));
+});
+
+test('loja 1.1: manivela automática só nos primeiros minutos da partida', async () => {
+  const { autoCrankStep } = await import('../src/core/automation.js');
+  const { AUTO_CRANK_SECONDS } = await import('../src/data/legacy.js');
+  const s = newState();
+  assert.equal(autoCrankStep(s, 10), 0);
+  s.legacy.shop.goldcrank = 5;
+  assert.equal(autoCrankStep(s, 10), 40);
+  assert.equal(s.stats.cranks, 40);
+  s.stats.playTime = AUTO_CRANK_SECONDS;
+  assert.equal(autoCrankStep(s, 10), 0);
+});
+
+test('o legado não satura a rede: capacidade cresce com os multiplicadores permanentes', async () => {
+  const { gridLoad } = await import('../src/core/engine.js');
+  const s = newState();
+  s.owned.wind = 20;
+  const load = gridLoad(s);
+  s.legacy.points = 400;
+  s.legacy.monument = 5;
+  s.achievements = { a_mwh: 0, a_gwh: 0 };
+  assert.ok(Math.abs(gridLoad(s) - load) < 1e-9);
+});
+
+test('textos da loja cabem na coluna de efeito (40)', async () => {
+  const legacyScreen = await import('../src/ui/screens/legacy.js');
+  const s = newState();
+  for (const it of SHOP) {
+    for (let lvl = 0; lvl <= it.costs.length; lvl++) {
+      s.legacy.shop[it.id] = lvl;
+      const row = legacyScreen.render({ state: s, ui: {}, say() {} }).map(stripAnsi).find((l) => l.includes(it.name));
+      assert.ok(visibleLength(row) <= 80, `${it.id} nível ${lvl}: ${row}`);
+    }
+  }
 });

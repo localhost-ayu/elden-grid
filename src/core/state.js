@@ -16,7 +16,7 @@ export function newState(seed = 1) {
     labs: 0,
     techs: {},
     upgrades: Object.fromEntries(GENERATORS.map((g) => [g.id, 0])),
-    auto: { buy: false, clock: 0 },
+    auto: { buy: false, clock: 0, crank: 0 }, // crank = relógio da manivela automática
     heat: hotDefaults(() => ({ h: 0, off: 0 })), // off = desligado até s.t
     cooling: hotDefaults(() => 0),
     transformers: 0,
@@ -42,7 +42,7 @@ export function newState(seed = 1) {
 //   v6 = state.earned, state.legacy
 //   v7 = state.events
 //   v8 = state.stats, state.career
-//   v9 = state.achievements, state.legacy.monument (fromSave preenche com 0)
+//   v9 = state.achievements, state.legacy.monument, state.auto.crank (fromSave preenche)
 export const SAVE_VERSION = 9;
 
 const MIGRATIONS = {
@@ -116,6 +116,7 @@ export function isValidState(s) {
   if (!s.owned || typeof s.owned !== 'object' || !Object.values(s.owned).every(count)) return false;
   if (!s.upgrades || typeof s.upgrades !== 'object' || !Object.values(s.upgrades).every(count)) return false;
   if (!s.auto || typeof s.auto.buy !== 'boolean' || !finite(s.auto.clock) || s.auto.clock < 0) return false;
+  if (!finite(s.auto.crank) || s.auto.crank < 0) return false;
   if (!s.heat || !Object.values(s.heat).every((x) => x && finite(x.h) && x.h >= 0 && finite(x.off))) return false;
   if (!s.cooling || !Object.values(s.cooling).every(count) || !count(s.transformers)) return false;
   if (!finite(s.earned) || s.earned < 0) return false;

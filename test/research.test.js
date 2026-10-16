@@ -121,7 +121,7 @@ test('save v3 migra para v4 com auto-compra desligada', () => {
   const env = migrate(v3);
   assert.equal(env.saveVersion, SAVE_VERSION);
   const s = fromSave(env.state);
-  assert.deepEqual(s.auto, { buy: false, clock: 0 });
+  assert.deepEqual(s.auto, { buy: false, clock: 0, crank: 0 });
   assert.ok(isValidState(s));
   assert.ok(!isValidState({ ...s, auto: { buy: 'sim', clock: 0 } }));
 });

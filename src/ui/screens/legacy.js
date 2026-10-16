@@ -56,8 +56,8 @@ function shopRow(s, item, selected) {
   const lvl = shopLevel(s, item);
   const cost = nextShopCost(s, item);
   const max = item.costs.length;
-  const next = cost == null ? item.values[max - 1] : item.values[lvl];
-  const effect = EFFECT[item.type](next);
+  const i = cost == null ? max - 1 : lvl;
+  const effect = item.perks?.[i]?.desc ?? EFFECT[item.type](item.values[i]);
   const price = cost == null ? 'completo ✓' : `${cost} ${glyphs().legacy}`;
   const text = `${selected ? '›' : ' '} ${item.name.padEnd(19)} ${`${lvl}/${max}`.padStart(3)}  ${effect.padEnd(40)} ${price.padStart(10)}`;
   const style = cost == null ? C.dim + C.green : s.legacy.points >= cost ? C.yellow : C.dim;

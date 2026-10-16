@@ -14,17 +14,27 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - Conquistas: 82 metas em oito categorias (8 secretas). Cada uma dá +1% de produção
   permanente e sobrevive à ascensão. Aviso no rodapé ao conquistar e lista com o
   progresso de cada uma na aba Estatísticas (tecla `V`).
-- Loja do legado maior: níveis 4 e 5 em Começo Rápido, Contratos de Obra, Bolsas de
-  Pesquisa, Turno da Noite (até 24 h a 90%) e Manivela de Ouro, e cinco itens novos:
-  Pesquisa Herdada, Engenharia Térmica, Seguro de Rede, Marcos Antecipados e Rede
-  Herdada.
+- Loja do legado maior, com preços que chegam a dezenas de milhares de pontos:
+  - níveis 4 e 5 que tiram o atrito do começo da partida: Começo Rápido traz alta
+    tensão, solar, hidrelétrica, biomassa e gás prontos; Bolsas de Pesquisa, até 25
+    laboratórios; Manivela de Ouro gira sozinha nos 5 minutos iniciais; Contratos de
+    Obra estendem o desconto a resfriamento e transformadores; Turno da Noite vai a 24 h
+    a 90%;
+  - cinco itens novos: Pesquisa Herdada, Engenharia Térmica, Seguro de Rede, Marcos
+    Antecipados e Rede Herdada.
 - A loja do legado rola sob o cabeçalho de pontos e ascensão.
 - Monumento: compra sem teto no fim da loja do legado. Cada nível multiplica a produção
-  por 1.1 e custa um pouco mais que o anterior; com centenas de pontos, passa a valer
-  mais que guardá-los.
+  por 1.1 e custa o dobro do anterior; com muitos pontos, passa a valer mais que
+  guardá-los.
 
 ### Alterado
-- Save v9 (`state.achievements`). Saves antigos migram sozinhos e recebem no primeiro
+- A capacidade da rede cresce junto com os bônus permanentes (pontos de legado,
+  Monumento e conquistas). Quem tinha muito legado começava a partida com a rede
+  saturada em mais de 1000%, vendendo quase tudo com desconto.
+- O desconto dos Contratos de Obra vale também para os laboratórios.
+- `scripts/simulate.js` usa a loja nova e o Monumento e mostra quando a loja fica
+  completa, o nível do Monumento, as partidas curtas e as conquistas.
+- Save v9 (`achievements`, `legacy.monument`, `auto.crank`). Saves antigos migram sozinhos e recebem no primeiro
   quadro as conquistas que já cumpriam.
 
 ## [1.0.1] - 2026-10-16
