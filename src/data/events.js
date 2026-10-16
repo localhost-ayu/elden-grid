@@ -40,6 +40,17 @@ export const EVENTS = [
     desc: 'produção -50% até a rede voltar',
     effects: [{ type: 'output', mult: 0.5 }],
   },
+  // Fronteira (1.4)
+  {
+    id: 'containment', name: 'Ruptura de contenção', article: 'a', weight: 2, crisis: 'contain', requires: 'containment',
+    desc: 'antimatéria e Kugelblitz rendem 30% até conter',
+    effects: [{ type: 'output', gen: 'antimatter', mult: 0.3 }, { type: 'output', gen: 'kugelblitz', mult: 0.3 }],
+  },
+  {
+    id: 'solarstorm', name: 'Tempestade solar', article: 'a', weight: 2, crisis: 'shield', requires: 'orbit',
+    desc: 'o Enxame para e a solar cai à metade',
+    effects: [{ type: 'output', gen: 'swarm', mult: 0 }, { type: 'output', gen: 'solar', mult: 0.5 }],
+  },
   {
     id: 'overload', name: 'Sobrecarga na subestação', article: 'a', weight: 2, crisis: 'rewire', requires: 'loaded',
     desc: 'capacidade da rede pela metade',
@@ -69,6 +80,22 @@ export const CRISES = {
       'Em crises de nível alto as setas somem após alguns segundos: memorize.',
     ],
   },
+  contain: {
+    title: 'Conter o campo magnético', game: 'balance',
+    steps: [
+      'O ponteiro deriva sozinho, empurrado por forças que mudam.',
+      'Use ← e → para segurá-lo na faixa central até a contenção encher.',
+      'Encostar na borda é uma ruptura. Rupturas demais e a crise está perdida.',
+    ],
+  },
+  shield: {
+    title: 'Proteger o Enxame', game: 'shield',
+    steps: [
+      'Erupções chegam pelas quatro direções, com a contagem na seta.',
+      'Aperte a seta da direção antes que a contagem acabe para bloquear.',
+      'Erupções que passam danificam o Enxame: impactos demais = falha.',
+    ],
+  },
 };
 
 // Dificuldade das crises: o nível vai de 0 (começo do jogo) a `maxLevel` e sobe 1 por
@@ -89,6 +116,12 @@ export const DIFFICULTY = {
     band: [0.35, 0.14], hold: [2.5, 6], gain: [0.1, 0.07], leak: [0.12, 0.3], maxBursts: [3, 2], timeLeft: [15, 15],
     drift: { from: 6, value: [0.08, 0.16] },
   },
+  // Contenção: o ponteiro (-1 a 1) é empurrado por uma força que muda a cada 0.5 s, de
+  // até `force`; cada seta dá `push` de velocidade. `zone`: meia-largura da faixa central.
+  balance: { zone: [0.5, 0.25], hold: [4, 8], force: [0.8, 1.8], push: [0.35, 0.3], maxBreaches: [3, 2], timeLeft: [20, 18] },
+  // Tempestade: uma erupção nova a cada `gap` s numa direção livre, com `warn` s para
+  // bloquear; `need` bloqueios resolvem.
+  shield: { need: [6, 12], warn: [2.4, 1.1], gap: [1.5, 0.6], maxHits: [3, 2], timeLeft: [20, 18] },
   // A partir do nível `hide.from`, as setas somem depois de `hide.value` s.
   sequence: { length: [5, 9], timeLeft: [14, 11], maxErrors: [3, 2], hide: { from: 6, value: [4, 2] } },
 };

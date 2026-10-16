@@ -93,7 +93,7 @@ test('ignorar a crise: a equipe resolve sozinha no prazo e o manual fecha', () =
 
 test('todas as crises cabem em 80×24: alerta, jogando e confirmando, no nível 0 e no máximo', () => {
   for (const level of [0, CRISIS.maxLevel]) {
-    for (const id of ['blackout', 'heatwave_crisis', 'overload']) {
+    for (const id of ['blackout', 'heatwave_crisis', 'overload', 'containment', 'solarstorm']) {
       const { app, press, text } = make(id);
       app.state.legacy.ascensions = level;
       press('x');

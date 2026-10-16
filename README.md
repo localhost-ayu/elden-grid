@@ -41,7 +41,8 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Upgrades e marcos.** Cada fonte tem 5 upgrades e dobra a produção ao chegar a 25, 50
   e 100 unidades. Compras em lote x1, x10, x100 ou MAX.
 - **Eventos e crises.** Tempestades, picos de demanda e descobertas mudam o jogo por um
-  tempo. Crises (blecaute, onda de calor, sobrecarga) ficam ativas até alguém agir: o
+  tempo. Crises (blecaute, onda de calor, sobrecarga e, na Fronteira, ruptura de contenção
+  e tempestade solar) ficam ativas até alguém agir: o
   manual de crise explica o minijogo de cada uma. Resolver sai de graça e dá um bônus;
   falhar, chamar a equipe ou ignorar custa o menor entre uma fração do caixa e alguns
   segundos de renda. As crises têm nível (0 a 10) que sobe a cada ascensão: começam

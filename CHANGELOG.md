@@ -30,6 +30,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   Estado Sólido (o excedente da rede passa a valer 40% e depois 60% do preço), Rede
   Orbital (capacidade x80), Antimatéria Catalisada (x2), Economia Pós-Escassez (produção
   x3) e Inteligência Planetária (pesquisa x3).
+- Duas crises novas com minijogos próprios, já com os níveis de dificuldade:
+  - **Ruptura de contenção** (com antimatéria ou Kugelblitz): um ponteiro deriva com
+    forças que mudam, e ← → o seguram na faixa central até a contenção encher.
+  - **Tempestade solar** (com o Enxame): erupções chegam pelas quatro direções e a seta
+    certa a tempo bloqueia cada uma.
 - Árvore de pesquisa: ramos muito fundos empurram a coluna do custo em vez de passar da
   largura da tela.
 
