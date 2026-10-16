@@ -10,6 +10,15 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+### Adicionado
+- Conquistas: 80 metas em oito categorias (8 secretas). Cada uma dá +1% de produção
+  permanente e sobrevive à ascensão. Aviso no rodapé ao conquistar e lista com o
+  progresso de cada uma na aba Estatísticas (tecla `V`).
+
+### Alterado
+- Save v9 (`state.achievements`). Saves antigos migram sozinhos e recebem no primeiro
+  quadro as conquistas que já cumpriam.
+
 ## [1.0.1] - 2026-10-16
 
 ### Adicionado

@@ -24,6 +24,7 @@ export function newState(seed = 1) {
     earned: 0,      // dinheiro ganho nesta partida (base do Legado; gastar não desconta)
     // Sobrevive à ascensão. earned = pontos já recebidos; points = não gastos.
     legacy: { points: 0, earned: 0, lifetime: 0, ascensions: 0, shop: {} },
+    achievements: {}, // { id: tempo de jogo da carreira ao conquistar } — sobrevive à ascensão
     // effects: [{ id, until }] (until null = crise em aberto); crisis: { id, deadline, game }
     events: { rng: seed >>> 0, next: SCHEDULE.first, effects: [], crisis: null, seen: 0 },
     stats: newStats(),  // esta partida
@@ -41,7 +42,8 @@ export function newState(seed = 1) {
 //   v6 = state.earned, state.legacy
 //   v7 = state.events
 //   v8 = state.stats, state.career
-export const SAVE_VERSION = 8;
+//   v9 = state.achievements
+export const SAVE_VERSION = 9;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -63,6 +65,8 @@ const MIGRATIONS = {
     const career = { ...known, moneyEarned: (st.legacy?.lifetime ?? 0) + known.moneyEarned };
     return { ...raw, saveVersion: 8, state: { ...st, stats: { ...newStats(), ...known }, career: { ...newStats(), ...career } } };
   },
+  // Conquistas começam vazias: o que o save antigo já cumpre sai no primeiro quadro.
+  8: (raw) => ({ ...raw, saveVersion: 9, state: { ...raw.state, achievements: raw.state?.achievements ?? {} } }),
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.
@@ -91,6 +95,7 @@ export function fromSave(raw) {
   s.heat = { ...base.heat, ...raw.heat };
   s.cooling = { ...base.cooling, ...raw.cooling };
   s.legacy = { ...base.legacy, ...raw.legacy, shop: { ...raw.legacy?.shop } };
+  s.achievements = { ...raw.achievements };
   s.events = { ...base.events, ...raw.events };
   s.stats = mergeStats(base.stats, raw.stats);
   s.career = mergeStats(base.career, raw.career);
@@ -118,6 +123,7 @@ export function isValidState(s) {
   if (!L || !count(L.points) || !count(L.earned) || !count(L.ascensions) || !finite(L.lifetime) || L.lifetime < 0) return false;
   if (!L.shop || typeof L.shop !== 'object' || !Object.values(L.shop).every(count)) return false;
   if (!isValidStats(s.stats) || !isValidStats(s.career)) return false;
+  if (!s.achievements || typeof s.achievements !== 'object' || !Object.values(s.achievements).every((t) => finite(t) && t >= 0)) return false;
   const ev = s.events;
   if (!ev || !Number.isInteger(ev.rng) || ev.rng < 0 || ev.rng > 0xffffffff || !finite(ev.next) || !count(ev.seen)) return false;
   if (!Array.isArray(ev.effects) || !ev.effects.every((a) => a && typeof a.id === 'string' && (a.until === null || finite(a.until)))) return false;

@@ -15,6 +15,7 @@ import { autoStep } from '../src/core/automation.js';
 import * as H from '../src/core/heat.js';
 import * as I from '../src/core/incidents.js';
 import * as P from '../src/core/prestige.js';
+import { checkAchievements } from '../src/core/achievements.js';
 import { GENERATORS } from '../src/data/generators.js';
 import { TECHS } from '../src/data/research.js';
 import { SHOP } from '../src/data/legacy.js';
@@ -57,6 +58,7 @@ function botStep(s, crises) {
   if (best) A.buyGenBulk(s, best.id, 'max');
   E.tick(s, DT);
   autoStep(s, DT);
+  checkAchievements(s);
   if (crises === 'off') return;
   I.eventsStep(s, DT);
   // "play" vence toda crise na hora; "idle" deixa a equipe resolver no prazo.

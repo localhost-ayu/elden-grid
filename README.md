@@ -46,6 +46,9 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
   continua produzindo e pausa eventos e crises; `\` de novo volta e mostra quanto rendeu.
+- **Conquistas.** 80 metas em oito categorias (algumas secretas), da primeira faísca a
+  um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
+  ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%
   da produção e mostra um resumo.
 
@@ -77,7 +80,7 @@ passou saturada. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
 | Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento |
 | Legado | `↑↓` + `Enter` ascende ou compra na loja (com confirmação `S`/`N`) |
-| Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` |
+| Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` · `V` conquistas |
 | Opções | `↑↓` escolhe, `←→`/`Enter` muda |
 
 ## Saves e opções

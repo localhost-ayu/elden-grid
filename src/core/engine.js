@@ -8,6 +8,7 @@ import { heatFactor, heatStep } from './heat.js';
 import { legacyMult, shopValue } from './prestige.js';
 import { eventMult } from './events.js';
 import { add, peak } from './records.js';
+import { ACHIEVEMENT_BONUS } from '../data/achievements.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -57,7 +58,11 @@ export function genModifiers(s, g) {
 const modMult = (mods, type) => mods.reduce((m, x) => (x.type === type ? m * x.mult : m), 1);
 export const genModMult = (s, g, type) => modMult(genModifiers(s, g), type);
 
-// Os multiplicadores globais (pesquisa e Legado) entram em power(), uma vez só.
+// Cada conquista soma ACHIEVEMENT_BONUS. Fica aqui (e não em core/achievements.js, que
+// consulta o engine para avaliar as condições) para não haver ciclo de imports.
+export const achievementMult = (s) => 1 + ACHIEVEMENT_BONUS * Object.keys(s.achievements).length;
+
+// Os multiplicadores globais (pesquisa, Legado e conquistas) entram em power(), uma vez só.
 export function genPower(s, g, average = false) {
   if (!s.owned[g.id]) return 0;
   const out = genModMult(s, g, 'output');
@@ -66,7 +71,7 @@ export function genPower(s, g, average = false) {
   return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev;
 }
 export const power = (s, average = false) =>
-  GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global') * legacyMult(s);
+  GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global') * legacyMult(s) * achievementMult(s);
 
 export const genUpkeep = (g) => g.traits.reduce((sum, tr) => sum + (tr.type === 'upkeep' ? tr.money : 0), 0);
 export const upkeep = (s) =>
