@@ -43,12 +43,13 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   você recebe pontos (+10% de produção cada ponto guardado) que podem ser trocados por
   vantagens permanentes na loja do legado: começar com usinas, pesquisas, resfriamento
   e transformadores, construir mais barato, marcos antecipados, seguro contra crises,
-  mais tempo offline e uma manivela que rende muito mais.
+  mais tempo offline e uma manivela que rende muito mais. Quando a loja acaba, o
+  **Monumento** (x1.1 de produção por nível, sem teto) dá destino aos pontos que sobram.
 - **Modo disfarce.** Apareceu alguém? `\` (barra invertida) troca a tela inteira, de
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
   continua produzindo e pausa eventos e crises; `\` de novo volta e mostra quanto rendeu.
-- **Conquistas.** 80 metas em oito categorias (algumas secretas), da primeira faísca a
+- **Conquistas.** 82 metas em oito categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%

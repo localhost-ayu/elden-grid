@@ -1,6 +1,6 @@
 // Só lê e escreve `s.legacy` e reinicia a partida: não importa o engine, que é quem
 // consulta os efeitos daqui (engine -> prestige, sem ciclo de imports).
-import { LEGACY, SHOP } from '../data/legacy.js';
+import { LEGACY, SHOP, MONUMENT } from '../data/legacy.js';
 import { TECHS } from '../data/research.js';
 import { newState } from './state.js';
 import { peak } from './records.js';
@@ -16,7 +16,18 @@ export function nextPointIn(s) {
   return (total + 1) ** 2 * LEGACY.divisor - lifetimeEarned(s);
 }
 
-export const legacyMult = (s) => 1 + LEGACY.bonusPerPoint * s.legacy.points;
+export const monumentMult = (s) => MONUMENT.mult ** s.legacy.monument;
+export const monumentCost = (s) => Math.ceil(MONUMENT.baseCost * MONUMENT.growth ** s.legacy.monument);
+// Tudo o que o Legado dá à produção: pontos guardados e Monumento.
+export const legacyMult = (s) => (1 + LEGACY.bonusPerPoint * s.legacy.points) * monumentMult(s);
+
+export function buyMonument(s) {
+  const cost = monumentCost(s);
+  if (s.legacy.points < cost) return false;
+  s.legacy.points -= cost;
+  s.legacy.monument++;
+  return true;
+}
 
 export const shopLevel = (s, item) => s.legacy.shop[item.id] ?? 0;
 // Valor do efeito comprado de um tipo, ou `fallback` se nada foi comprado.

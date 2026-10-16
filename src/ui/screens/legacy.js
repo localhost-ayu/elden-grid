@@ -1,9 +1,9 @@
-// Item 0 é a ascensão; os demais, a loja. A ascensão apaga a partida, então só acontece
+// Item 0 é a ascensão; depois a loja e, por último, o Monumento (sem teto). A ascensão apaga a partida, então só acontece
 // depois de uma prévia do que se ganha e do que se perde, com confirmação S/N.
-import { LEGACY, SHOP } from '../../data/legacy.js';
+import { LEGACY, SHOP, MONUMENT } from '../../data/legacy.js';
 import { offlineMax } from '../../core/engine.js';
 import {
-  ascend, buyShop, canAscend, legacyGain, legacyMult, nextPointIn, nextShopCost, shopLevel,
+  ascend, buyMonument, buyShop, canAscend, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
 } from '../../core/prestige.js';
 import { C, paint, glyphs } from '../theme.js';
 import { fmt, bar } from '../format.js';
@@ -29,7 +29,9 @@ const EFFECT = {
   transformers: (v) => `começa com ${v} ${v === 1 ? 'transformador' : 'transformadores'}`,
 };
 
-const clampSel = (ui) => (ui.sel = Math.max(0, Math.min(ui.sel ?? 0, SHOP.length)));
+const LAST = SHOP.length + 1; // índice do Monumento
+const clampSel = (ui) => (ui.sel = Math.max(0, Math.min(ui.sel ?? 0, LAST)));
+const times = (m) => `x${m < 100 ? m.toFixed(2) : fmt(m)}`;
 
 function ascendBlock(s, selected) {
   const mark = selected ? '›' : ' ';
@@ -76,6 +78,14 @@ function shopWindow(ui, rows, room) {
   return { shown: rows.slice(ui.top, end), more };
 }
 
+function monumentRow(s, selected) {
+  const lvl = s.legacy.monument;
+  const cost = monumentCost(s);
+  const effect = `produção ${times(monumentMult(s))} → ${times(monumentMult(s) * MONUMENT.mult)}`;
+  const text = `${selected ? '›' : ' '} ${MONUMENT.name.padEnd(19)} ${String(lvl).padStart(3)}  ${effect.padEnd(40)} ${`${cost} ${glyphs().legacy}`.padStart(10)}`;
+  return ' ' + paint((s.legacy.points >= cost ? C.yellow : C.dim) + (selected ? C.bold : ''), text);
+}
+
 export function render(ctx, height = Infinity) {
   const s = ctx.state;
   const ui = ctx.ui;
@@ -92,7 +102,7 @@ export function render(ctx, height = Infinity) {
     '   ' + paint(C.bold, 'Loja do Legado') + paint(C.dim, ' '.repeat(16) + 'nível  próximo nível'),
   ];
   const confirm = ui.confirm ? ['', '   ' + paint(C.yellow + C.bold, ui.confirm.text) + '  ' + paint(C.bold, '(S/N)')] : [];
-  const rows = SHOP.map((item, i) => shopRow(s, item, sel === i + 1));
+  const rows = [...SHOP.map((item, i) => shopRow(s, item, sel === i + 1)), monumentRow(s, sel === LAST)];
   const { shown, more } = shopWindow(ui, rows, height - head.length - confirm.length);
   return [...head, ...shown, ...(more ? [more] : []), ...confirm];
 }
@@ -116,6 +126,12 @@ function choose(ctx) {
     };
     return;
   }
+  if (ui.sel === LAST) {
+    const cost = monumentCost(s);
+    if (buyMonument(s)) ctx.say(`${MONUMENT.name} nível ${s.legacy.monument}: produção ${times(monumentMult(s))}.`, 'ok');
+    else ctx.say(`${cost - s.legacy.points === 1 ? 'Falta 1 ponto' : `Faltam ${cost - s.legacy.points} pontos`} para o próximo nível do ${MONUMENT.name}.`, 'err');
+    return;
+  }
   const item = SHOP[ui.sel - 1];
   const cost = nextShopCost(s, item);
   if (cost == null) ctx.say(`${item.name}: completo.`, 'info');
@@ -135,7 +151,7 @@ export function key(ctx, k) {
     return true;
   }
   if (k === 'up') { ui.sel = Math.max(0, (ui.sel ?? 0) - 1); return true; }
-  if (k === 'down') { ui.sel = Math.min(SHOP.length, (ui.sel ?? 0) + 1); return true; }
+  if (k === 'down') { ui.sel = Math.min(LAST, (ui.sel ?? 0) + 1); return true; }
   if (k === 'enter') { clampSel(ui); choose(ctx); return true; }
   return false;
 }

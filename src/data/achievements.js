@@ -116,6 +116,8 @@ export const ACHIEVEMENTS = [
   { id: 'a_fast30', cat: 'legacy', name: 'Pressa', desc: 'ascenda em até 30 min de partida', type: 'fastest', at: 1800 },
   { id: 'a_fast15', cat: 'legacy', name: 'Relâmpago', desc: 'ascenda em até 15 min de partida', type: 'fastest', at: 900 },
   { id: 'a_shop1', cat: 'legacy', name: 'Investidor', desc: 'um item da loja do legado no máximo', type: 'shopMax', at: 1 },
+  { id: 'a_mon1', cat: 'legacy', name: 'Pedra Fundamental', desc: 'erga o primeiro nível do Monumento', type: 'legacy', key: 'monument', at: 1 },
+  { id: 'a_mon25', cat: 'legacy', name: 'Maravilha do Mundo', desc: 'Monumento no nível 25', type: 'legacy', key: 'monument', at: 25 },
   { id: 'a_shopall', cat: 'legacy', name: 'Loja Esvaziada', desc: 'toda a loja do legado no máximo', type: 'shopMax', at: SHOP.length },
 
   // ---- manivela e tempo ----

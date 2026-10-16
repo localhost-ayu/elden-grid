@@ -11,7 +11,7 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 ## [Não lançado]
 
 ### Adicionado
-- Conquistas: 80 metas em oito categorias (8 secretas). Cada uma dá +1% de produção
+- Conquistas: 82 metas em oito categorias (8 secretas). Cada uma dá +1% de produção
   permanente e sobrevive à ascensão. Aviso no rodapé ao conquistar e lista com o
   progresso de cada uma na aba Estatísticas (tecla `V`).
 - Loja do legado maior: níveis 4 e 5 em Começo Rápido, Contratos de Obra, Bolsas de
@@ -19,6 +19,9 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   Pesquisa Herdada, Engenharia Térmica, Seguro de Rede, Marcos Antecipados e Rede
   Herdada.
 - A loja do legado rola sob o cabeçalho de pontos e ascensão.
+- Monumento: compra sem teto no fim da loja do legado. Cada nível multiplica a produção
+  por 1.1 e custa um pouco mais que o anterior; com centenas de pontos, passa a valer
+  mais que guardá-los.
 
 ### Alterado
 - Save v9 (`state.achievements`). Saves antigos migram sozinhos e recebem no primeiro

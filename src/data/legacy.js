@@ -8,6 +8,12 @@ export const LEGACY = {
   bonusPerPoint: 0.1,
 };
 
+// Monumento: compra repetível, sem teto. Cada nível multiplica a produção por `mult` e
+// custa ceil(baseCost × growth^nível) pontos. Como o bônus de ponto guardado é somado
+// (+10% cada), ele perde força com centenas de pontos; o Monumento, multiplicativo, passa
+// a valer mais. Guardar ou erguer o Monumento é uma escolha que muda com o tempo.
+export const MONUMENT = { name: 'Monumento', mult: 1.1, baseCost: 10, growth: 1.15 };
+
 // `values[i]` é o efeito no nível i+1; `costs[i]`, o preço em pontos desse nível.
 // Os níveis 4 e 5 (1.1) custam bem mais: são o objetivo de quem já tem a loja básica.
 //   start        eólicas com que cada partida começa

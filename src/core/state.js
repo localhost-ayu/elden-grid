@@ -23,7 +23,7 @@ export function newState(seed = 1) {
     t: 0,           // tempo de jogo em segundos
     earned: 0,      // dinheiro ganho nesta partida (base do Legado; gastar não desconta)
     // Sobrevive à ascensão. earned = pontos já recebidos; points = não gastos.
-    legacy: { points: 0, earned: 0, lifetime: 0, ascensions: 0, shop: {} },
+    legacy: { points: 0, earned: 0, lifetime: 0, ascensions: 0, shop: {}, monument: 0 },
     achievements: {}, // { id: tempo de jogo da carreira ao conquistar } — sobrevive à ascensão
     // effects: [{ id, until }] (until null = crise em aberto); crisis: { id, deadline, game }
     events: { rng: seed >>> 0, next: SCHEDULE.first, effects: [], crisis: null, seen: 0 },
@@ -42,7 +42,7 @@ export function newState(seed = 1) {
 //   v6 = state.earned, state.legacy
 //   v7 = state.events
 //   v8 = state.stats, state.career
-//   v9 = state.achievements
+//   v9 = state.achievements, state.legacy.monument (fromSave preenche com 0)
 export const SAVE_VERSION = 9;
 
 const MIGRATIONS = {
@@ -120,7 +120,7 @@ export function isValidState(s) {
   if (!s.cooling || !Object.values(s.cooling).every(count) || !count(s.transformers)) return false;
   if (!finite(s.earned) || s.earned < 0) return false;
   const L = s.legacy;
-  if (!L || !count(L.points) || !count(L.earned) || !count(L.ascensions) || !finite(L.lifetime) || L.lifetime < 0) return false;
+  if (!L || !count(L.points) || !count(L.earned) || !count(L.ascensions) || !count(L.monument) || !finite(L.lifetime) || L.lifetime < 0) return false;
   if (!L.shop || typeof L.shop !== 'object' || !Object.values(L.shop).every(count)) return false;
   if (!isValidStats(s.stats) || !isValidStats(s.career)) return false;
   if (!s.achievements || typeof s.achievements !== 'object' || !Object.values(s.achievements).every((t) => finite(t) && t >= 0)) return false;
