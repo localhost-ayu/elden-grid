@@ -10,6 +10,16 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+### Adicionado
+- Versão do jogo na tela de título e em Opções.
+- Aviso de atualização: uma vez por dia, em segundo plano, o jogo procura a última tag no
+  GitHub e avisa no título quando há versão nova. Sem internet ou com timeout (3 s),
+  nada trava nem muda. Desliga em Opções → Checar atualizações ou com
+  `ELDEN_GRID_NO_UPDATE_CHECK=1`.
+- Item **Atualizar** no título (só com versão nova): num clone git limpo na `main`, roda
+  `git pull --ff-only` depois de confirmar; em qualquer outro caso, mostra como
+  atualizar à mão. Os saves nunca são tocados.
+
 ## [1.1.0] - 2026-10-16
 
 Herança: o legado ganha teto infinito e a partida longa ganha metas.

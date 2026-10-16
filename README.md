@@ -87,6 +87,16 @@ passou saturada, quando a loja do legado ficou completa e o nível do Monumento.
 | Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` · `V` conquistas |
 | Opções | `↑↓` escolhe, `←→`/`Enter` muda |
 
+## Versão e atualizações
+
+A versão aparece na tela de título. Uma vez por dia, em segundo plano, o jogo consulta as
+tags do repositório no GitHub e avisa quando há versão nova. Sem internet nada trava: o
+aviso só não aparece. Se a pasta do jogo for um clone git limpo na `main`, o item
+**Atualizar** do título roda `git pull --ff-only` (os saves ficam em `~/.elden-grid/` e
+não são tocados); senão, é só rodar `git pull` ou baixar a versão nova em
+[Releases](https://github.com/localhost-ayu/elden-grid/releases). Para não consultar a
+rede: Opções → Checar atualizações, ou `ELDEN_GRID_NO_UPDATE_CHECK=1`.
+
 ## Saves e opções
 
 Tudo fica em `~/.elden-grid/`, fora do repositório (saves da época em que o jogo se
@@ -97,7 +107,7 @@ chamava Reactor ASCII, em `~/.reactor-ascii/`, são movidos para lá na primeira
   versões antigas são migrados degrau por degrau (`saveVersion`).
 - `settings.json`: animações (ligadas, reduzidas, desligadas), 5/10/15 fps, símbolos
   Unicode ou ASCII puro, cores 256/16/sem cor, números curtos ou científicos e intervalo
-  do autosave e o tipo de disfarce. A variável de ambiente `NO_COLOR` desliga as cores.
+  do autosave, o tipo de disfarce e a checagem de atualizações (com a última versão vista). A variável de ambiente `NO_COLOR` desliga as cores.
 - `export-slotN.txt` / `import.txt`: o save em uma linha de texto (Base64), para levar
   para outra máquina. A exportação também tenta copiar o texto para a área de
   transferência do terminal (OSC 52).
@@ -108,7 +118,7 @@ chamava Reactor ASCII, em `~/.reactor-ascii/`, são movidos para lá na primeira
 index.js            liga terminal, storage e app; loop de quadros e autosave
 src/data/           só números e textos de balanceamento (fontes, pesquisa, eventos…)
 src/core/           regras do jogo, puras e determinísticas (sem terminal, sem disco)
-src/storage/        saves em slots, escrita atômica, migração, opções, exportação
+src/storage/        saves em slots, escrita atômica, migração, opções, exportação, versão
 src/ui/             tudo que toca o terminal: renderer, teclado, tema, telas, arte ASCII
 scripts/            simulação de balanceamento
 test/               node:test, sem dependências

@@ -28,6 +28,7 @@ import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import { DEFAULT_SETTINGS } from '../storage/settings.js';
+import { compareVersions, CHECK_EVERY_MS, RELEASES_URL } from '../storage/update.js';
 import { tooSmall, renderTooSmall } from './screens/too-small.js';
 
 // A 1ª letra do rótulo é a tecla direta, e é sublinhada na barra de abas.
@@ -60,10 +61,11 @@ const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 // `settings` é o objeto de opções; `onSettings(settings)` persiste quando ele muda.
 // `noColor`: NO_COLOR no ambiente (vence a opção de cores). `copy(text)`: tenta pôr o
 // texto na área de transferência do terminal; retorna se conseguiu. `who`: { user, host }
-// do sistema, para o prompt do disfarce parecer o do jogador.
+// do sistema, para o prompt do disfarce parecer o do jogador. `updater`: versão e
+// atualização (storage/update.js): { version, latest(), inspect(), pull() }.
 export function createApp({
   store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random,
-  noColor = false, copy = () => false, who = {},
+  noColor = false, copy = () => false, who = {}, updater = null,
 }) {
   const app = {
     state: null,  // jogo aberto (null = nenhum slot carregado ainda)
@@ -83,6 +85,8 @@ export function createApp({
     // Disfarce ativo: { d (ui/stealth.js), money } — money = saldo ao esconder, para o
     // resumo da volta. Fica por cima de qualquer modo (menu, jogo, opções...).
     stealth: null,
+    // Atualização: 'pulling' enquanto o git pull roda; 'pulled' = baixada, falta reiniciar.
+    updating: null,
     now,
   };
 
@@ -104,6 +108,45 @@ export function createApp({
     settings[k] = v;
     applySettings();
     onSettings(settings);
+    if (k === 'updateCheck' && v) checkUpdates({ force: true });
+  }
+
+  // Em segundo plano e no máximo 1x por dia. Falhou (sem conexão, timeout)? Nada muda e
+  // a próxima abertura tenta de novo. Retorna a promessa para os testes esperarem.
+  function checkUpdates({ force = false } = {}) {
+    if (!updater || !settings.updateCheck) return Promise.resolve(null);
+    if (!force && app.now - (settings.lastUpdateCheck ?? 0) < CHECK_EVERY_MS) return Promise.resolve(null);
+    return Promise.resolve()
+      .then(() => updater.latest())
+      .then((v) => {
+        if (!v) return null;
+        settings.latestVersion = v;
+        settings.lastUpdateCheck = app.now;
+        onSettings(settings);
+        return v;
+      })
+      .catch(() => null);
+  }
+  const hasUpdate = () => !!updater && !!settings.latestVersion && compareVersions(settings.latestVersion, updater.version) > 0;
+
+  // Clone git limpo na main: pergunta e roda git pull. Senão, diz como atualizar à mão.
+  function selfUpdate(ask) {
+    if (app.updating) return;
+    const r = updater.inspect();
+    if (!r.canPull) {
+      say(`Atualização manual: ${r.reason}. Rode "git pull" na pasta do jogo ou baixe em ${RELEASES_URL}`, 'info', 15000);
+      return;
+    }
+    ask(`Baixar a versão ${settings.latestVersion} com git pull? Seus saves não são tocados.`, () => {
+      app.updating = 'pulling';
+      say('Baixando a atualização…', 'info', 60000);
+      return updater.pull().then((res) => {
+        app.messages = app.messages.filter((m) => m.text !== 'Baixando a atualização…');
+        app.updating = res.ok ? 'pulled' : null;
+        if (res.ok) say(`Versão ${settings.latestVersion} baixada! Saia (Q) e abra o jogo de novo para jogar com ela.`, 'ok', 30000);
+        else say(`Não deu para atualizar: ${res.reason}`, 'err', 15000);
+      });
+    });
   }
 
   function exportSave() {
@@ -229,6 +272,11 @@ export function createApp({
     close: () => { app.crisisOpen = false; },
     announce,
     quit: () => onQuit(),
+    version: updater?.version ?? null,
+    latestVersion: settings.latestVersion,
+    get hasUpdate() { return hasUpdate(); },
+    get updating() { return app.updating; },
+    selfUpdate,
   });
 
   function toMenu() {
@@ -467,8 +515,9 @@ export function createApp({
     const room = (h) => rows - h.length - 2 - MAX_MESSAGES;
     if (app.mode === 'menu') {
       header = [];
-      help = menu.help;
-      body = menu.render(ctx('menu'), room(header), cols);
+      const c = ctx('menu');
+      help = helpOf(menu, c);
+      body = menu.render(c, room(header), cols);
     } else if (app.mode === 'game') {
       header = [tabBar(), ...statsLines(), banner(cols)];
       const tab = app.crisisOpen ? { id: 'crisis', screen: crisis } : TABS[app.tab];
@@ -503,9 +552,12 @@ export function createApp({
     });
   }
 
+  checkUpdates();
+
   return {
     key,
     update,
+    checkUpdates,
     lines,
     overlays,
     say,

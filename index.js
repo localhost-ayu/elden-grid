@@ -3,6 +3,7 @@ import {
   listSlots, readSlot, writeSlot, deleteSlot, importLegacy, exportSlot, importSlot, moveOldSaveDir,
 } from './src/storage/saves.js';
 import { readSettings, writeSettings } from './src/storage/settings.js';
+import { updater } from './src/storage/update.js';
 import * as term from './src/ui/term.js';
 import { parseKeys } from './src/ui/input.js';
 import { createScreen } from './src/ui/screen.js';
@@ -47,6 +48,8 @@ const app = createApp({
   noColor: Boolean(process.env.NO_COLOR),
   copy: term.copy,
   who: whoami(),
+  // ELDEN_GRID_NO_UPDATE_CHECK=1: nada de rede (a versão continua aparecendo).
+  updater: process.env.ELDEN_GRID_NO_UPDATE_CHECK ? { ...updater, latest: async () => null } : updater,
 });
 if (moved) app.say('Saves do Reactor ASCII movidos para ~/.elden-grid/.', 'ok', 10000);
 if (imported) app.say('Save antigo encontrado e importado para o Slot 1.', 'ok', 10000);
