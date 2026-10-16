@@ -10,6 +10,10 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [1.1.0] - 2026-10-16
+
+Herança: o legado ganha teto infinito e a partida longa ganha metas.
+
 ### Adicionado
 - Conquistas: 82 metas em oito categorias (8 secretas). Cada uma dá +1% de produção
   permanente e sobrevive à ascensão. Aviso no rodapé ao conquistar e lista com o
@@ -34,8 +38,8 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - O desconto dos Contratos de Obra vale também para os laboratórios.
 - `scripts/simulate.js` usa a loja nova e o Monumento e mostra quando a loja fica
   completa, o nível do Monumento, as partidas curtas e as conquistas.
-- Save v9 (`achievements`, `legacy.monument`, `auto.crank`). Saves antigos migram sozinhos e recebem no primeiro
-  quadro as conquistas que já cumpriam.
+- Save v9 (`achievements`, `legacy.monument`, `auto.crank`). Saves antigos migram
+  sozinhos e recebem no primeiro quadro as conquistas que já cumpriam.
 
 ## [1.0.1] - 2026-10-16
 
@@ -71,6 +75,7 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.1...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/localhost-ayu/elden-grid/releases/tag/v1.0.0
