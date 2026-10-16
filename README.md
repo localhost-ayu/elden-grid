@@ -42,6 +42,10 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Legado.** Depois de ganhar $25B numa partida dá para ascender: a partida recomeça e
   você recebe pontos (+10% de produção cada ponto guardado) que podem ser trocados por
   vantagens permanentes na loja do legado.
+- **Modo disfarce.** Apareceu alguém? `\` (barra invertida) troca a tela inteira, de
+  qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
+  log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
+  continua produzindo e pausa eventos e crises; `\` de novo volta e mostra quanto rendeu.
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%
   da produção e mostra um resumo.
 
@@ -67,6 +71,7 @@ passou saturada. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`
 
 | Onde | Teclas |
 |---|---|
+| Em qualquer tela | `\` disfarça o jogo (e volta) |
 | Em qualquer aba | `G` `P` `R` `L` `E` `O` (ou `Tab`/`Shift+Tab`) trocam de aba · `espaço` gira a manivela · `X` abre o manual de crise · `M`/`Esc` menu (salva) · `Q` sai (salva) |
 | Geradores | `↑↓` + `Enter` ou `0`–`9` compram · `B` lote · `U` upgrade · `A` auto-compra · `V` cena das usinas |
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
@@ -85,7 +90,7 @@ chamava Reactor ASCII, em `~/.reactor-ascii/`, são movidos para lá na primeira
   versões antigas são migrados degrau por degrau (`saveVersion`).
 - `settings.json`: animações (ligadas, reduzidas, desligadas), 5/10/15 fps, símbolos
   Unicode ou ASCII puro, cores 256/16/sem cor, números curtos ou científicos e intervalo
-  do autosave. A variável de ambiente `NO_COLOR` desliga as cores.
+  do autosave e o tipo de disfarce. A variável de ambiente `NO_COLOR` desliga as cores.
 - `export-slotN.txt` / `import.txt`: o save em uma linha de texto (Base64), para levar
   para outra máquina. A exportação também tenta copiar o texto para a área de
   transferência do terminal (OSC 52).

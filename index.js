@@ -1,3 +1,4 @@
+import os from 'node:os';
 import {
   listSlots, readSlot, writeSlot, deleteSlot, importLegacy, exportSlot, importSlot, moveOldSaveDir,
 } from './src/storage/saves.js';
@@ -21,6 +22,13 @@ if (imported) { settings.lastSlot = 1; writeSettings(settings); }
 
 const screen = createScreen();
 
+// Usuário e máquina de verdade no prompt do disfarce "terminal vazio".
+function whoami() {
+  let user = process.env.USER || process.env.USERNAME || 'dev';
+  try { user = os.userInfo().username || user; } catch {}
+  return { user, host: os.hostname().split('.')[0] || 'localhost' };
+}
+
 // Nenhum slot é carregado aqui: o jogador escolhe no menu (Continuar / Carregar slot),
 // e é nessa hora que o progresso offline é calculado.
 const app = createApp({
@@ -38,6 +46,7 @@ const app = createApp({
   // https://no-color.org: presente e não vazio = sem cor.
   noColor: Boolean(process.env.NO_COLOR),
   copy: term.copy,
+  who: whoami(),
 });
 if (moved) app.say('Saves do Reactor ASCII movidos para ~/.elden-grid/.', 'ok', 10000);
 if (imported) app.say('Save antigo encontrado e importado para o Slot 1.', 'ok', 10000);

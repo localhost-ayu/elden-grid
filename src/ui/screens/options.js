@@ -4,7 +4,7 @@ import { CHOICES } from '../../storage/settings.js';
 import { C, paint } from '../theme.js';
 
 export const confirmHelp = 'S confirmar  N/Esc cancelar';
-export const help = (ctx) => (ctx.ui.confirm ? confirmHelp : '↑↓ escolher  ←→/Enter mudar  Esc voltar  Q sair');
+export const help = (ctx) => (ctx.ui.confirm ? confirmHelp : '↑↓ escolher  ←→/Enter mudar  \\ disfarce  Esc voltar  Q sair');
 
 const OPTIONS = [
   {
@@ -29,6 +29,11 @@ const OPTIONS = [
     hint: 'sufixos k, M, B, T... ou notação científica desde 1000',
   },
   { key: 'autosaveSec', label: 'Autosave', name: (v) => `a cada ${v} s`, hint: 'o jogo também salva ao sair e ao voltar ao menu' },
+  {
+    key: 'disguise', label: 'Disfarce',
+    name: { build: 'testes rodando', logs: 'log de servidor', shell: 'terminal vazio' },
+    hint: '\\ (barra invertida) esconde o jogo de qualquer tela; \\ de novo volta',
+  },
 ];
 
 const ACTIONS = [

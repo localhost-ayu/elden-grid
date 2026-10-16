@@ -12,6 +12,7 @@ export const CHOICES = Object.freeze({
   colors: ['full', '16', 'none'],
   numbers: ['short', 'sci'],
   autosaveSec: [15, 30, 60],
+  disguise: ['build', 'logs', 'shell'],
 });
 export const AUTOSAVE_CHOICES = CHOICES.autosaveSec;
 
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   colors: 'full',
   numbers: 'short',
   autosaveSec: 15,
+  disguise: 'build', // o que a tecla \ mostra no lugar do jogo (ui/stealth.js)
 });
 
 const settingsPath = (dir) => path.join(dir, 'settings.json');

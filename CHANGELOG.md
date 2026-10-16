@@ -13,6 +13,10 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 ## [1.0.1] - 2026-10-16
 
 ### Adicionado
+- Modo disfarce: `\` troca a tela, de qualquer lugar do jogo, por testes rodando, o log
+  de um servidor ou um terminal vazio (escolha em Opções → Disfarce). Esconder salva o
+  jogo, que segue produzindo com eventos e crises em pausa; ao voltar, um resumo mostra
+  quanto rendeu.
 - Este `CHANGELOG.md` e tags de versão no git (`v1.0.0`, `v1.0.1`).
 
 ### Corrigido

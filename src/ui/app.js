@@ -13,7 +13,8 @@ import { createParticles, easeTo, spawn, stepParticles } from './anim.js';
 import { fmt, fmtPct, fmtClock, visibleLength, setNumberFormat } from './format.js';
 import { REWARD } from '../data/events.js';
 import { eventDef, isActive } from '../core/events.js';
-import { eventsStep, currentEvent } from '../core/incidents.js';
+import { eventsStep, currentEvent, holdEvents } from '../core/incidents.js';
+import { STEALTH_KEY, createDisguise, stepDisguise, disguiseKey, renderDisguise } from './stealth.js';
 import * as crisis from './screens/crisis.js';
 import * as menu from './screens/menu.js';
 import * as generators from './screens/generators.js';
@@ -56,10 +57,11 @@ const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 //   save(n, state) -> bool                          remove(n)
 // `settings` é o objeto de opções; `onSettings(settings)` persiste quando ele muda.
 // `noColor`: NO_COLOR no ambiente (vence a opção de cores). `copy(text)`: tenta pôr o
-// texto na área de transferência do terminal; retorna se conseguiu.
+// texto na área de transferência do terminal; retorna se conseguiu. `who`: { user, host }
+// do sistema, para o prompt do disfarce parecer o do jogador.
 export function createApp({
   store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random,
-  noColor = false, copy = () => false,
+  noColor = false, copy = () => false, who = {},
 }) {
   const app = {
     state: null,  // jogo aberto (null = nenhum slot carregado ainda)
@@ -76,6 +78,9 @@ export function createApp({
     particles: createParticles(),
     saleClock: 0,
     crisisOpen: false, // manual de crise aberto por cima da aba
+    // Disfarce ativo: { d (ui/stealth.js), money } — money = saldo ao esconder, para o
+    // resumo da volta. Fica por cima de qualquer modo (menu, jogo, opções...).
+    stealth: null,
     now,
   };
 
@@ -284,8 +289,28 @@ export function createApp({
     }
   }
 
+  // Esconder salva na hora (se o jogador fechar a janela depois, nada se perde) e não
+  // deixa rastro: sem mensagens, partículas ou alerta piscando por baixo do disfarce.
+  function toggleStealth() {
+    if (app.stealth) {
+      const { money } = app.stealth;
+      app.stealth = null;
+      if (app.state) {
+        const diff = app.state.money - money;
+        say(`De volta! Enquanto o jogo estava escondido: ${diff >= 0 ? '+' : '-'}$${fmt(Math.abs(diff))}; eventos e crises ficaram em pausa.`, 'ok', 6000);
+      }
+      return;
+    }
+    save();
+    app.stealth = { d: createDisguise(settings.disguise, { now: app.now, rng, ...who }), money: app.state?.money ?? 0 };
+    app.messages = [];
+    app.particles = createParticles();
+  }
+
   function key(k) {
+    if (k === STEALTH_KEY) return toggleStealth();
     if (k === 'ctrl-c') return onQuit();
+    if (app.stealth) return disguiseKey(app.stealth.d, k);
     if (app.mode === 'game') return gameKey(k);
     const screen = app.mode === 'menu' ? menu : FULL[app.mode].screen;
     if (screen.key(ctx(app.mode), k)) return;
@@ -299,7 +324,8 @@ export function createApp({
     if (app.state) {
       const shutdowns = tick(app.state, dt);
       autoStep(app.state, dt);
-      eventsStep(app.state, dt).forEach(announce);
+      if (app.stealth) holdEvents(app.state, dt);
+      else eventsStep(app.state, dt).forEach(announce);
       if (!app.state.events.crisis) app.crisisOpen = false;
       sampleHistory(app.history, app.state);
       // Animações desligadas: os números saltam direto para o valor real.
@@ -311,7 +337,7 @@ export function createApp({
       if (app.saleClock >= 1) {
         app.saleClock %= 1;
         const inc = income(app.state);
-        if (app.mode === 'game' && inc > 0 && animations() === 'on') {
+        if (app.mode === 'game' && !app.stealth && inc > 0 && animations() === 'on') {
           spawn(app.particles, { text: `+$${fmt(inc)}`, st: C.green + C.dim, x: 0.45 + rng() * 0.5, y: 0, vy: 4, life: 1.4 });
         }
       }
@@ -322,6 +348,7 @@ export function createApp({
     }
     stepParticles(app.particles, dt);
     app.messages = app.messages.filter((m) => m.until > now);
+    if (app.stealth) { app.messages = []; stepDisguise(app.stealth.d, now); }
   }
 
   const sep = (cols) => paint(C.dim, ' ' + '─'.repeat(Math.max(0, cols - 2)));
@@ -419,6 +446,8 @@ export function createApp({
   const helpOf = (screen, c) => (typeof screen.help === 'function' ? screen.help(c) : screen.help);
 
   function lines(cols, rows) {
+    // O disfarce vem antes até do aviso de tela pequena: nada do jogo pode aparecer.
+    if (app.stealth) return renderDisguise(app.stealth.d, cols, rows, app.now);
     if (tooSmall(cols, rows)) return renderTooSmall(cols, rows);
     let header;
     let body;
@@ -448,7 +477,7 @@ export function createApp({
   // do corpo): a cena das usinas. Fora dela (outras abas, telas cheias) não aparecem,
   // para nunca parecerem parte de um número da interface.
   function overlays(cols, rows) {
-    if (app.mode !== 'game' || app.crisisOpen || tooSmall(cols, rows)) return [];
+    if (app.mode !== 'game' || app.stealth || app.crisisOpen || tooSmall(cols, rows)) return [];
     const zone = app.ui[TABS[app.tab].id]?.particleZone;
     if (!zone) return [];
     const top = HEADER_H + zone.top;
@@ -472,6 +501,7 @@ export function createApp({
     get state() { return app.state; },
     get slot() { return app.slot; },
     get mode() { return app.mode; },
+    get hidden() { return app.stealth !== null; },
     get tab() { return TABS[app.tab].id; },
   };
 }
