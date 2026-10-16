@@ -36,6 +36,8 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   partida. Meta de $25B, contando só o tempo com o jogo aberto. Ao terminar, o jogo
   guarda o recorde do dia e mostra um código (ex.: `EG-1016-38:12-K7Q`) para comparar
   com os amigos.
+- 15 conquistas de desafio numa categoria nova (97 no total): níveis completos, todos os
+  desafios, nível V de cada um e sequências e tempos da semente do dia.
 
 ### Alterado
 - Perfil compartilhado entre os slots em `~/.elden-grid/profile.json` (níveis de desafio

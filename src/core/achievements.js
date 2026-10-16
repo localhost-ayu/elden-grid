@@ -9,6 +9,9 @@ import { COOLING } from '../data/heat.js';
 import { bought, power, income, gridLoad, upgradeLevel, upgradeTrack } from './engine.js';
 import { HOT_GENERATORS, coolingLevel, heatLevel, isShutdown } from './heat.js';
 import { shopLevel } from './prestige.js';
+import { activeProfile, totalTiers } from './rewards.js';
+import { challengeTier } from './profile.js';
+import { CHALLENGES } from '../data/challenges.js';
 
 const get = (obj, path) => path.split('.').reduce((o, k) => o?.[k], obj) ?? 0;
 const ratio = (v, at) => (at > 0 ? v / at : 0);
@@ -38,6 +41,12 @@ const PROGRESS = {
   fastWin: (s, a) => under(s.career.bestWin[a.game], a.at),
   without: (s, a) => (get(s.stats, a.key) === 0 ? ratio(s.stats.moneyEarned, a.at) : 0),
   count: (s, a) => ratio(Object.keys(s.achievements).length, a.at),
+  // As de desafio olham o perfil compartilhado (não o save): saem no save que estiver aberto.
+  challenge: (s, a) => ratio(challengeTier(activeProfile(), a.challenge), a.at),
+  tiers: (s, a) => ratio(totalTiers(), a.at),
+  allTiers: (s, a) => Math.min(...CHALLENGES.map((c) => ratio(challengeTier(activeProfile(), c.id), a.at))),
+  dailies: (s, a) => ratio(Object.keys(activeProfile().daily).length, a.at),
+  dailyFast: (s, a) => under(Math.min(Infinity, ...Object.values(activeProfile().daily)), a.at),
 };
 
 export const hasAchievement = (s, id) => id in s.achievements;
