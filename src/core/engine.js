@@ -3,7 +3,7 @@ import { GENERATORS, LAB } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import { GRID } from '../data/grid.js';
 import { MILESTONES, UPGRADE_TRACK, UPGRADE_OVERRIDES, UPGRADE_NAMES } from '../data/upgrades.js';
-import { envFactor } from './traits.js';
+import { envFactor, launchOpen, launchLeft } from './traits.js';
 import { heatFactor, heatStep } from './heat.js';
 import { contractDiscount, legacyMult, shopValue } from './prestige.js';
 import { eventMult } from './events.js';
@@ -158,6 +158,16 @@ export const labCost = (s) => unitCost(LAB.baseCost, LAB.growth, s.labs, shopVal
 export const genBulk = (s, g, amount) => bulk(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost'), amount);
 export const labBulk = (s, amount) => bulk(LAB.baseCost, LAB.growth, s.labs, s.money, shopValue(s, 'cost', 1), amount);
 export const genAffordable = (s, g) => maxAffordable(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost')).n;
+// Janela de lançamento (trait `launch`): null se a fonte não tem. Pesquisas 'launch'
+// alargam a janela.
+const launchTrait = (g) => g.traits.find((tr) => tr.type === 'launch');
+export const launchExtra = (s) => boughtOf(s, 'launch').reduce((sum, t) => sum + t.add, 0);
+export function genLaunch(s, g) {
+  const tr = launchTrait(g);
+  return tr ? { open: launchOpen(s, tr, launchExtra(s)), left: launchLeft(s, tr, launchExtra(s)) } : null;
+}
+// Dá para comprar agora (fora da janela de lançamento, não).
+export const genBuyable = (s, g) => genUnlocked(g, s) && (genLaunch(s, g)?.open ?? true);
 export const genUnlocked = (g, s) => (g.unlock === null || bought(s, g.unlock)) && !genDisabled(s, g);
 export const labUnlocked = (s) => s.totalEnergy >= LAB.unlockAt || s.labs > 0;
 export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => bought(s, r));

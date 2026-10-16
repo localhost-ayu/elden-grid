@@ -41,4 +41,5 @@ export const UPGRADE_NAMES = {
   tidal: ['Lâminas Bidirecionais', 'Comportas Pré-Fabricadas', 'Lagoa de Maré', 'Turbinas de Fluxo', 'Barragem Oceânica'],
   fusion: ['Ímãs Supercondutores', 'Tokamaks em Série', 'Divertor de Tungstênio', 'Reciclagem de Trítio', 'Stellarator Otimizado'],
   antimatter: ['Armadilhas de Penning', 'Linha de Montagem', 'Aniquilação Dirigida', 'Contenção Magnética', 'Motor de Dirac'],
+  swarm: ['Velas Solares', 'Satélites em Série', 'Espelhos Finos', 'Coletores de Micro-ondas', 'Anel de Dyson'],
 };

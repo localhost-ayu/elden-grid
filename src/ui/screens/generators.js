@@ -1,7 +1,7 @@
 import { GENERATORS, LAB, PAGE_SIZE } from '../../data/generators.js';
 import { TECHS } from '../../data/research.js';
 import {
-  power, genPower, rpRate, genUnlocked, labUnlocked, genEnv, genBulk, labBulk, genAffordable,
+  power, genPower, rpRate, genUnlocked, labUnlocked, genEnv, genBulk, labBulk, genAffordable, genLaunch,
   genModMult, milestones, nextMilestone, nextUpgrade, upgradeLevel, upgradeTrack,
 } from '../../core/engine.js';
 import { isDay, reservoirLevel, tideRising } from '../../core/traits.js';
@@ -15,7 +15,11 @@ import { scrollWindow } from '../list.js';
 import { CARD_H, sceneCards, sceneRows } from '../scene.js';
 
 export const help = (ctx) => {
-  if (ctx.ui.scene) return 'V volta à lista  0-9 comprar  B lote  espaço gira  Tab abas  M menu  Q sair';
+  if (ctx.ui.scene) {
+    return pageCount(ctx.state) > 1
+      ? 'V volta à lista  ←→ página  0-9 comprar  B lote  espaço gira  M menu  Q sair'
+      : 'V volta à lista  0-9 comprar  B lote  espaço gira  Tab abas  M menu  Q sair';
+  }
   return pageCount(ctx.state) > 1
     ? '↑↓ Enter comprar  ←→ página  B lote  U upgrade  V cena  0-9 atalho  Q sair'
     : '↑↓ Enter comprar  B lote  U upgrade  V cena  0-9 atalho  espaço gira  Q sair';
@@ -40,6 +44,10 @@ const TRAIT_LABEL = {
   // Por unidade, já com desconto de upgrades de eficiência.
   upkeep: (s, g, tr) => `-$${fmt(tr.money * genModMult(s, g, 'upkeep'))}/s`,
   heat: (s, g) => `calor ${Math.round(heatLevel(s, g) * 100)}%`,
+  launch: (s, g) => {
+    const w = genLaunch(s, g);
+    return w.open ? `janela aberta ${Math.ceil(w.left)}s` : `lançamento em ${Math.ceil(w.left)}s`;
+  },
 };
 // Desligado por superaquecimento é a informação mais urgente: aparece sozinha.
 const condition = (s, g) => (isShutdown(s, g)
@@ -152,13 +160,17 @@ function autoLine(s) {
 
 const clampSel = (ui, n) => (ui.sel = Math.max(0, Math.min(ui.sel ?? 0, n - 1)));
 
+// A cena inteira mostra a página aberta (←→ troca, como na lista).
 function sceneView(ctx, height, width) {
   const s = ctx.state;
-  const types = sceneCards(s).length;
-  const top = ' ' + paint(C.bold, 'Usinas') + paint(C.dim, `  ${fmt(power(s))} kW · ${types} ${types === 1 ? 'tipo' : 'tipos'}  ·  V volta à lista`);
+  const page = pageOf(ctx);
+  const pages = pageCount(s);
+  const types = sceneCards(s, page).length;
+  const where = pages > 1 ? ` · pág. ${page + 1}/${pages} ←→` : '';
+  const top = ' ' + paint(C.bold, 'Usinas') + paint(C.dim, `  ${fmt(power(s))} kW · ${types} ${types === 1 ? 'tipo' : 'tipos'}${where}  ·  V volta à lista`);
   ctx.ui.particleZone = null;
   if (!types) return [top, '', paint(C.dim, '   Nenhuma usina ainda — compre a primeira turbina na lista (V).')];
-  const rows = sceneRows(s, ctx.anim, width, Math.floor((height - 1) / CARD_H));
+  const rows = sceneRows(s, ctx.anim, width, Math.floor((height - 1) / CARD_H), page);
   ctx.ui.particleZone = { top: 1, height: rows.length };
   return [top, ...rows];
 }
@@ -208,6 +220,8 @@ function buy(ctx, it) {
   const g = it.gen;
   if (genDisabled(s, g)) return ctx.say(`${g.name} está desligada neste desafio.`, 'err');
   if (!genUnlocked(g, s)) return ctx.say(`${g.name} ainda está bloqueado (pesquisa).`, 'err');
+  const w = genLaunch(s, g);
+  if (w && !w.open) return ctx.say(`${g.name}: a próxima janela de lançamento abre em ${Math.ceil(w.left)} s.`, 'err');
   const before = s.owned[g.id];
   const n = buyGenBulk(s, g.id, amount);
   if (!n) return ctx.say(`Sem dinheiro para ${bulkLabel(amount)} ${g.name} ($${fmt(genBulk(s, g, amount).cost)}).`, 'err');

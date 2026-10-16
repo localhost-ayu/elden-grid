@@ -28,6 +28,13 @@ export const reservoirLevel = (s, tr) => 0.5 + 0.5 * Math.sin((TAU * s.t) / tr.p
 
 const sumAdd = (techs) => techs.reduce((sum, t) => sum + t.add, 0);
 
+// Janela de lançamento: aberta nos primeiros `window` (+ `extra`) s de cada `period` s.
+const phase = (s, tr) => ((s.t % tr.period) + tr.period) % tr.period;
+export const launchOpen = (s, tr, extra = 0) => phase(s, tr) < tr.window + extra;
+// Segundos até a janela abrir (fechada) ou fechar (aberta).
+export const launchLeft = (s, tr, extra = 0) =>
+  (launchOpen(s, tr, extra) ? tr.window + extra - phase(s, tr) : tr.period - phase(s, tr));
+
 export const TRAITS = {
   wind: { factor: (s) => windLevel(s), avg: () => 1 },
   daylight: {
@@ -41,6 +48,8 @@ export const TRAITS = {
     avg: (tr) => (tr.min + tr.max) / 2,
   },
   tide: { factor: (s, tr) => tideLevel(s, tr), avg: () => 1 },
+  // Em órbita a produção é fixa: a janela só limita quando se compra.
+  launch: { factor: () => 1, avg: () => 1 },
   // upkeep não mexe na produção: é custo, tratado em engine.upkeep().
 };
 

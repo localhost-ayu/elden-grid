@@ -14,6 +14,10 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - Páginas na aba Geradores: 10 fontes por página, com as teclas `0`–`9` valendo na página
   aberta e `←→` (ou `PgUp`/`PgDn`) para trocar. A segunda página aparece quando a
   primeira fonte dela é liberada.
+- **Enxame Solar Orbital**, a primeira fonte depois da antimatéria: espelhos em órbita,
+  sem noite e com produção fixa, mas que só se compram na janela de lançamento (8 s a
+  cada 40 s; a auto-compra espera a janela). Pesquisas: Espelhos em Órbita (libera),
+  Enxame de Dyson (x2) e Foguetes Reutilizáveis (janela +8 s).
 
 ## [1.3.0] - 2026-10-16
 

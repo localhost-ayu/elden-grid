@@ -10,6 +10,7 @@
 //       'battery'  (+`add` no piso noturno do solar: baterias guardam a energia do dia)
 //       'capacity' (x na capacidade de transmissão da rede)
 //       'auto'     (auto-compra do gerador mais barato a cada `interval` segundos)
+//       'launch'   (+`add` s na janela de lançamento do Enxame)
 export const TECHS = [
   // ---- eólica ----
   { id: 't_wind2',       name: 'Pás Aerodinâmicas',        cost: 3,      req: [],                type: 'genMult', gen: 'wind', mult: 2 },
@@ -30,6 +31,11 @@ export const TECHS = [
   { id: 't_tidal',       name: 'Barragens de Maré',        cost: 8000,   req: ['t_nuclear'],     type: 'unlock' },
   { id: 't_fusion',      name: 'Fusão Magnética',          cost: 15000,  req: ['t_nuclear'],     type: 'unlock' },
   { id: 't_antimatter',  name: 'Contenção de Antimatéria', cost: 60000,  req: ['t_fusion'],      type: 'unlock' },
+
+  // ---- Fronteira (1.4): depois da antimatéria ----
+  { id: 't_orbital',     name: 'Espelhos em Órbita',       cost: 250000, req: ['t_antimatter'],  type: 'unlock' },
+  { id: 't_swarm2',      name: 'Enxame de Dyson',          cost: 600000, req: ['t_orbital'],     type: 'genMult', gen: 'swarm', mult: 2 },
+  { id: 't_launch',      name: 'Foguetes Reutilizáveis',   cost: 400000, req: ['t_orbital'],     type: 'launch', add: 8 },
 
   // ---- rede e mercado ----
   { id: 't_grid',        name: 'Rede Inteligente',         cost: 20,     req: [],                type: 'price',    mult: 1.25 },
