@@ -21,6 +21,10 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   ← →, é preciso segurar a pressão numa faixa verde no ritmo; chegar a 100% estoura a
   válvula. Nos níveis altos a faixa oscila. A conquista Pistão Humano passou a pedir as
   válvulas abertas em até 5 s.
+- O custo de falhar ou chamar a equipe sobe com o nível da crise: de 8% do caixa ou 45 s
+  de renda (nível 0) até 25% do caixa ou 5 min de renda (nível 10). O bônus Rede afinada
+  dura de 45 s a 90 s, conforme o nível.
+- Seguro de Rede nível 3 reduz o dano das crises a 35%, em vez de zerá-lo.
 
 ## [1.2.0] - 2026-10-16
 

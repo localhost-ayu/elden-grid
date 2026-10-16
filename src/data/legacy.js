@@ -86,7 +86,9 @@ export const SHOP = [
   },
   { id: 'research', name: 'Pesquisa Herdada', type: 'techs', costs: [5, 40, 2000], values: [T1, T2, T3] },
   { id: 'thermal', name: 'Engenharia Térmica', type: 'cooling', costs: [6, 80, 6000], values: [1, 2, 3] },
-  { id: 'insurance', name: 'Seguro de Rede', type: 'damage', costs: [4, 50, 1500], values: [0.75, 0.5, 0] },
+  // O Seguro não zera o dano: as crises endurecem com as ascensões e precisam continuar
+  // pesando (1.3).
+  { id: 'insurance', name: 'Seguro de Rede', type: 'damage', costs: [4, 50, 1500], values: [0.75, 0.5, 0.35] },
   { id: 'early', name: 'Marcos Antecipados', type: 'milestones', costs: [300, 50000], values: [0.8, 0.6] },
   { id: 'inherited', name: 'Rede Herdada', type: 'transformers', costs: [3, 30, 1000], values: [1, 2, 3] },
 ];

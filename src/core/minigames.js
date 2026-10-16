@@ -6,8 +6,8 @@
 // DIFFICULTY (data/events.js).
 import { CRISIS, DIFFICULTY } from '../data/events.js';
 
-// Parâmetro [nível 0, nível máximo] no nível pedido.
-const lerp = ([a, b], level) => a + (b - a) * Math.min(1, Math.max(0, level / CRISIS.maxLevel));
+// Parâmetro [nível 0, nível máximo] no nível pedido (também usado pelos custos e bônus).
+export const lerp = ([a, b], level) => a + (b - a) * Math.min(1, Math.max(0, level / CRISIS.maxLevel));
 const int = (range, level) => Math.round(lerp(range, level));
 // Regra que só liga a partir do nível `from`: `value` vai de [nível from, nível máximo].
 const from = (rule, level) => (level < rule.from ? null

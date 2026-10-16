@@ -2,7 +2,7 @@
 // minijogo. Abre por cima da aba atual (tecla X) e o jogo continua rodando por trás.
 import { CRISIS, REWARD } from '../../data/events.js';
 import { eventDef } from '../../core/events.js';
-import { beginCrisis, callCrew, crisisDef, crisisInput, crisisLevel, damage } from '../../core/incidents.js';
+import { beginCrisis, callCrew, crisisDef, crisisInput, crisisLevel, damage, damageTerms, rewardDuration } from '../../core/incidents.js';
 import { bandEdges, inBand } from '../../core/minigames.js';
 import { C, paint, glyphs } from '../theme.js';
 import { fmt, fmtClock, bar } from '../format.js';
@@ -19,6 +19,14 @@ const dots = (n, total, on = glyphs().dot, off = glyphs().dotEmpty) => on.repeat
 const flash = (g) => (g.last && g.time - g.last.at < 0.3 ? g.last.ok : null);
 
 const TRACK = 50;
+
+// "8% do caixa ou 45 s de renda", no nível atual.
+function terms(s) {
+  const { moneyShare, incomeSeconds } = damageTerms(s);
+  const sec = Math.round(incomeSeconds);
+  const time = sec < 120 ? `${sec} s` : `${Math.round(sec / 60)} min`;
+  return `${Math.round(moneyShare * 100)}% do caixa ou ${time} de renda`;
+}
 
 function timingWidget(g) {
   const gl = glyphs();
@@ -104,8 +112,8 @@ export function render(ctx) {
   lines.push(...(c.game ? WIDGET[c.game.kind](c.game) : ['', '   ' + paint(C.bold + C.yellow, 'Enter começa quando você estiver pronto.'), '']));
   lines.push(
     '',
-    '   ' + paint(C.green, `Resolver você mesmo: grátis + ${REWARD.name} (produção x${REWARD.effects[0].mult} por ${REWARD.duration} s)`),
-    '   ' + paint(C.yellow, `Falhar ou chamar a equipe [P]: $${fmt(cost)}`) + paint(C.dim, '  (até 10% do caixa ou 1 min de renda)'),
+    '   ' + paint(C.green, `Resolver você mesmo: grátis + ${REWARD.name} (produção x${REWARD.effects[0].mult} por ${Math.round(rewardDuration(s))} s)`),
+    '   ' + paint(C.yellow, `Falhar ou chamar a equipe [P]: $${fmt(cost)}`) + paint(C.dim, `  (até ${terms(s)})`),
   );
   if (ctx.ui.confirm) lines.push('', '   ' + paint(C.yellow + C.bold, `Chamar a equipe por $${fmt(cost)}?`) + '  ' + paint(C.bold, '(S/N)'));
   return lines;

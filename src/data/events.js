@@ -102,7 +102,9 @@ export const SCHEDULE = {
 
 // Danos de uma crise = o menor entre uma fração do dinheiro guardado e alguns segundos
 // de renda: dói, mas nunca leva a poupança embora nem pune demais quem está ausente.
-export const DAMAGE = { moneyShare: 0.1, incomeSeconds: 60 };
+// Como os minijogos, sobem com o nível da crise: [nível 0, nível máximo].
+export const DAMAGE = { moneyShare: [0.08, 0.25], incomeSeconds: [45, 300] };
 
-// Resolver no braço sai de graça e ainda rende um bônus.
-export const REWARD = { id: 'tuned', name: 'Rede afinada', duration: 45, effects: [{ type: 'output', mult: 1.25 }] };
+// Resolver no braço sai de graça e ainda rende um bônus, mais longo nos níveis altos
+// (`duration`: [nível 0, nível máximo] em segundos).
+export const REWARD = { id: 'tuned', name: 'Rede afinada', duration: [45, 90], effects: [{ type: 'output', mult: 1.25 }] };

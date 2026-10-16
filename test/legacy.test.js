@@ -293,7 +293,8 @@ test('loja 1.1: Marcos Antecipados baixam a exigência; Seguro de Rede barateia 
   s.legacy.shop.insurance = 2;
   assert.ok(Math.abs(damage(s) - full * 0.5) < 1e-9);
   s.legacy.shop.insurance = 3;
-  assert.equal(damage(s), 0);
+  assert.ok(damage(s) > 0, 'o seguro não zera o dano');
+  assert.ok(Math.abs(damage(s) - full * 0.35) < 1e-9);
 });
 
 test('Monumento: sem teto, custo crescente, multiplica a produção e sobrevive à ascensão', async () => {

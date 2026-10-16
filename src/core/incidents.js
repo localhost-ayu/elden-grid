@@ -3,7 +3,7 @@
 // Não roda offline (quem chama é o loop do jogo, nunca applyOffline).
 import { EVENTS, CRISES, CRISIS, SCHEDULE, DAMAGE, REWARD } from '../data/events.js';
 import { rand, eventDef, isActive } from './events.js';
-import { MINIGAMES } from './minigames.js';
+import { MINIGAMES, lerp } from './minigames.js';
 import { power, income, rpRate, gridLoad } from './engine.js';
 import { HOT_GENERATORS } from './heat.js';
 import { add, best } from './records.js';
@@ -43,9 +43,17 @@ export const crisisLevel = (s) => (s.run
   : Math.min(s.legacy.ascensions, CRISIS.maxLevel));
 
 export const crisisDef = (s) => s.events.crisis && CRISES[eventDef(s.events.crisis.id).crisis];
-// Seguro de Rede (Legado) reduz a conta, até zerar.
-export const damage = (s) =>
-  Math.max(0, Math.min(s.money * DAMAGE.moneyShare, income(s) * DAMAGE.incomeSeconds) * shopValue(s, 'damage', 1));
+// Fração do caixa e segundos de renda que a crise cobra neste nível.
+export const damageTerms = (s) => ({
+  moneyShare: lerp(DAMAGE.moneyShare, crisisLevel(s)),
+  incomeSeconds: lerp(DAMAGE.incomeSeconds, crisisLevel(s)),
+});
+// Seguro de Rede (Legado) reduz a conta, sem zerar (a dificuldade continua valendo).
+export function damage(s) {
+  const { moneyShare, incomeSeconds } = damageTerms(s);
+  return Math.max(0, Math.min(s.money * moneyShare, income(s) * incomeSeconds) * shopValue(s, 'damage', 1));
+}
+export const rewardDuration = (s) => lerp(REWARD.duration, crisisLevel(s));
 // Evento em andamento (não conta o bônus de recompensa), ou null.
 export const currentEvent = (s) => s.events.effects.find((a) => a.id !== REWARD.id && isActive(s, a)) ?? null;
 
@@ -81,7 +89,7 @@ function resolve(s, outcome) {
   }
   s.events.effects = s.events.effects.filter((a) => a.id !== c.id);
   // Apagão Eterno corta o bônus: com tantas crises, ele viraria vantagem.
-  if (outcome === 'won' && !rules(s).noReward) s.events.effects.push({ id: REWARD.id, until: s.t + REWARD.duration });
+  if (outcome === 'won' && !rules(s).noReward) s.events.effects.push({ id: REWARD.id, until: s.t + rewardDuration(s) });
   s.events.crisis = null;
   scheduleNext(s);
   return { type: 'resolved', id: c.id, outcome, cost };

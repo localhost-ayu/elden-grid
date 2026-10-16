@@ -5,7 +5,7 @@ import { EVENTS, SCHEDULE, DAMAGE, REWARD, CRISIS } from '../src/data/events.js'
 import { rand, eventMult } from '../src/core/events.js';
 import { MINIGAMES } from '../src/core/minigames.js';
 import {
-  eventsStep, eligibleEvents, beginCrisis, crisisInput, callCrew, damage, currentEvent, crisisLevel,
+  eventsStep, eligibleEvents, beginCrisis, crisisInput, callCrew, damage, currentEvent, crisisLevel, damageTerms, rewardDuration,
 } from '../src/core/incidents.js';
 import { power, price, capacity, tick, applyOffline, income } from '../src/core/engine.js';
 import { heatTarget } from '../src/core/heat.js';
@@ -125,13 +125,21 @@ test('descoberta dá PP proporcional ao laboratório', () => {
   assert.ok(note.rp > 0);
 });
 
-test('danos: o menor entre 10% do caixa e 1 min de renda', () => {
+test('danos: o menor entre uma fração do caixa e alguns segundos de renda, maiores no nível alto', () => {
   const s = newState();
   s.owned.wind = 10;
   s.money = 1e9;
-  assert.equal(damage(s), income(s) * DAMAGE.incomeSeconds);
+  assert.equal(damage(s), income(s) * DAMAGE.incomeSeconds[0]);
   s.money = 100;
-  assert.equal(damage(s), 100 * DAMAGE.moneyShare);
+  assert.equal(damage(s), 100 * DAMAGE.moneyShare[0]);
+  s.legacy.ascensions = CRISIS.maxLevel;
+  assert.equal(damage(s), 100 * DAMAGE.moneyShare[1]);
+  s.money = 1e9;
+  assert.equal(damage(s), income(s) * DAMAGE.incomeSeconds[1]);
+  assert.deepEqual(damageTerms(s), { moneyShare: DAMAGE.moneyShare[1], incomeSeconds: DAMAGE.incomeSeconds[1] });
+  assert.equal(rewardDuration(s), REWARD.duration[1]);
+  s.legacy.ascensions = 0;
+  assert.equal(rewardDuration(s), REWARD.duration[0]);
   s.money = 0;
   assert.equal(damage(s), 0);
 });

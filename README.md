@@ -38,7 +38,9 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Eventos e crises.** Tempestades, picos de demanda e descobertas mudam o jogo por um
   tempo. Crises (blecaute, onda de calor, sobrecarga) ficam ativas até alguém agir: o
   manual de crise explica o minijogo de cada uma. Resolver sai de graça e dá um bônus;
-  falhar, chamar a equipe ou ignorar custa o menor entre 10% do caixa e 1 min de renda.
+  falhar, chamar a equipe ou ignorar custa o menor entre uma fração do caixa e alguns
+  segundos de renda. As crises têm nível (0 a 10) que sobe a cada ascensão: começam
+  fáceis e baratas e terminam pedindo atenção (até 25% do caixa ou 5 min de renda).
 - **Legado.** A ascensão fecha uma partida completa: pede $25B ganhos nela **e** uma usina
   de antimatéria ou todas as pesquisas concluídas. Quanto mais a partida rende, mais
   pontos ela dá. Ao ascender, a partida recomeça e você recebe pontos (+10% de produção

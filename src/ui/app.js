@@ -13,7 +13,7 @@ import { createParticles, easeTo, spawn, stepParticles } from './anim.js';
 import { fmt, fmtPct, fmtClock, fmtDuration, visibleLength, setNumberFormat } from './format.js';
 import { REWARD } from '../data/events.js';
 import { eventDef, isActive } from '../core/events.js';
-import { eventsStep, currentEvent, holdEvents } from '../core/incidents.js';
+import { eventsStep, currentEvent, holdEvents, rewardDuration } from '../core/incidents.js';
 import { checkAchievements } from '../core/achievements.js';
 import { ACHIEVEMENT_BONUS } from '../data/achievements.js';
 import { STEALTH_KEY, createDisguise, stepDisguise, disguiseKey, renderDisguise } from './stealth.js';
@@ -419,7 +419,7 @@ export function createApp({
       const the = `${def.article} ${def.name.toLowerCase()}`;
       const solved = def.article === 'o' ? 'resolvido' : 'resolvida';
       const [text, kind] = {
-        won: [`${def.name} ${solved} por você! Sem custo + ${REWARD.name} por ${REWARD.duration} s.`, 'ok'],
+        won: [`${def.name} ${solved} por você! Sem custo + ${REWARD.name} por ${Math.round(rewardDuration(app.state))} s.`, 'ok'],
         lost: [`Não deu: a equipe consertou ${the} por ${cost}.`, 'err'],
         crew: [`Equipe chamada: ${the} foi ${solved} por ${cost}.`, 'info'],
         timeout: [`Ninguém atendeu: a equipe resolveu ${the} sozinha por ${cost}.`, 'err'],
