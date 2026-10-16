@@ -2,6 +2,9 @@
 // chega a cada marco. Serve para ajustar as curvas em src/data/ com números, não no olho.
 //
 //   bun scripts/simulate.js [minutos=90] [--seeds=5] [--crises=play|idle|off] [--runs=1]
+//                           [--challenge=<id> --tier=1..5 | --daily=AAAA-MM-DD]
+// Com desafio ou semente do dia, o bot joga a partida especial (sem legado) e mostra
+// quanto tempo levou até a meta.
 //
 // Bot: gira a manivela nos 5 primeiros minutos, pesquisa tudo que puder, compra a fonte
 // com mais kW médio por $ (MAX), upgrades, laboratório, resfriamento e transformadores
@@ -22,6 +25,7 @@ import { GENERATORS } from '../src/data/generators.js';
 import { TECHS } from '../src/data/research.js';
 import { SHOP, LEGACY, MONUMENT } from '../src/data/legacy.js';
 import { ACHIEVEMENTS } from '../src/data/achievements.js';
+import { applyRunStart, goalReached, runGoal, dailySeed } from '../src/core/challenges.js';
 
 const DT = 0.1;
 
@@ -83,8 +87,11 @@ function botStep(s, crises) {
   }
 }
 
-export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1 } = {}) {
-  const s = newState(seed);
+export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null } = {}) {
+  const s = newState(daily ? dailySeed(daily) : seed);
+  if (challenge) s.run = { challenge, tier };
+  if (daily) s.run = { daily };
+  if (s.run) applyRunStart(s);
   if (crises === 'off') s.events.next = Infinity;
   const marks = {};
   const ascensions = [];
@@ -98,6 +105,7 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1 } =
     if (s.labs > 0 && !('lab' in marks)) marks.lab = min;
     if (!('shop' in marks) && shopDone(s)) marks.shop = min;
     if (!('monument' in marks) && s.legacy.monument > 0) marks.monument = min;
+    if (goalReached(s)) { s.run.done = true; marks.goal = min; break; }
     if (P.canAscend(s) && P.legacyGain(s) >= Math.max(1, s.legacy.earned / 2) && ascensions.length < runs) {
       const gain = P.ascend(s);
       ascensions.push({ at: min, took: min - runStart, gain, n: s.legacy.ascensions });
@@ -124,9 +132,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const seeds = Number(args.seeds ?? 5);
   const crises = args.crises ?? 'play';
   const runs = Number(args.runs ?? 1);
-  console.log(`Simulação: ${minutes} min, ${seeds} seeds, crises=${crises}, até ${runs} ascensão(ões)\n`);
+  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null };
+  const what = special.challenge ? ` · desafio ${special.challenge} ${special.tier}` : special.daily ? ` · semente ${special.daily}` : '';
+  console.log(`Simulação: ${minutes} min, ${seeds} seeds, crises=${crises}, até ${runs} ascensão(ões)${what}\n`);
   for (let seed = 1; seed <= seeds; seed++) {
-    const { s, marks, ascensions, saturated } = simulate({ minutes, seed, crises, runs });
+    const { s, marks, ascensions, saturated } = simulate({ minutes, seed, crises, runs, ...special });
+    if (s.run) {
+      const goal = `$${runGoal(s).toExponential(1)}`;
+      console.log(`seed ${seed}: meta ${goal} ${'goal' in marks ? `em ${clock(marks.goal)}` : `não alcançada em ${minutes} min ($${s.earned.toExponential(2)})`}`);
+      continue;
+    }
     const order = ['solar', 'lab', 'hydro', 'gas', 'nuclear', 'tidal', 'fusion', 'antimatter'];
     const m = order.filter((k) => k in marks).map((k) => `${k} ${clock(marks[k])}`).join('  ');
     // Muitas ascensões: mostra as 8 primeiras e as 4 últimas.

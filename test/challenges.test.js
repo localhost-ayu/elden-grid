@@ -56,21 +56,28 @@ test('Rede Velha, Mercado em Queda e Combustível Caro mudam rede, preço e oper
   normal.techs = { t_grid: true, t_hv: true };
   const old = inRun('oldgrid', 3);
   old.techs = { ...normal.techs };
-  assert.ok(Math.abs(capacity(old) / capacity(normal) - 20 ** 0.5 / 20) < 1e-9);
+  const exp = CHALLENGES.find((c) => c.id === 'oldgrid').rules[2].capacityExp;
+  assert.ok(Math.abs(capacity(old) / capacity(normal) - 20 ** exp / 20) < 1e-9);
 
   const crash = inRun('crash', 1);
   assert.equal(priceDecay(crash), 1);
-  crash.stats.playTime = 2400;
+  const { priceHalfLife, priceFloor } = CHALLENGES.find((c) => c.id === 'crash').rules[0];
+  crash.stats.playTime = priceHalfLife;
   assert.ok(Math.abs(priceDecay(crash) - 0.5) < 1e-9);
   crash.stats.playTime = 1e6;
-  assert.equal(priceDecay(crash), 0.4);
-  assert.ok(Math.abs(priceBase(crash) - 0.4) < 1e-9);
+  assert.equal(priceDecay(crash), priceFloor);
+  assert.ok(Math.abs(priceBase(crash) - priceFloor) < 1e-9);
 
   const fuel = inRun('fuel', 5);
   fuel.owned.gas = 2;
+  fuel.owned.nuclear = 2;
   const gas = newState();
   gas.owned.gas = 2;
-  assert.equal(upkeep(fuel), upkeep(gas) * 10);
+  gas.owned.nuclear = 2;
+  const rule = CHALLENGES.find((c) => c.id === 'fuel').rules[4];
+  assert.equal(upkeep(fuel), upkeep(gas) * rule.upkeep);
+  const nuclear = GENERATORS.find((g) => g.id === 'nuclear');
+  assert.ok(Math.abs(power(fuel) / power(gas) - rule.output.nuclear) < 1e-9);
 });
 
 test('Apagão Eterno: eventos bem mais frequentes', () => {

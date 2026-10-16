@@ -74,7 +74,8 @@ function resolve(s, outcome) {
     s.career.streak = 0;
   }
   s.events.effects = s.events.effects.filter((a) => a.id !== c.id);
-  if (outcome === 'won') s.events.effects.push({ id: REWARD.id, until: s.t + REWARD.duration });
+  // Apagão Eterno corta o bônus: com tantas crises, ele viraria vantagem.
+  if (outcome === 'won' && !rules(s).noReward) s.events.effects.push({ id: REWARD.id, until: s.t + REWARD.duration });
   s.events.crisis = null;
   scheduleNext(s);
   return { type: 'resolved', id: c.id, outcome, cost };

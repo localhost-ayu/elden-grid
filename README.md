@@ -80,7 +80,9 @@ npm run simulate       # ou: bun scripts/simulate.js 90 --seeds=5
 
 `scripts/simulate.js` joga sozinho usando só a lógica do jogo e imprime quando chegou a
 cada marco (primeira solar, nuclear, fusão, cada ascensão), as crises, quanto tempo a rede
-passou saturada, quando a loja do legado ficou completa e o nível do Monumento. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
+passou saturada, quando a loja do legado ficou completa e o nível do Monumento. Com
+`--challenge=<id> --tier=N` (ou `--daily=AAAA-MM-DD`), joga um desafio e mostra o tempo
+até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
 
 ## Controles
 

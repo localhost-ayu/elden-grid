@@ -60,6 +60,9 @@ export function genModifiers(s, g) {
   }
   const contracts = shopValue(s, 'cost');
   if (contracts) mods.push({ type: 'cost', mult: contracts, source: 'Legado' });
+  const rule = rules(s);
+  if (rule.cost[g.id]) mods.push({ type: 'cost', mult: rule.cost[g.id], source: 'Desafio' });
+  if (rule.output[g.id]) mods.push({ type: 'output', mult: rule.output[g.id], source: 'Desafio' });
   if (g.id === 'solar' && reward(s, 'solar')) mods.push({ type: 'output', mult: 1 + reward(s, 'solar'), source: 'Desafios' });
   return mods;
 }

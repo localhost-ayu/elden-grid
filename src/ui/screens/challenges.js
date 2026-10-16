@@ -21,12 +21,18 @@ const genName = (id) => GENERATORS.find((g) => g.id === id)?.short.toLowerCase()
 export function describeRule(r) {
   const parts = [];
   if (r.eventGap) parts.push(`eventos ${(1 / r.eventGap).toFixed(1)}x mais frequentes`);
-  if (r.crisisWeight) parts.push(`crises ${r.crisisWeight}x mais prováveis`);
-  if (r.disabled) parts.push(`sem ${r.disabled.map(genName).join(' e sem ')}${r.noCrank ? ' e sem manivela' : ''}`);
-  if (r.start) parts.push(`começa com ${Object.entries(r.start).map(([id, n]) => `${n} ${genName(id)}`).join(', ')}`);
+  if (r.crisisWeight) parts.push(`crises x${r.crisisWeight}`);
+  if (r.disabled) {
+    const names = [...r.disabled.map(genName), ...(r.noCrank ? ['manivela'] : [])];
+    parts.push(`sem ${names.length > 1 ? `${names.slice(0, -1).join(', ')} e ${names.at(-1)}` : names[0]}`);
+  }
   if (r.capacityExp) parts.push(`Linhas de Alta Tensão rendem x${(20 ** r.capacityExp).toFixed(1)} em vez de x20`);
   if (r.priceHalfLife) parts.push(`preço cai à metade a cada ${Math.round(r.priceHalfLife / 60)} min, até ${Math.round(r.priceFloor * 100)}%`);
-  if (r.upkeep) parts.push(`custo de operação x${r.upkeep}`);
+  if (r.upkeep) parts.push(`operação x${r.upkeep}`);
+  if (r.cost) parts.push(`construir ${Object.keys(r.cost).map(genName).join('/')} x${Object.values(r.cost)[0]}`);
+  if (r.noReward) parts.push('sem bônus por vitória');
+  if (r.output) parts.push(`usinas a combustível x${Object.values(r.output)[0]}`);
+  if (r.heat) parts.push(`calor x${r.heat}`);
   return parts.join(', ');
 }
 
