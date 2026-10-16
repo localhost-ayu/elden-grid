@@ -14,6 +14,13 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - Ascender agora fecha uma partida completa: além de $25B ganhos na partida, é preciso
   ter uma usina de antimatéria ou concluir todas as pesquisas. A aba Legado mostra as
   condições com o que falta. Ficar mais tempo na partida continua rendendo mais pontos.
+- Crises têm nível de dificuldade, de 0 a 10, que sobe 1 por ascensão. O nível 0 é mais
+  fácil que antes; nos altos a faixa do timing estreita, a sequência fica mais longa e
+  some da tela depois de alguns segundos. O nível aparece no manual de crise.
+- Válvulas de alívio (onda de calor) com regra nova: em vez de encher a barra martelando
+  ← →, é preciso segurar a pressão numa faixa verde no ritmo; chegar a 100% estoura a
+  válvula. Nos níveis altos a faixa oscila. A conquista Pistão Humano passou a pedir as
+  válvulas abertas em até 5 s.
 
 ## [1.2.0] - 2026-10-16
 

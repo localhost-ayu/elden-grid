@@ -120,7 +120,7 @@ test('UI: aviso ao conquistar (agrupado se forem muitas) e V alterna para a list
   Object.assign(many.career, { energy: 2e6, moneyEarned: 2e9, cranks: 200 });
   const b = open(many);
   b.app.update(0.1, 100);
-  assert.match(b.text(), /★ \d+ conquistas desbloqueadas!/);
+  assert.match(b.text(), /★ \d+ conquistas novas!/);
 });
 
 test('conquistas de desafio olham o perfil compartilhado e saem no save aberto', async () => {

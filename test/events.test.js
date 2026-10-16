@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newState, migrate, fromSave, isValidState, SAVE_VERSION } from '../src/core/state.js';
-import { EVENTS, SCHEDULE, DAMAGE, REWARD } from '../src/data/events.js';
+import { EVENTS, SCHEDULE, DAMAGE, REWARD, CRISIS } from '../src/data/events.js';
 import { rand, eventMult } from '../src/core/events.js';
 import { MINIGAMES } from '../src/core/minigames.js';
 import {
-  eventsStep, eligibleEvents, beginCrisis, crisisInput, callCrew, damage, currentEvent,
+  eventsStep, eligibleEvents, beginCrisis, crisisInput, callCrew, damage, currentEvent, crisisLevel,
 } from '../src/core/incidents.js';
 import { power, price, capacity, tick, applyOffline, income } from '../src/core/engine.js';
 import { heatTarget } from '../src/core/heat.js';
@@ -196,18 +196,56 @@ test('minijogo de timing: acerto na faixa, erro fora, faixa estreita e acelera',
   assert.equal(g.status, 'lost'); // tempo esgotado
 });
 
-test('minijogo de pressão: só alternar conta e a pressão vaza', () => {
-  const g = MINIGAMES.mash.create();
-  MINIGAMES.mash.input(g, 'left');
-  MINIGAMES.mash.input(g, 'left'); // segurar a mesma tecla não enche
+test('minijogo de pressão: alternar no ritmo segura a faixa; martelar estoura', () => {
+  const M = MINIGAMES.mash;
+  const g = M.create(() => 0.5);
+  M.input(g, 'left');
+  M.input(g, 'left'); // segurar a mesma tecla não sobe
   assert.equal(g.fill, g.gain);
-  MINIGAMES.mash.step(g, 0.1);
-  assert.ok(g.fill < g.gain);
-  for (let i = 0; i < 20; i++) MINIGAMES.mash.input(g, i % 2 ? 'left' : 'right');
-  assert.equal(g.status, 'won');
-  const slow = MINIGAMES.mash.create();
-  MINIGAMES.mash.step(slow, 11);
+  M.step(g, 0.1);
+  assert.ok(g.fill < g.gain, 'a pressão vaza');
+  // No ritmo: sobe até a faixa e aperta só quando cai abaixo do centro.
+  const calm = M.create(() => 0.5);
+  let dir = 'left';
+  for (let i = 0; i < 400 && calm.status === 'playing'; i++) {
+    if (calm.fill < calm.center) { M.input(calm, dir); dir = dir === 'left' ? 'right' : 'left'; }
+    M.step(calm, 0.05);
+  }
+  assert.equal(calm.status, 'won');
+  assert.equal(calm.bursts, 0);
+  // Martelando: passa da faixa, chega a 100% e estoura até perder.
+  const spam = M.create(() => 0.5);
+  for (let i = 0; i < 200 && spam.status === 'playing'; i++) {
+    M.input(spam, i % 2 ? 'left' : 'right');
+    M.step(spam, 0.02);
+  }
+  assert.equal(spam.status, 'lost');
+  assert.equal(spam.bursts, spam.maxBursts);
+  const slow = M.create(() => 0.5);
+  M.step(slow, slow.timeLeft + 1);
   assert.equal(slow.status, 'lost');
+});
+
+test('nível da crise: parâmetros vão do fácil (0) ao difícil (máximo)', () => {
+  const r = () => 0.5;
+  const easy = { t: MINIGAMES.timing.create(r, 0), m: MINIGAMES.mash.create(r, 0), q: MINIGAMES.sequence.create(r, 0) };
+  const hard = { t: MINIGAMES.timing.create(r, CRISIS.maxLevel), m: MINIGAMES.mash.create(r, CRISIS.maxLevel), q: MINIGAMES.sequence.create(r, CRISIS.maxLevel) };
+  assert.ok(hard.t.width < easy.t.width && hard.t.speed > easy.t.speed && hard.t.need > easy.t.need);
+  assert.ok(hard.m.band < easy.m.band && hard.m.hold > easy.m.hold && hard.m.leak > easy.m.leak);
+  assert.equal(easy.m.drift, 0);
+  assert.ok(hard.m.drift > 0, 'a faixa oscila no nível alto');
+  assert.ok(hard.q.seq.length > easy.q.seq.length);
+  assert.equal(easy.q.hideAt, null);
+  assert.ok(hard.q.hideAt > 0, 'a sequência some no nível alto');
+  // Nível vem das ascensões, com teto; desafios usam o nível fixo.
+  const s = newState();
+  assert.equal(crisisLevel(s), 0);
+  s.legacy.ascensions = 3;
+  assert.equal(crisisLevel(s), 3);
+  s.legacy.ascensions = 99;
+  assert.equal(crisisLevel(s), CRISIS.maxLevel);
+  s.run = { daily: '2026-10-16' };
+  assert.equal(crisisLevel(s), CRISIS.runLevel);
 });
 
 test('save v6 migra para v7; minijogo pela metade volta ao alerta ao carregar', () => {
@@ -232,7 +270,8 @@ test('ascender mantém a sorte correndo (não repete os eventos da 1ª partida)'
   rand(s);
   const rng = s.events.rng;
   s.earned = LEGACY.minRunEarned;
-  ascend(s);
+  s.owned.antimatter = 1;
+  assert.ok(ascend(s) > 0);
   assert.equal(s.events.rng, rng);
   assert.equal(s.events.crisis, null);
 });

@@ -400,7 +400,7 @@ export function createApp({
   function celebrate(list) {
     if (!list.length) return;
     const bonus = `+${Math.round(ACHIEVEMENT_BONUS * 100)}% de produção`;
-    if (list.length > 2) say(`★ ${list.length} conquistas desbloqueadas! (${bonus} cada) Veja em Estatísticas, tecla V.`, 'ok', 8000);
+    if (list.length > 2) say(`★ ${list.length} conquistas novas! (${bonus} cada) Veja em Estatísticas, tecla V.`, 'ok', 8000);
     else for (const a of list) say(`★ Conquista: ${a.name} — ${a.desc} (${bonus})`, 'ok', 6000);
   }
 

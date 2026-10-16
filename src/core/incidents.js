@@ -1,7 +1,7 @@
 // Sorteio de eventos e ciclo de vida das crises: alerta -> minijogo -> resolução.
 // Um evento por vez, para o jogador sempre saber o que está acontecendo.
 // Não roda offline (quem chama é o loop do jogo, nunca applyOffline).
-import { EVENTS, CRISES, SCHEDULE, DAMAGE, REWARD } from '../data/events.js';
+import { EVENTS, CRISES, CRISIS, SCHEDULE, DAMAGE, REWARD } from '../data/events.js';
 import { rand, eventDef, isActive } from './events.js';
 import { MINIGAMES } from './minigames.js';
 import { power, income, rpRate, gridLoad } from './engine.js';
@@ -35,6 +35,12 @@ function pick(s) {
 const scheduleNext = (s) => {
   s.events.next = s.t + (SCHEDULE.gapMin + rand(s) * (SCHEDULE.gapMax - SCHEDULE.gapMin)) * rules(s).eventGap;
 };
+
+// Dificuldade das crises: sobe 1 por ascensão até o teto. Desafios e semente do dia têm
+// nível fixo (o do desafio, se a regra disser), para a partida ser igual para todos.
+export const crisisLevel = (s) => (s.run
+  ? rules(s).crisisLevel ?? CRISIS.runLevel
+  : Math.min(s.legacy.ascensions, CRISIS.maxLevel));
 
 export const crisisDef = (s) => s.events.crisis && CRISES[eventDef(s.events.crisis.id).crisis];
 // Seguro de Rede (Legado) reduz a conta, até zerar.
@@ -110,7 +116,7 @@ export function eventsStep(s, dt) {
 export function beginCrisis(s) {
   const c = s.events.crisis;
   if (!c || c.game) return false;
-  c.game = MINIGAMES[crisisDef(s).game].create(() => rand(s));
+  c.game = MINIGAMES[crisisDef(s).game].create(() => rand(s), crisisLevel(s));
   return true;
 }
 
