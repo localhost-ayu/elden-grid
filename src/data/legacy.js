@@ -29,7 +29,8 @@ export const MONUMENT = { name: 'Monumento', mult: 1.1, baseCost: 10, growth: 2 
 // `values[i]` é o efeito no nível i+1; `costs[i]`, o preço em pontos desse nível.
 // `perks[i]` (opcional): vantagem extra do nível, com o texto da loja em `desc`.
 // Preços dos níveis altos na casa dos milhares: os pontos crescem ~1.5x por ascensão, e
-// com estes preços o bot completa a loja em ~16 h de jogo (scripts/simulate.js).
+// com estes preços o bot completa a loja em ~17 h de jogo (scripts/simulate.js). Na 1.3
+// a 1ª ascensão passou a dar ~20 pontos (antes 5) e os níveis mais caros subiram ~1.5x.
 // Os níveis 4 e 5 dos itens antigos NÃO aumentam o efeito principal: tiram atrito do
 // começo da partida (pesquisas prontas, laboratórios, manivela automática). Poder bruto a
 // mais nesses níveis encurtava todas as partidas seguintes a poucos minutos (simulado).
@@ -58,7 +59,7 @@ export const AUTO_CRANK_SECONDS = 300;
 
 export const SHOP = [
   {
-    id: 'start', name: 'Começo Rápido', type: 'start', costs: [2, 5, 12, 150, 5000], values: [10, 25, 50, 50, 50],
+    id: 'start', name: 'Começo Rápido', type: 'start', costs: [2, 5, 12, 150, 8000], values: [10, 25, 50, 50, 50],
     perks: [null, null,
       { techs: HV, desc: '50 eólicas e alta tensão pronta' },
       { techs: EARLY, desc: '+ solar e hidrelétrica liberadas' },
@@ -66,29 +67,29 @@ export const SHOP = [
   },
   // O desconto vale para geradores e laboratórios (laboratório caro travava o começo).
   {
-    id: 'contracts', name: 'Contratos de Obra', type: 'cost', costs: [3, 8, 20, 300, 20000], values: [0.9, 0.8, 0.7, 0.7, 0.7],
+    id: 'contracts', name: 'Contratos de Obra', type: 'cost', costs: [3, 8, 20, 300, 30000], values: [0.9, 0.8, 0.7, 0.7, 0.7],
     perks: [null, null, null,
       { discount: ['cooling'], desc: '-30% também no resfriamento' },
       { discount: ['cooling', 'transformers'], desc: '-30% também em transformadores' }],
   },
   {
-    id: 'grants', name: 'Bolsas de Pesquisa', type: 'lab', costs: [2, 5, 12, 200, 8000], values: [1.5, 2, 3, 3, 3],
+    id: 'grants', name: 'Bolsas de Pesquisa', type: 'lab', costs: [2, 5, 12, 200, 12000], values: [1.5, 2, 3, 3, 3],
     perks: [null, null, null, { labs: 10, desc: 'pesquisa x3 e 10 laboratórios prontos' }, { labs: 25, desc: 'pesquisa x3 e 25 laboratórios prontos' }],
   },
   {
-    id: 'nightshift', name: 'Turno da Noite', type: 'offline', costs: [1, 3, 8, 100, 3000],
+    id: 'nightshift', name: 'Turno da Noite', type: 'offline', costs: [1, 3, 8, 100, 5000],
     values: [{ hours: 2, rate: 0.6 }, { hours: 4, rate: 0.7 }, { hours: 8, rate: 0.8 }, { hours: 12, rate: 0.85 }, { hours: 24, rate: 0.9 }],
   },
   { id: 'heirloom', name: 'Automação Herdada', type: 'auto', costs: [4], values: [1] },
   {
-    id: 'goldcrank', name: 'Manivela de Ouro', type: 'crank', costs: [1, 3, 8, 100, 4000], values: [1, 2, 5, 5, 5],
+    id: 'goldcrank', name: 'Manivela de Ouro', type: 'crank', costs: [1, 3, 8, 100, 6000], values: [1, 2, 5, 5, 5],
     perks: [null, null, null, { autoCrank: 2, desc: 'gira sozinha 2x/s nos 5 min iniciais' }, { autoCrank: 4, desc: 'gira sozinha 4x/s nos 5 min iniciais' }],
   },
-  { id: 'research', name: 'Pesquisa Herdada', type: 'techs', costs: [5, 40, 2000], values: [T1, T2, T3] },
-  { id: 'thermal', name: 'Engenharia Térmica', type: 'cooling', costs: [6, 80, 6000], values: [1, 2, 3] },
+  { id: 'research', name: 'Pesquisa Herdada', type: 'techs', costs: [5, 40, 3000], values: [T1, T2, T3] },
+  { id: 'thermal', name: 'Engenharia Térmica', type: 'cooling', costs: [6, 80, 9000], values: [1, 2, 3] },
   // O Seguro não zera o dano: as crises endurecem com as ascensões e precisam continuar
   // pesando (1.3).
-  { id: 'insurance', name: 'Seguro de Rede', type: 'damage', costs: [4, 50, 1500], values: [0.75, 0.5, 0.35] },
-  { id: 'early', name: 'Marcos Antecipados', type: 'milestones', costs: [300, 50000], values: [0.8, 0.6] },
-  { id: 'inherited', name: 'Rede Herdada', type: 'transformers', costs: [3, 30, 1000], values: [1, 2, 3] },
+  { id: 'insurance', name: 'Seguro de Rede', type: 'damage', costs: [4, 50, 2500], values: [0.75, 0.5, 0.35] },
+  { id: 'early', name: 'Marcos Antecipados', type: 'milestones', costs: [300, 80000], values: [0.8, 0.6] },
+  { id: 'inherited', name: 'Rede Herdada', type: 'transformers', costs: [3, 30, 1500], values: [1, 2, 3] },
 ];

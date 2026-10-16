@@ -27,6 +27,9 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - Desafios e semente do dia têm crises de nível fixo 3, igual para todos; no Apagão
   Eterno o nível sobe com o desafio (I = 3 … V = 10).
 - Seguro de Rede nível 3 reduz o dano das crises a 35%, em vez de zerá-lo.
+- Loja do legado rebalanceada para o novo ritmo de pontos: os níveis mais caros de cada
+  item custam ~1.5x mais. No simulador, a 1ª ascensão sai em ~1 h com ~20 pontos e a
+  loja completa em ~17 h.
 
 ## [1.2.0] - 2026-10-16
 

@@ -6,7 +6,8 @@
 // Com desafio ou semente do dia, o bot joga a partida especial (sem legado) e mostra
 // quanto tempo levou até a meta.
 //
-// Bot: gira a manivela nos 5 primeiros minutos, pesquisa tudo que puder, compra a fonte
+// Bot: perde uma parte das crises conforme o nível delas (FAIL_PER_LEVEL); gira a
+// manivela nos 5 primeiros minutos, pesquisa tudo que puder, compra a fonte
 // com mais kW médio por $ (MAX), upgrades, laboratório, resfriamento e transformadores
 // quando custam uma fração pequena do saldo. Ascende quando a prévia rende pelo menos
 // metade dos pontos já recebidos (ascender a cada ponto novo seria pouco humano).
@@ -28,6 +29,17 @@ import { ACHIEVEMENTS } from '../src/data/achievements.js';
 import { applyRunStart, goalReached, runGoal, dailySeed } from '../src/core/challenges.js';
 
 const DT = 0.1;
+const FAIL_PER_LEVEL = 0.03;
+
+// Sorte do próprio bot (erros nas crises), separada da sorte do jogo para não mudar a
+// sequência de eventos da partida.
+let botSeed = 1;
+function botRand() {
+  let t = (botSeed = (botSeed + 0x6d2b79f5) >>> 0);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
 
 function shop(s) {
   // Gasta metade dos pontos (do mais barato para o mais caro) e guarda o resto como bônus.
@@ -79,15 +91,17 @@ function botStep(s, crises) {
   checkAchievements(s);
   if (crises === 'off') return;
   I.eventsStep(s, DT);
-  // "play" vence toda crise na hora; "idle" deixa a equipe resolver no prazo.
+  // "play" joga na hora, como um humano atento: perde FAIL_PER_LEVEL × nível das crises
+  // (nível 0 nunca, nível 10 ~30%); "idle" deixa a equipe resolver no prazo.
   if (crises === 'play' && s.events.crisis) {
     I.beginCrisis(s);
-    s.events.crisis.game.status = 'won';
+    s.events.crisis.game.status = botRand() < FAIL_PER_LEVEL * I.crisisLevel(s) ? 'lost' : 'won';
     I.eventsStep(s, 0);
   }
 }
 
 export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null } = {}) {
+  botSeed = seed;
   const s = newState(daily ? dailySeed(daily) : seed);
   if (challenge) s.run = { challenge, tier };
   if (daily) s.run = { daily };
@@ -154,7 +168,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(`        loja completa: ${'shop' in marks ? clock(marks.shop) : 'não'} · monumento nv ${s.legacy.monument}` +
       `${'monument' in marks ? ` (1º em ${clock(marks.monument)})` : ''} · partidas < 10 min após a 3ª: ${short}` +
       ` · conquistas ${Object.keys(s.achievements).length}/${ACHIEVEMENTS.length}`);
-    console.log(`        crises: ${c.won} vencidas, ${c.timeout} ignoradas, $${s.career.crewPaid.toExponential(2)} pagos · ` +
+    console.log(`        crises: ${c.won} vencidas, ${c.lost} perdidas, ${c.timeout} ignoradas, $${s.career.crewPaid.toExponential(2)} pagos · ` +
       `pico ${s.career.peakKw.toExponential(2)} kW · rede saturada ${Math.round(saturated * 100)}% do tempo\n`);
   }
 }
