@@ -132,7 +132,7 @@ test('animações reduzidas: sem partículas, mas a cena ainda anda', () => {
 
 test('Opções: percorre valores com ←→, persiste e cabe em 80×24 (menu e aba)', () => {
   const { app, press, text, calls } = make();
-  press('4'); // Opções pelo menu
+  press('5'); // Opções pelo menu
   assert.match(text(), /Animações +‹ ligadas ›/);
   press('right');
   assert.equal(app.settingsRef.animations, 'reduced');

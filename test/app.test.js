@@ -161,7 +161,7 @@ test('M e Esc voltam ao menu salvando; q e Ctrl+C saem', () => {
 
 test('menu > Opções abre a tela e Esc volta', () => {
   const { app, press, text } = make();
-  press('4');
+  press('5');
   assert.equal(app.mode, 'options');
   assert.match(text(), /Opções/);
   press('escape');
@@ -225,7 +225,7 @@ test('todas as telas cabem em 80×24 com rodapé de ajuda na posição fixa', ()
     assert.ok(/Q sair|Esc|qualquer tecla|S confirmar/.test(stripAnsi(lines[20])), `${label}: ajuda fora do lugar`);
   };
   check('menu');
-  press('4'); check('opções do menu'); press('escape');
+  press('5'); check('opções do menu'); press('escape');
   press('3'); check('slots'); press('delete'); check('slots confirmando'); press('n', 'escape');
   press('1'); check('offline'); press('enter');
   for (const t of TABS) { press(t.key); check(t.id); }

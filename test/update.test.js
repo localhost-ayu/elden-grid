@@ -79,8 +79,8 @@ test('título mostra a versão; com versão nova, avisa e oferece Atualizar', as
   await settle();
   assert.equal(newer.settings.latestVersion, '1.2.0');
   assert.match(newer.text(), /Nova versão 1\.2\.0 disponível!/);
-  assert.match(newer.text(), /5 {2}Atualizar/);
-  assert.match(newer.text(), /1-6 atalho/);
+  assert.match(newer.text(), /6 {2}Atualizar/);
+  assert.match(newer.text(), /1-7 atalho/);
 });
 
 test('sem conexão (ou erro): nada trava, nada muda, e tenta de novo na próxima abertura', async () => {
@@ -102,7 +102,7 @@ test('checa no máximo 1x por dia; desligado em Opções, nunca checa; religar c
   await settle();
   assert.equal(off.calls.latest, 0);
   const { app, calls, settings } = off;
-  app.key('4'); // Opções
+  app.key('5'); // Opções
   for (let i = 0; i < 7; i++) app.key('down');
   app.key('right');
   assert.equal(settings.updateCheck, true);
@@ -114,11 +114,11 @@ test('checa no máximo 1x por dia; desligado em Opções, nunca checa; religar c
 test('Atualizar: clone limpo pergunta S/N e roda git pull; depois pede para reiniciar', async () => {
   const { app, calls, text } = make({ latest: '1.2.0' });
   await settle();
-  app.key('5');
+  app.key('6');
   assert.match(text(), /Baixar a versão 1\.2\.0 com git pull\? Seus saves não são tocados\. +\(S\/N\)/);
   app.key('n');
   assert.equal(calls.pull, 0);
-  app.key('5');
+  app.key('6');
   app.key('s');
   await settle();
   assert.equal(calls.pull, 1);
@@ -130,7 +130,7 @@ test('Atualizar: clone limpo pergunta S/N e roda git pull; depois pede para rein
 test('Atualizar sem poder usar git (zip, outra branch, mudanças locais): instrução manual', async () => {
   const { app, calls, text } = make({ latest: '1.2.0', inspect: { canPull: false, reason: 'há mudanças locais nos arquivos do jogo' } });
   await settle();
-  app.key('5');
+  app.key('6');
   assert.equal(calls.pull, 0);
   assert.match(text(), /Atualização manual: há mudanças locais/);
 });
@@ -138,9 +138,9 @@ test('Atualizar sem poder usar git (zip, outra branch, mudanças locais): instru
 test('git pull falhou: avisa o motivo e deixa tentar de novo', async () => {
   const { app, text } = make({ latest: '1.2.0', pull: { ok: false, reason: 'Could not resolve host: github.com' } });
   await settle();
-  app.key('5');
+  app.key('6');
   app.key('s');
   await settle();
   assert.match(text(), /Não deu para atualizar: Could not resolve host/);
-  assert.match(text(), /5 {2}Atualizar/);
+  assert.match(text(), /6 {2}Atualizar/);
 });

@@ -10,7 +10,7 @@ import { canAscend, legacyMult } from '../core/prestige.js';
 import { hourOfDay, isDay } from '../core/traits.js';
 import { C, paint, glyphs, setColorMode, setUnicode } from './theme.js';
 import { createParticles, easeTo, spawn, stepParticles } from './anim.js';
-import { fmt, fmtPct, fmtClock, visibleLength, setNumberFormat } from './format.js';
+import { fmt, fmtPct, fmtClock, fmtDuration, visibleLength, setNumberFormat } from './format.js';
 import { REWARD } from '../data/events.js';
 import { eventDef, isActive } from '../core/events.js';
 import { eventsStep, currentEvent, holdEvents } from '../core/incidents.js';
@@ -27,6 +27,10 @@ import * as stats from './screens/stats.js';
 import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
+import * as challenges from './screens/challenges.js';
+import { ROMAN } from './screens/challenges.js';
+import { newProfile, completeChallenge } from '../core/profile.js';
+import { applyRunStart, challengeDef, goalReached, runGoal } from '../core/challenges.js';
 import { DEFAULT_SETTINGS } from '../storage/settings.js';
 import { compareVersions, CHECK_EVERY_MS, RELEASES_URL } from '../storage/update.js';
 import { tooSmall, renderTooSmall } from './screens/too-small.js';
@@ -50,7 +54,10 @@ const FULL = {
   slots: { screen: slots, title: 'Slots' },
   offline: { screen: offline, title: 'Bem-vindo de volta' },
   options: { screen: options, title: 'Opções' },
+  challenges: { screen: challenges, title: 'Desafios' },
 };
+
+export const CHALLENGE_SLOT = 'D';
 
 const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 
@@ -63,9 +70,11 @@ const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 // texto na área de transferência do terminal; retorna se conseguiu. `who`: { user, host }
 // do sistema, para o prompt do disfarce parecer o do jogador. `updater`: versão e
 // atualização (storage/update.js): { version, latest(), inspect(), pull() }.
+// `profile`: perfil compartilhado (storage/profile.js): { read(), write(p) }.
+// O store também guarda o slot de Desafio, com n = 'D' (fora da lista dos slots 1–3).
 export function createApp({
   store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random,
-  noColor = false, copy = () => false, who = {}, updater = null,
+  noColor = false, copy = () => false, who = {}, updater = null, profile: profileStore = null,
 }) {
   const app = {
     state: null,  // jogo aberto (null = nenhum slot carregado ainda)
@@ -87,6 +96,8 @@ export function createApp({
     stealth: null,
     // Atualização: 'pulling' enquanto o git pull roda; 'pulled' = baixada, falta reiniciar.
     updating: null,
+    profile: profileStore?.read() ?? newProfile(),
+    challengeCache: undefined, // resumo do slot D para a tela de Desafios (undefined = reler)
     now,
   };
 
@@ -172,7 +183,48 @@ export function createApp({
   }
 
   const slotList = () => (app.slotCache ??= store.list());
-  const dirty = () => { app.slotCache = null; };
+  const dirty = () => { app.slotCache = null; app.challengeCache = undefined; };
+
+  // { run, earned } da partida do slot D, ou null.
+  function challengeRun() {
+    if (app.challengeCache === undefined) {
+      const st = app.slot === CHALLENGE_SLOT ? app.state : store.load(CHALLENGE_SLOT)?.state;
+      app.challengeCache = st?.run?.challenge ? { run: st.run, earned: st.earned } : null;
+    }
+    return app.challengeCache;
+  }
+
+  // Partida nova no slot D: estado comum, sem legado, marcado com a regra do desafio.
+  function startChallenge(id, tier) {
+    const s = newState(Math.floor(rng() * 2 ** 32));
+    s.run = { challenge: id, tier };
+    applyRunStart(s);
+    open(CHALLENGE_SLOT, s);
+    save();
+    app.mode = 'game';
+    say(`Desafio ${challengeDef(id).name} ${ROMAN[tier - 1]}: ganhe $${fmt(runGoal(s))} nesta partida. Boa sorte!`, 'ok', 8000);
+  }
+
+  // Desafio é jogado ativo: abrir o slot D não credita progresso offline.
+  function continueChallenge() {
+    if (app.slot === CHALLENGE_SLOT && app.state) { app.mode = 'game'; return; }
+    const r = store.load(CHALLENGE_SLOT);
+    if (!usable(r)) { say('A partida de desafio não pôde ser carregada.', 'err'); return; }
+    open(CHALLENGE_SLOT, r.state);
+    app.mode = 'game';
+  }
+
+  function finishChallenge() {
+    const s = app.state;
+    s.run.done = true;
+    const { challenge, tier } = s.run;
+    const fresh = completeChallenge(app.profile, challenge, tier, s.stats.playTime);
+    profileStore?.write(app.profile);
+    save();
+    const name = `${challengeDef(challenge).name} ${ROMAN[tier - 1]}`;
+    say(`${glyphs().legacy} DESAFIO CONCLUÍDO: ${name} em ${fmtDuration(s.stats.playTime)}!` +
+      (fresh ? ' Novo nível no perfil.' : ' (nível já completo: vale como recorde)'), 'ok', 15000);
+  }
 
   function save() {
     if (!app.state || !app.slot) return true;
@@ -183,6 +235,7 @@ export function createApp({
   }
 
   function remember(n) {
+    if (n === CHALLENGE_SLOT) return; // "Continuar" é para os slots 1–3
     if (settings.lastSlot !== n) { settings.lastSlot = n; onSettings(settings); }
   }
 
@@ -262,6 +315,10 @@ export function createApp({
     },
     loadSlot,
     newGame,
+    get profile() { return app.profile; },
+    get challengeRun() { return challengeRun(); },
+    startChallenge,
+    continueChallenge,
     deleteSlot,
     // A partida mudou por inteiro: gráficos e partículas da anterior não fazem sentido.
     ascended() {
@@ -309,6 +366,7 @@ export function createApp({
   // A partícula nasce da ação: girar a manivela solta o que ela rendeu.
   function crankBurst() {
     const kwh = crank(app.state);
+    if (!kwh) { say('A manivela está desligada neste desafio.', 'info', 2000); return; }
     if (animations() !== 'on') return;
     const x = 0.5 + rng() * 0.35;
     spawn(app.particles, { text: `+${fmt(kwh)} kWh`, st: C.cyan, x, y: 0, vy: 4, life: 1.6 });
@@ -387,6 +445,7 @@ export function createApp({
       else eventsStep(app.state, dt).forEach(announce);
       if (!app.state.events.crisis) app.crisisOpen = false;
       celebrate(checkAchievements(app.state));
+      if (goalReached(app.state)) finishChallenge();
       sampleHistory(app.history, app.state);
       // Animações desligadas: os números saltam direto para o valor real.
       const roll = animations() === 'off' ? (_, target) => target : (cur, target) => easeTo(cur, target, dt);
@@ -466,8 +525,17 @@ export function createApp({
       // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
       paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`) +
       (s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : '') +
-      (s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${Math.round((legacyMult(s) - 1) * 100)}%`) : ''),
+      (s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${Math.round((legacyMult(s) - 1) * 100)}%`) : '') +
+      challengeBadge(s),
     ];
+  }
+
+  // No slot D: qual desafio e quanto falta (ou ✓ quando concluído).
+  function challengeBadge(s) {
+    if (!s.run?.challenge) return '';
+    const label = `${challengeDef(s.run.challenge)?.name} ${ROMAN[s.run.tier - 1]}`;
+    if (s.run.done) return '  ' + paint(C.green, `${label} ✓`);
+    return '  ' + paint(C.mag + C.bold, `${label} ${fmtPct(Math.min(1, s.earned / runGoal(s)))}`);
   }
 
   // Cor: acima (verde) ou abaixo (amarelo) da média; seta: subindo ou descendo agora.

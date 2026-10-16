@@ -110,7 +110,7 @@ export function fromSave(raw) {
   return s;
 }
 
-const isValidRun = (r) => !!r && typeof r === 'object' &&
+const isValidRun = (r) => !!r && typeof r === 'object' && (r.done === undefined || typeof r.done === 'boolean') &&
   ((typeof r.challenge === 'string' && Number.isInteger(r.tier) && r.tier >= 1 && r.tier <= 5) ||
     (typeof r.daily === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.daily)));
 

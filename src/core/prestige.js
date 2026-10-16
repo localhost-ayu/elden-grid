@@ -8,7 +8,8 @@ import { peak } from './records.js';
 export const pointsFor = (money) => Math.floor(Math.sqrt(Math.max(0, money) / LEGACY.divisor));
 export const lifetimeEarned = (s) => s.legacy.lifetime + s.earned;
 export const legacyGain = (s) => Math.max(0, pointsFor(lifetimeEarned(s)) - s.legacy.earned);
-export const canAscend = (s) => s.earned >= LEGACY.minRunEarned && legacyGain(s) >= 1;
+// Desafios e semente do dia (s.run) não ascendem: começam e terminam sem legado.
+export const canAscend = (s) => !s.run && s.earned >= LEGACY.minRunEarned && legacyGain(s) >= 1;
 
 // Quanto falta ganhar nesta partida para a prévia subir mais 1 ponto.
 export function nextPointIn(s) {

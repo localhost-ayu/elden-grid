@@ -8,9 +8,12 @@ import {
 import { isHot, nextCooling } from './heat.js';
 import { shopValue } from './prestige.js';
 import { add, crankTap } from './records.js';
+import { rules } from './challenges.js';
 
 // Rende uma fração da produção de 1 s (mínimo 1 kWh): continua útil a partida toda.
+// Retorna 0 se a manivela está desligada (desafio Sem Vento).
 export function crank(s) {
+  if (rules(s).noCrank) return 0;
   const e = Math.max(1, power(s) * shopValue(s, 'crank', 0.5));
   const money = e * price(s);
   s.totalEnergy += e;

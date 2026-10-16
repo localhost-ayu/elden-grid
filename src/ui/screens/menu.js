@@ -13,6 +13,7 @@ const ITEMS = [
   { label: 'Continuar', run: (ctx) => ctx.continueGame(), enabled: (ctx) => ctx.canContinue },
   { label: 'Novo jogo', run: (ctx) => ctx.openSlots('new') },
   { label: 'Carregar slot', run: (ctx) => ctx.openSlots('load') },
+  { label: 'Desafios', run: (ctx) => ctx.go('challenges') },
   { label: 'Opções', run: (ctx) => ctx.go('options') },
   {
     label: 'Atualizar', shown: (ctx) => ctx.hasUpdate && ctx.updating !== 'pulled', enabled: (ctx) => !ctx.updating,

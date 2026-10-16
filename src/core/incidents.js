@@ -8,6 +8,7 @@ import { power, income, rpRate, gridLoad } from './engine.js';
 import { HOT_GENERATORS } from './heat.js';
 import { add, best } from './records.js';
 import { shopValue } from './prestige.js';
+import { rules } from './challenges.js';
 
 const hasReactor = (s) => HOT_GENERATORS.some((g) => s.owned[g.id] > 0);
 const REQUIRES = {
@@ -20,15 +21,18 @@ const REQUIRES = {
 
 export const eligibleEvents = (s) => EVENTS.filter((e) => !e.requires || REQUIRES[e.requires](s));
 
+// Desafios (Apagão Eterno) aumentam o peso das crises e encurtam o intervalo.
+const weight = (s, e) => e.weight * (e.crisis ? rules(s).crisisWeight : 1);
+
 function pick(s) {
   const list = eligibleEvents(s);
-  let r = rand(s) * list.reduce((sum, e) => sum + e.weight, 0);
-  for (const e of list) if ((r -= e.weight) < 0) return e;
+  let r = rand(s) * list.reduce((sum, e) => sum + weight(s, e), 0);
+  for (const e of list) if ((r -= weight(s, e)) < 0) return e;
   return list.at(-1);
 }
 
 const scheduleNext = (s) => {
-  s.events.next = s.t + SCHEDULE.gapMin + rand(s) * (SCHEDULE.gapMax - SCHEDULE.gapMin);
+  s.events.next = s.t + (SCHEDULE.gapMin + rand(s) * (SCHEDULE.gapMax - SCHEDULE.gapMin)) * rules(s).eventGap;
 };
 
 export const crisisDef = (s) => s.events.crisis && CRISES[eventDef(s.events.crisis.id).crisis];

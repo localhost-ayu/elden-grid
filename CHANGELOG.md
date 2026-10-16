@@ -19,6 +19,13 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - Item **Atualizar** no título (só com versão nova): num clone git limpo na `main`, roda
   `git pull --ff-only` depois de confirmar; em qualquer outro caso, mostra como
   atualizar à mão. Os saves nunca são tocados.
+- Desafios (menu → Desafios): cinco partidas com regras próprias, jogadas num slot
+  separado (D), do zero e sem legado, sem tocar nos slots 1–3. Apagão Eterno (eventos e
+  crises sem parar), Sem Vento (sem eólica nem manivela), Rede Velha (capacidade
+  pesquisada rende menos), Mercado em Queda (o kWh perde valor com o tempo) e
+  Combustível Caro (gás e fusão custam muito para operar). Cada um tem 5 níveis, com
+  metas de $25B a $10T ganhos na partida e regras mais duras; o melhor tempo de cada
+  nível fica registrado. Desafios não têm ascensão nem progresso offline.
 
 ### Alterado
 - Perfil compartilhado entre os slots em `~/.elden-grid/profile.json` (níveis de desafio

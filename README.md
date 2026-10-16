@@ -50,6 +50,10 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
   continua produzindo e pausa eventos e crises; `\` de novo volta e mostra quanto rendeu.
+- **Desafios.** Cinco partidas com regras que mudam o jogo (crises sem parar, sem vento,
+  rede velha, mercado em queda, combustível caro), cada uma com 5 níveis de meta. Ficam
+  num slot separado (D), começam do zero sem legado e não tocam nos saves 1–3; o
+  progresso e os recordes vão para um perfil compartilhado.
 - **Conquistas.** 82 metas em oito categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
@@ -82,6 +86,7 @@ passou saturada, quando a loja do legado ficou completa e o nível do Monumento.
 | Em qualquer aba | `G` `P` `R` `L` `E` `O` (ou `Tab`/`Shift+Tab`) trocam de aba · `espaço` gira a manivela · `X` abre o manual de crise · `M`/`Esc` menu (salva) · `Q` sai (salva) |
 | Geradores | `↑↓` + `Enter` ou `0`–`9` compram · `B` lote · `U` upgrade · `A` auto-compra · `V` cena das usinas |
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
+| Desafios | `↑↓` desafio · `←→` nível · `Enter` joga · `C` continua a partida do slot D |
 | Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento |
 | Legado | `↑↓` + `Enter` ascende ou compra na loja (com confirmação `S`/`N`) |
 | Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` · `V` conquistas |
@@ -105,9 +110,12 @@ chamava Reactor ASCII, em `~/.reactor-ascii/`, são movidos para lá na primeira
 - `slot1.json` … `slot3.json` (e `.bak`): três saves. A gravação é atômica (`.tmp` +
   `rename`) e um save corrompido é recuperado do backup sem derrubar o jogo. Saves de
   versões antigas são migrados degrau por degrau (`saveVersion`).
+- `slotD.json`: a partida de desafio em andamento.
+- `profile.json`: perfil compartilhado entre os slots (níveis de desafio e recordes).
 - `settings.json`: animações (ligadas, reduzidas, desligadas), 5/10/15 fps, símbolos
-  Unicode ou ASCII puro, cores 256/16/sem cor, números curtos ou científicos e intervalo
-  do autosave, o tipo de disfarce e a checagem de atualizações (com a última versão vista). A variável de ambiente `NO_COLOR` desliga as cores.
+  Unicode ou ASCII puro, cores 256/16/sem cor, números curtos ou científicos, intervalo
+  do autosave, tipo de disfarce e checagem de atualizações (com a última versão vista).
+  A variável de ambiente `NO_COLOR` desliga as cores.
 - `export-slotN.txt` / `import.txt`: o save em uma linha de texto (Base64), para levar
   para outra máquina. A exportação também tenta copiar o texto para a área de
   transferência do terminal (OSC 52).
