@@ -20,6 +20,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   `git pull --ff-only` depois de confirmar; em qualquer outro caso, mostra como
   atualizar à mão. Os saves nunca são tocados.
 
+### Alterado
+- Perfil compartilhado entre os slots em `~/.elden-grid/profile.json` (níveis de desafio
+  e recordes), com escrita atômica e backup como os saves.
+- Save v10 (`state.run`: marca a partida como desafio ou semente do dia).
+
 ## [1.1.0] - 2026-10-16
 
 Herança: o legado ganha teto infinito e a partida longa ganha metas.
