@@ -50,6 +50,8 @@ export const TRAITS = {
   tide: { factor: (s, tr) => tideLevel(s, tr), avg: () => 1 },
   // Em órbita a produção é fixa: a janela só limita quando se compra.
   launch: { factor: () => 1, avg: () => 1 },
+  // A alimentação depende das outras fontes: calculada no engine (feedFactor).
+  feed: { factor: () => 1, avg: () => 1 },
   // upkeep não mexe na produção: é custo, tratado em engine.upkeep().
 };
 

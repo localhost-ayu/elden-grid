@@ -74,13 +74,27 @@ export const genModMult = (s, g, type) => modMult(genModifiers(s, g), type);
 export const achievementMult = (s) => 1 + ACHIEVEMENT_BONUS * Object.keys(s.achievements).length;
 
 // Os multiplicadores globais (pesquisa, Legado e conquistas) entram em power(), uma vez só.
-export function genPower(s, g, average = false) {
+function genRaw(s, g, average) {
   if (!s.owned[g.id]) return 0;
   const out = genModMult(s, g, 'output');
   // Offline não há eventos: um blecaute no instante do save não pune a hora inteira fora.
   const ev = average ? 1 : eventMult(s, 'output', g.id);
   return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev;
 }
+
+// Alimentação (trait `feed`, Kugelblitz): a produção das outras fontes sobre `share` × a
+// dele, até 1. Construir rápido demais, ou perder reatores num desligamento, faz render menos.
+const feedTrait = (g) => g.traits.find((tr) => tr.type === 'feed');
+export const feedShare = (s, g) => feedTrait(g).share * mult(s, 'feed');
+export function feedFactor(s, g, average = false) {
+  if (!feedTrait(g)) return 1;
+  const own = genRaw(s, g, average);
+  if (!own) return 1;
+  const others = GENERATORS.reduce((sum, x) => sum + (feedTrait(x) ? 0 : genRaw(s, x, average)), 0);
+  return Math.min(1, others / (feedShare(s, g) * own));
+}
+
+export const genPower = (s, g, average = false) => genRaw(s, g, average) * feedFactor(s, g, average);
 export const power = (s, average = false) =>
   GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global') * permanentMult(s);
 

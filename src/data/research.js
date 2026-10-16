@@ -11,6 +11,7 @@
 //       'capacity' (x na capacidade de transmissão da rede)
 //       'auto'     (auto-compra do gerador mais barato a cada `interval` segundos)
 //       'launch'   (+`add` s na janela de lançamento do Enxame)
+//       'feed'     (x no quanto o Kugelblitz precisa ser alimentado)
 export const TECHS = [
   // ---- eólica ----
   { id: 't_wind2',       name: 'Pás Aerodinâmicas',        cost: 3,      req: [],                type: 'genMult', gen: 'wind', mult: 2 },
@@ -36,6 +37,9 @@ export const TECHS = [
   { id: 't_orbital',     name: 'Espelhos em Órbita',       cost: 250000, req: ['t_antimatter'],  type: 'unlock' },
   { id: 't_swarm2',      name: 'Enxame de Dyson',          cost: 600000, req: ['t_orbital'],     type: 'genMult', gen: 'swarm', mult: 2 },
   { id: 't_launch',      name: 'Foguetes Reutilizáveis',   cost: 400000, req: ['t_orbital'],     type: 'launch', add: 8 },
+  { id: 't_kugel',       name: 'Colapso Gravitacional',    cost: 1.2e6,  req: ['t_orbital'],     type: 'unlock' },
+  { id: 't_kugel2',      name: 'Kugelblitz em Cascata',    cost: 3e6,    req: ['t_kugel'],       type: 'genMult', gen: 'kugelblitz', mult: 2 },
+  { id: 't_feed',        name: 'Acreção Controlada',       cost: 2e6,    req: ['t_kugel'],       type: 'feed', mult: 0.5 },
 
   // ---- rede e mercado ----
   { id: 't_grid',        name: 'Rede Inteligente',         cost: 20,     req: [],                type: 'price',    mult: 1.25 },

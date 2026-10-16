@@ -18,6 +18,13 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   sem noite e com produção fixa, mas que só se compram na janela de lançamento (8 s a
   cada 40 s; a auto-compra espera a janela). Pesquisas: Espelhos em Órbita (libera),
   Enxame de Dyson (x2) e Foguetes Reutilizáveis (janela +8 s).
+- **Kugelblitz**, um buraco negro artificial que precisa ser alimentado: rende a fração
+  que as outras fontes conseguem sustentar (a produção delas sobre 60% da dele). Construir
+  rápido demais, ou perder reatores num desligamento, derruba a alimentação. Pesquisas:
+  Colapso Gravitacional (libera), Kugelblitz em Cascata (x2) e Acreção Controlada (precisa
+  de metade da alimentação).
+- Árvore de pesquisa: ramos muito fundos empurram a coluna do custo em vez de passar da
+  largura da tela.
 
 ## [1.3.0] - 2026-10-16
 

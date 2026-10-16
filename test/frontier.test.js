@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newState } from '../src/core/state.js';
 import { GENERATORS } from '../src/data/generators.js';
-import { genLaunch, genBuyable, power } from '../src/core/engine.js';
+import { genLaunch, genBuyable, genPower, power, feedFactor } from '../src/core/engine.js';
 import { buyGenBulk } from '../src/core/actions.js';
 import { cheapestGen } from '../src/core/automation.js';
 import { createApp } from '../src/ui/app.js';
@@ -84,4 +84,28 @@ test('aba Geradores: página 2 com a Fronteira, ←→ troca e as teclas valem n
   app.key('left');
   app.key('1');
   assert.ok(s.owned.wind > 0, 'de volta à página 1, a tecla 1 é a eólica');
+});
+
+test('Kugelblitz: rende a fração de alimentação que as outras fontes dão; Acreção Controlada ajuda', () => {
+  const s = newState();
+  const k = gen('kugelblitz');
+  s.techs.t_kugel = true;
+  s.owned.kugelblitz = 1;
+  assert.equal(feedFactor(s, k), 0, 'sozinho, sem alimentação');
+  assert.equal(power(s), 0);
+  const share = k.traits.find((t) => t.type === 'feed').share;
+  // Fonte estável (sem vento/sol) para a conta ficar exata.
+  s.techs.t_geo = true;
+  const geo = gen('geothermal');
+  s.owned.geothermal = 10;
+  const expected = genPower(s, geo) / (share * k.output);
+  assert.ok(expected > 0 && expected < 0.5);
+  assert.ok(Math.abs(feedFactor(s, k) - expected) < 1e-9);
+  assert.ok(Math.abs(genPower(s, k) - k.output * expected) < 1e-3, 'rende só a parte alimentada');
+  s.techs.t_feed = true; // precisa de metade: rende o dobro
+  assert.ok(Math.abs(feedFactor(s, k) - 2 * expected) < 1e-9);
+  s.owned.geothermal = 1e5;
+  assert.equal(feedFactor(s, k), 1, 'nunca passa de 100%');
+  s.owned.kugelblitz = 0;
+  assert.equal(feedFactor(s, k), 1);
 });

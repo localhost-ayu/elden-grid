@@ -2,7 +2,7 @@
 // nível de upgrade), em vez de uma arte por unidade, que não caberia na tela.
 import { GENERATORS, LAB } from '../data/generators.js';
 import { HEAT } from '../data/heat.js';
-import { genEnv, genLaunch, upgradeLevel, upgradeTrack } from '../core/engine.js';
+import { genEnv, genLaunch, feedFactor, upgradeLevel, upgradeTrack } from '../core/engine.js';
 import { sunLevel, reservoirLevel, tideLevel } from '../core/traits.js';
 import { heatLevel, isHot, isShutdown } from '../core/heat.js';
 import { ART, ART_W, ART_H } from './art/index.js';
@@ -22,6 +22,7 @@ function artInfo(s, g) {
     level: res ? reservoirLevel(s, res) : 0.5,
     high: tide ? tideLevel(s, tide) >= 1 : true,
     launch: !!genLaunch(s, g)?.open,
+    fed: feedFactor(s, g),
   };
 }
 

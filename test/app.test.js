@@ -336,7 +336,7 @@ test('árvore de pesquisa completa cabe em 80 colunas em qualquer posição', ()
   startNew(press);
   press('p');
   app.state.rp = 5;
-  for (let i = 0; i < 35; i++) {
+  for (let i = 0; i < 60; i++) { // passa por toda a árvore, Fronteira incluída
     for (const l of app.lines(80, 24)) assert.ok(visibleLength(l) <= 80, stripAnsi(l));
     press('down');
   }

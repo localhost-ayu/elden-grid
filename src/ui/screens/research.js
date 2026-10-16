@@ -66,9 +66,11 @@ function row(s, node, selected, width) {
   const left = `${selected ? '›' : ' '} ${node.prefix}${ICON[st]} ${t.name}`;
   const cost = (fmt(t.cost) + ' PP').padStart(9);
   let right = st === 'locked' ? 'requer: ' + missing(s, t).map(techName).join(', ') : describe(t);
-  const room = width - 2 - NAME_COL - cost.length - 2;
+  // Ramos fundos (a Fronteira fica 8 níveis abaixo da raiz) empurram a coluna do custo.
+  const nameCol = Math.max(NAME_COL, visibleLength(left) + 1);
+  const room = width - 2 - nameCol - cost.length - 2;
   if (visibleLength(right) > room) right = [...right].slice(0, Math.max(0, room - 1)).join('') + '…';
-  const text = `${left.padEnd(NAME_COL)}${cost}  ${right}`;
+  const text = `${left.padEnd(nameCol)}${cost}  ${right}`;
   const style = st === 'done' ? C.dim + C.green
     : st === 'locked' ? C.dim
     : s.rp >= t.cost ? C.mag : '';

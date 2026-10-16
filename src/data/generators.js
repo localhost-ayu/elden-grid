@@ -8,6 +8,9 @@
 //   upkeep    custo de operação em $/s por unidade (combustível)
 //   launch    só se compra na janela de lançamento: aberta `window` s a cada `period` s
 //             (pesquisas 'launch' alargam a janela). Em órbita não há noite: produção fixa.
+//   feed      precisa ser alimentado: rende a fração de alimentação, que é a produção das
+//             outras fontes dividida por `share` × a produção dele (no máximo 100%).
+//             Pesquisas 'feed' baixam o `share`.
 //   heat      gera calor (`base` = alvo de calor sem upgrades nem resfriamento; ver heat.js).
 //             base > 1 = superaquece sem resfriamento (o "risco alto" da antimatéria)
 // Invariante testada: upkeep < output × preço mínimo (0.8) × fração paga pelo excedente
@@ -26,6 +29,7 @@ export const GENERATORS = [
   { id: 'antimatter', key: '0', name: 'Antimatéria', short: 'Antimatéria',        baseCost: 8e7,    growth: 1.16, output: 1.2e6,   icon: '<@>', art: 'antimatter', unlock: 't_antimatter', traits: [{ type: 'heat', base: 1.05 }] },
   // ---- Fronteira (1.4): página 2 da aba Geradores ----
   { id: 'swarm',      key: '1', name: 'Enxame Solar Orbital', short: 'Enxame',   baseCost: 3e9,    growth: 1.16, output: 3e7,     icon: '-O-', art: 'swarm',      unlock: 't_orbital',   traits: [{ type: 'launch', period: 40, window: 8 }] },
+  { id: 'kugelblitz', key: '2', name: 'Kugelblitz', short: 'Kugelblitz',          baseCost: 1.2e11, growth: 1.17, output: 8e8,     icon: '(@)', art: 'kugelblitz', unlock: 't_kugel',     traits: [{ type: 'feed', share: 0.6 }] },
 ];
 
 // A aba Geradores mostra PAGE_SIZE fontes por página, com as teclas 1–9 e 0 (`key`) valendo
