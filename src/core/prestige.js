@@ -6,17 +6,28 @@ import { rewardStart } from './rewards.js';
 import { newState } from './state.js';
 import { peak } from './records.js';
 
-export const pointsFor = (money) => Math.floor(Math.sqrt(Math.max(0, money) / LEGACY.divisor));
+// Pontos = (dinheiro / divisor)^exponent, arredondado para baixo. A conta em ponto
+// flutuante erra perto dos limites (8^(1/3) = 1.999…), então o resultado é conferido pela
+// conta inversa, que é exata para os inteiros.
+const threshold = (points) => points ** (1 / LEGACY.exponent) * LEGACY.divisor;
+export function pointsFor(money) {
+  let p = Math.floor((Math.max(0, money) / LEGACY.divisor) ** LEGACY.exponent);
+  if (threshold(p + 1) <= money) p++;
+  else if (p > 0 && threshold(p) > money) p--;
+  return p;
+}
+export const pointsThreshold = threshold;
 export const lifetimeEarned = (s) => s.legacy.lifetime + s.earned;
 export const legacyGain = (s) => Math.max(0, pointsFor(lifetimeEarned(s)) - s.legacy.earned);
 
-// Condições de fim de partida (LEGACY.gate): basta uma. Cada uma com o texto e se já foi
-// cumprida, para a aba Legado mostrar o checklist.
+// Condições de fim de partida (fase atual de LEGACY.gate): basta uma. Cada uma com o
+// texto e se já foi cumprida, para a aba Legado mostrar o checklist.
 const GATE = {
   owned: (s, c) => (s.owned[c.gen] ?? 0) > 0,
   techs: (s) => TECHS.every((t) => s.techs[t.id]),
 };
-export const gateStatus = (s) => LEGACY.gate.map((c) => ({ ...c, done: GATE[c.type](s, c) }));
+export const gatePhase = (s) => LEGACY.gate.filter((p) => p.from <= s.legacy.ascensions).at(-1);
+export const gateStatus = (s) => gatePhase(s).any.map((c) => ({ ...c, done: GATE[c.type](s, c) }));
 export const gateMet = (s) => gateStatus(s).some((c) => c.done);
 
 // Desafios e semente do dia (s.run) não ascendem: começam e terminam sem legado.
@@ -25,7 +36,7 @@ export const canAscend = (s) => !s.run && s.earned >= LEGACY.minRunEarned && gat
 // Quanto falta ganhar nesta partida para a prévia subir mais 1 ponto.
 export function nextPointIn(s) {
   const total = s.legacy.earned + legacyGain(s);
-  return (total + 1) ** 2 * LEGACY.divisor - lifetimeEarned(s);
+  return threshold(total + 1) - lifetimeEarned(s);
 }
 
 export const monumentMult = (s) => MONUMENT.mult ** s.legacy.monument;

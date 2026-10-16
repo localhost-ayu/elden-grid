@@ -47,7 +47,8 @@ export function newState(seed = 1) {
 //   v8 = state.stats, state.career
 //   v9 = state.achievements, state.legacy.monument, state.auto.crank (fromSave preenche)
 //   v10 = state.run (fromSave preenche com null)
-export const SAVE_VERSION = 10;
+//   v11 = pontos de legado pela raiz cúbica: legacy.lifetime é reajustado à curva nova
+export const SAVE_VERSION = 11;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -72,6 +73,15 @@ const MIGRATIONS = {
   // Conquistas começam vazias: o que o save antigo já cumpre sai no primeiro quadro.
   8: (raw) => ({ ...raw, saveVersion: 9, state: { ...raw.state, achievements: raw.state?.achievements ?? {} } }),
   9: (raw) => ({ ...raw, saveVersion: 10 }),
+  // 1.4: pontos = cbrt(total / 5e7) em vez de sqrt(total / 1e9). Quem já ascendeu mantém
+  // os pontos recebidos (legacy.earned); o total ganho passa a ser o mínimo que dá esses
+  // pontos na curva nova, para o próximo ponto não ficar centenas de vezes mais longe.
+  // Números fixos aqui (e não LEGACY): a migração é da curva da 1.4, mesmo se ela mudar.
+  10: (raw) => {
+    const L = raw.state?.legacy;
+    if (!L || !(L.earned > 0)) return { ...raw, saveVersion: 11 };
+    return { ...raw, saveVersion: 11, state: { ...raw.state, legacy: { ...L, lifetime: L.earned ** 3 * 5e7 } } };
+  },
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.

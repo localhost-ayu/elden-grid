@@ -80,7 +80,9 @@ function botStep(s, crises) {
   let best = null;
   let bestV = 0;
   for (const g of GENERATORS) {
-    if (!E.genUnlocked(g, s)) continue;
+    if (!E.genBuyable(s, g)) continue;
+    // Kugelblitz mal alimentado rende menos: o bot só amplia com folga de alimentação.
+    if (E.feedFactor(s, g) < 0.95) continue;
     const v = (g.output * E.genModMult(s, g, 'output') * E.genEnv(s, g, true)) / E.genCost(s, g);
     if (v > bestV) { bestV = v; best = g; }
   }
@@ -156,7 +158,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       console.log(`seed ${seed}: meta ${goal} ${'goal' in marks ? `em ${clock(marks.goal)}` : `não alcançada em ${minutes} min ($${s.earned.toExponential(2)})`}`);
       continue;
     }
-    const order = ['solar', 'lab', 'hydro', 'gas', 'nuclear', 'tidal', 'fusion', 'antimatter'];
+    const order = ['solar', 'lab', 'hydro', 'gas', 'nuclear', 'tidal', 'fusion', 'antimatter', 'swarm', 'kugelblitz', 'vacuum'];
     const m = order.filter((k) => k in marks).map((k) => `${k} ${clock(marks[k])}`).join('  ');
     // Muitas ascensões: mostra as 8 primeiras e as 4 últimas.
     const list = ascensions.length > 12 ? [...ascensions.slice(0, 8), null, ...ascensions.slice(-4)] : ascensions;

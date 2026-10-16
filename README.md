@@ -48,8 +48,9 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   segundos de renda. As crises têm nível (0 a 10) que sobe a cada ascensão: começam
   fáceis e baratas e terminam pedindo atenção (até 25% do caixa ou 5 min de renda).
 - **Legado.** A ascensão fecha uma partida completa: pede $25B ganhos nela **e** uma usina
-  de antimatéria ou todas as pesquisas concluídas. Quanto mais a partida rende, mais
-  pontos ela dá. Ao ascender, a partida recomeça e você recebe pontos (+10% de produção
+  de antimatéria (nas três primeiras) ou a Energia do Vácuo (da 4ª em diante), ou então
+  todas as pesquisas concluídas. Quanto mais a partida rende, mais pontos ela dá (raiz
+  cúbica do total ganho). Ao ascender, a partida recomeça e você recebe pontos (+10% de produção
   cada ponto guardado) que podem ser trocados por vantagens permanentes na loja do
   legado: começar com usinas, pesquisas, laboratórios, resfriamento e transformadores,
   construir mais barato, marcos antecipados, seguro contra crises, mais tempo offline e
@@ -68,7 +69,7 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Semente do dia.** Uma partida por dia igual para todo mundo (mesma seed, mesmas
   regras sorteadas): quem chega a $25B mais rápido? Ao terminar, o jogo mostra um código
   com o tempo para mandar aos amigos.
-- **Conquistas.** 97 metas em nove categorias (algumas secretas), da primeira faísca a
+- **Conquistas.** 102 metas em nove categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%

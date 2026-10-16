@@ -35,8 +35,19 @@ número e data. Mudanças de save registram a nova `saveVersion`.
     forças que mudam, e ← → o seguram na faixa central até a contenção encher.
   - **Tempestade solar** (com o Enxame): erupções chegam pelas quatro direções e a seta
     certa a tempo bloqueia cada uma.
+- Cinco conquistas novas (102 no total): uma para cada fonte da Fronteira e uma para cada
+  crise nova vencida rápido.
 - Árvore de pesquisa: ramos muito fundos empurram a coluna do custo em vez de passar da
   largura da tela.
+
+### Mudado
+- Da 4ª ascensão em diante, a partida só fecha com a Energia do Vácuo (ou todas as
+  pesquisas); as três primeiras continuam fechando na antimatéria. A aba Legado mostra as
+  condições da fase atual.
+- Pontos de legado pela raiz cúbica do total ganho (antes, raiz quadrada), com a 1ª
+  ascensão ainda em ~20 pontos. Com a raiz quadrada, a primeira partida até a Fronteira
+  dava 100x mais pontos que a anterior. Save **v11**: quem já ascendeu mantém os pontos, e
+  o total ganho é reajustado para o próximo ponto vir no ritmo da curva nova.
 
 ## [1.3.0] - 2026-10-16
 

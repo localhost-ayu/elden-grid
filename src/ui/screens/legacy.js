@@ -68,7 +68,7 @@ function ascendBlock(s, selected) {
 function missing(s) {
   const parts = [];
   if (s.earned < LEGACY.minRunEarned) parts.push(`$${fmt(LEGACY.minRunEarned)} nesta partida`);
-  if (!gateMet(s)) parts.push(LEGACY.gate.map((c) => c.short).join(' ou '));
+  if (!gateMet(s)) parts.push(gateStatus(s).map((c) => c.short).join(' ou '));
   return parts.join(' e ');
 }
 
