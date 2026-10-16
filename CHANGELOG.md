@@ -10,6 +10,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [1.4.0] - 2026-10-16
+
+Fronteira: três fontes depois da antimatéria, duas crises novas e partidas que fecham na
+Fronteira.
+
 ### Adicionado
 - Páginas na aba Geradores: 10 fontes por página, com as teclas `0`–`9` valendo na página
   aberta e `←→` (ou `PgUp`/`PgDn`) para trocar. A segunda página aparece quando a
@@ -185,7 +190,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.1...v1.1.0
