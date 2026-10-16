@@ -1,8 +1,9 @@
 // Árvore de pesquisa (paga com PP). `req` lista os pré-requisitos; o PRIMEIRO é o pai
 // na árvore desenhada (os demais aparecem como "requer: X" quando faltam).
 // A ordem do array é a ordem dos irmãos na tela.
-// Custos do fim da árvore calibrados com scripts/simulate.js: Fusão chega pouco antes do
-// primeiro Legado (~36 min) e Antimatéria é prêmio de partida longa (~58 min).
+// Custos do fim da árvore calibrados com scripts/simulate.js: Fusão chega em ~36 min e
+// Antimatéria em ~58 min na 1ª partida. Com ~45 pontos de legado (4ª partida), o Enxame
+// chega em ~1 h e o Vácuo em ~2 h.
 //
 // type: 'unlock'   (só libera algo; o gerador aponta para ela em `unlock`)
 //       'genMult'  (x na geração de um gerador)    'global'   (x em toda a geração)
@@ -53,8 +54,8 @@ export const TECHS = [
   { id: 't_substation',  name: 'Subestações',              cost: 400,    req: ['t_hv'],          type: 'capacity', mult: 30 },
   { id: 't_hvdc',        name: 'Linhas HVDC',              cost: 2500,   req: ['t_substation'],  type: 'capacity', mult: 40 },
   { id: 't_continental', name: 'Rede Continental',         cost: 12000,  req: ['t_hvdc'],        type: 'capacity', mult: 50 },
-  { id: 't_planetary',   name: 'Rede Planetária',          cost: 100000, req: ['t_continental'], type: 'capacity', mult: 60 },
-  { id: 't_orbitalgrid', name: 'Rede Orbital',             cost: 300000, req: ['t_planetary'],   type: 'capacity', mult: 80 },
+  { id: 't_planetary',   name: 'Rede Planetária',          cost: 60000,  req: ['t_continental'], type: 'capacity', mult: 60 },
+  { id: 't_orbitalgrid', name: 'Rede Orbital',             cost: 100000, req: ['t_planetary'],   type: 'capacity', mult: 1000 },
   // Armazenamento: o excedente vai para baterias e é vendido depois, valendo mais.
   { id: 't_storage',     name: 'Armazenamento em Rede',    cost: 120000, req: ['t_planetary', 't_battery'], type: 'excess', add: 0.15 },
   { id: 't_storage2',    name: 'Baterias de Estado Sólido', cost: 600000, req: ['t_storage'],     type: 'excess', add: 0.2 },

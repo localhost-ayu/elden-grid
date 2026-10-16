@@ -28,7 +28,7 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   Dinâmico (x2) e Volantes de Inércia (a produção nunca cai abaixo de x1).
 - Mais seis pesquisas no fim da árvore (45 no total): Armazenamento em Rede e Baterias de
   Estado Sólido (o excedente da rede passa a valer 40% e depois 60% do preço), Rede
-  Orbital (capacidade x80), Antimatéria Catalisada (x2), Economia Pós-Escassez (produção
+  Orbital (capacidade x1000), Antimatéria Catalisada (x2), Economia Pós-Escassez (produção
   x3) e Inteligência Planetária (pesquisa x3).
 - Duas crises novas com minijogos próprios, já com os níveis de dificuldade:
   - **Ruptura de contenção** (com antimatéria ou Kugelblitz): um ponteiro deriva com
@@ -48,6 +48,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   ascensão ainda em ~20 pontos. Com a raiz quadrada, a primeira partida até a Fronteira
   dava 100x mais pontos que a anterior. Save **v11**: quem já ascendeu mantém os pontos, e
   o total ganho é reajustado para o próximo ponto vir no ritmo da curva nova.
+
+- Metas dos desafios nos níveis III a V subiram para $1T, $30T e $1Q: com a Fronteira, o
+  nível V estava saindo 1 h mais rápido que o calibrado.
+- Rede Planetária mais barata (60k PP) e Rede Orbital com capacidade x1000: com o legado
+  forte, a rede passava 70% do tempo saturada nas partidas da Fronteira.
 
 ## [1.3.0] - 2026-10-16
 

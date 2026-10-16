@@ -113,9 +113,12 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, ch
   const ascensions = [];
   let runStart = 0;
   let saturated = 0;
+  let runSat = 0;
+  let runSteps = 0;
   for (let step = 0; step < minutes * 60 / DT; step++) {
     botStep(s, crises);
-    if (E.gridLoad(s) > 1) saturated++;
+    if (E.gridLoad(s) > 1) { saturated++; runSat++; }
+    runSteps++;
     const min = (step * DT) / 60;
     for (const g of GENERATORS) if (s.owned[g.id] > 0 && !(g.id in marks)) marks[g.id] = min;
     if (s.labs > 0 && !('lab' in marks)) marks.lab = min;
@@ -124,7 +127,9 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, ch
     if (goalReached(s)) { s.run.done = true; marks.goal = min; break; }
     if (P.canAscend(s) && P.legacyGain(s) >= Math.max(1, s.legacy.earned / 2) && ascensions.length < runs) {
       const gain = P.ascend(s);
-      ascensions.push({ at: min, took: min - runStart, gain, n: s.legacy.ascensions });
+      ascensions.push({ at: min, took: min - runStart, gain, n: s.legacy.ascensions, sat: runSat / runSteps });
+      runSat = 0;
+      runSteps = 0;
       runStart = min;
       if (crises === 'off') s.events.next = Infinity;
       shop(s);

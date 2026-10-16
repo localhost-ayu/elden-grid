@@ -19,7 +19,9 @@
 //   output         x na produção de fontes específicas ({ gerador: x })
 //   heat           x no alvo de calor dos reatores
 //   crisisLevel    nível fixo das crises (sem a regra: CRISIS.runLevel, em data/events.js)
-export const GOALS = [2.5e10, 1e11, 5e11, 2.5e12, 1e13];
+// 1.4: metas III–V subiram (eram 5e11, 2.5e12, 1e13): com a Fronteira, o nível V caía
+// para ~1h30–2h20. Bot: I ~40 min, III ~1h20, IV ~2h10, V 2h45–3h55.
+export const GOALS = [2.5e10, 1e11, 1e12, 3e13, 1e15];
 
 // Recompensas (valem nos slots 1–3, nunca dentro de um desafio). Cada nível completo de
 // qualquer desafio multiplica a produção por TIER_MULT (25 níveis: x10.8), e cada desafio
