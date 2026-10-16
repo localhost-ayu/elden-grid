@@ -2,7 +2,8 @@
 
 Idle game de geração de energia que roda inteiro no terminal. Você começa girando uma
 manivela e comprando uma turbina eólica, e termina administrando uma rede com reatores de
-fusão, antimatéria, crises para apagar e um legado que atravessa partidas.
+fusão, antimatéria, espelhos em órbita e um buraco negro artificial, crises para apagar e
+um legado que atravessa partidas.
 
 ```
  ⚡ ELDEN GRID    Geradores │ Pesquisa │ Rede │ Legado │ Estatísticas │ Opções
@@ -26,13 +27,17 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 
 - **Energia vira dinheiro sozinha.** Cada usina produz kW; a energia é vendida a um preço
   que oscila (▲/▼ mostram a tendência). Convenção: 1 s real = 1 h de jogo.
-- **Dez fontes, cada uma com personalidade.** A eólica segue o vento, a solar o dia e a
+- **Treze fontes, cada uma com personalidade.** A eólica segue o vento, a solar o dia e a
   noite, a maremotriz a maré, a hidrelétrica o reservatório; gás e fusão têm custo de
   operação; nuclear, fusão e antimatéria esquentam e podem desligar se ninguém resfriar.
+  Depois da antimatéria vem a **Fronteira** (página 2 da aba Geradores): o Enxame Solar
+  Orbital só se compra nas janelas de lançamento, o Kugelblitz rende o quanto as outras
+  fontes conseguem alimentá-lo e a Energia do Vácuo oscila entre x0.2 e x5.
 - **Pesquisa destrava o resto.** Laboratórios geram Pontos de Pesquisa (PP) para uma árvore
-  de 30 techs: novas fontes, multiplicadores, capacidade da rede e auto-compra.
+  de 45 techs: novas fontes, multiplicadores, capacidade da rede, armazenamento e
+  auto-compra.
 - **A rede é o gargalo.** Acima da capacidade de transmissão, o excedente vale só 25% do
-  preço. A aba Rede mostra a rede em quatro visões (mapa, fluxo, gráfico e calor).
+  preço (mais com as pesquisas de armazenamento). A aba Rede mostra a rede em quatro visões (mapa, fluxo, gráfico e calor).
 - **Upgrades e marcos.** Cada fonte tem 5 upgrades e dobra a produção ao chegar a 25, 50
   e 100 unidades. Compras em lote x1, x10, x100 ou MAX.
 - **Eventos e crises.** Tempestades, picos de demanda e descobertas mudam o jogo por um

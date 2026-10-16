@@ -120,11 +120,15 @@ export const capacity = (s) =>
 export const transformerCost = (s) =>
   Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
 
+// Fração do preço paga pelo excedente: armazenamento (pesquisas 'excess') guarda parte
+// dele para vender depois.
+export const excessRate = (s) => GRID.excessPriceRate + boughtOf(s, 'excess').reduce((sum, t) => sum + t.add, 0);
+
 // { full, excess, perSecond }: kW a preço cheio, kW excedentes (com desconto) e $/s.
 export function sales(s, kw) {
   const full = Math.min(kw, capacity(s));
   const excess = kw - full;
-  return { full, excess, perSecond: (full + excess * GRID.excessPriceRate) * price(s) };
+  return { full, excess, perSecond: (full + excess * excessRate(s)) * price(s) };
 }
 // Fração da capacidade em uso (1 = no limite; > 1 = saturada).
 export const gridLoad = (s) => power(s) / capacity(s);

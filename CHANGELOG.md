@@ -26,6 +26,10 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - **Energia do Vácuo**, a última fonte da Fronteira: produção instável que oscila rápido
   entre x0.2 e x5 (média ~x1.4). Pesquisas: Flutuação do Vácuo (libera), Efeito Casimir
   Dinâmico (x2) e Volantes de Inércia (a produção nunca cai abaixo de x1).
+- Mais seis pesquisas no fim da árvore (45 no total): Armazenamento em Rede e Baterias de
+  Estado Sólido (o excedente da rede passa a valer 40% e depois 60% do preço), Rede
+  Orbital (capacidade x80), Antimatéria Catalisada (x2), Economia Pós-Escassez (produção
+  x3) e Inteligência Planetária (pesquisa x3).
 - Árvore de pesquisa: ramos muito fundos empurram a coluna do custo em vez de passar da
   largura da tela.
 

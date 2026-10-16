@@ -9,7 +9,7 @@ import { GRID } from '../../data/grid.js';
 import { HEAT } from '../../data/heat.js';
 import {
   power, genPower, genEnv, capacity, sales, gridLoad, price, income, upkeep, transformerCost,
-  genModMult,
+  genModMult, excessRate,
 } from '../../core/engine.js';
 import {
   HOT_GENERATORS, heatLevel, heatTarget, efficiency, isShutdown, shutdownLeft, coolingLevel, nextCooling,
@@ -114,7 +114,7 @@ function mapView(s, height) {
   const out = [];
   for (let i = 0; i < Math.min(rows, height); i++) out.push('  ' + padVisible(grid[i] ?? '', MAP_W * 3 + 2) + (legend[i] ?? ''));
   if (!owned(s).length) out.splice(0, out.length, '', paint(C.dim, '   Nenhuma usina ainda — compre na aba Geradores.'));
-  if (load > 1 && out.length < height) out.push('', paint(C.red + C.bold, '   REDE SATURADA') + paint(C.dim, ` — excedente vendido a ${Math.round(GRID.excessPriceRate * 100)}% do preço`));
+  if (load > 1 && out.length < height) out.push('', paint(C.red + C.bold, '   REDE SATURADA') + paint(C.dim, ` — excedente vendido a ${Math.round(excessRate(s) * 100)}% do preço`));
   return out;
 }
 

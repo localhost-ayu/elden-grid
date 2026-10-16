@@ -13,6 +13,7 @@
 //       'launch'   (+`add` s na janela de lançamento do Enxame)
 //       'feed'     (x no quanto o Kugelblitz precisa ser alimentado)
 //       'vacuumFloor' (piso da flutuação do vácuo: `floor`, o maior vale)
+//       'excess'   (+`add` na fração do preço paga pelo excedente da rede: armazenamento)
 export const TECHS = [
   // ---- eólica ----
   { id: 't_wind2',       name: 'Pás Aerodinâmicas',        cost: 3,      req: [],                type: 'genMult', gen: 'wind', mult: 2 },
@@ -44,6 +45,7 @@ export const TECHS = [
   { id: 't_vacuum',      name: 'Flutuação do Vácuo',       cost: 6e6,    req: ['t_kugel'],       type: 'unlock' },
   { id: 't_vacuum2',     name: 'Efeito Casimir Dinâmico',  cost: 1.5e7,  req: ['t_vacuum'],      type: 'genMult', gen: 'vacuum', mult: 2 },
   { id: 't_flywheel',    name: 'Volantes de Inércia',      cost: 5e6,    req: ['t_vacuum'],      type: 'vacuumFloor', floor: 1 },
+  { id: 't_antimatter2', name: 'Antimatéria Catalisada',   cost: 500000, req: ['t_antimatter'],  type: 'genMult', gen: 'antimatter', mult: 2 },
 
   // ---- rede e mercado ----
   { id: 't_grid',        name: 'Rede Inteligente',         cost: 20,     req: [],                type: 'price',    mult: 1.25 },
@@ -52,14 +54,20 @@ export const TECHS = [
   { id: 't_hvdc',        name: 'Linhas HVDC',              cost: 2500,   req: ['t_substation'],  type: 'capacity', mult: 40 },
   { id: 't_continental', name: 'Rede Continental',         cost: 12000,  req: ['t_hvdc'],        type: 'capacity', mult: 50 },
   { id: 't_planetary',   name: 'Rede Planetária',          cost: 100000, req: ['t_continental'], type: 'capacity', mult: 60 },
+  { id: 't_orbitalgrid', name: 'Rede Orbital',             cost: 1.5e6,  req: ['t_planetary'],   type: 'capacity', mult: 80 },
+  // Armazenamento: o excedente vai para baterias e é vendido depois, valendo mais.
+  { id: 't_storage',     name: 'Armazenamento em Rede',    cost: 300000, req: ['t_planetary', 't_battery'], type: 'excess', add: 0.15 },
+  { id: 't_storage2',    name: 'Baterias de Estado Sólido', cost: 3e6,   req: ['t_storage'],     type: 'excess', add: 0.2 },
   { id: 't_grid2',       name: 'Supercondutores',          cost: 1200,   req: ['t_grid'],        type: 'global',   mult: 1.5 },
   { id: 't_global2',     name: 'Era da Eletrificação',     cost: 15000,  req: ['t_grid2'],       type: 'global',   mult: 2 },
+  { id: 't_global3',     name: 'Economia Pós-Escassez',    cost: 8e6,    req: ['t_global2', 't_orbital'], type: 'global', mult: 3 },
   { id: 't_market',      name: 'Mercado Livre de Energia', cost: 9000,   req: ['t_grid', 't_hvdc'], type: 'price',  mult: 1.5 },
 
   // ---- laboratório e automação ----
   { id: 't_lab',         name: 'Método Científico',        cost: 120,    req: [],                type: 'lab',  mult: 2 },
   { id: 't_lab2',        name: 'Computação Quântica',      cost: 5000,   req: ['t_lab'],         type: 'lab',  mult: 2 },
   { id: 't_lab3',        name: 'Colaboração Global',       cost: 60000,  req: ['t_lab2'],        type: 'lab',  mult: 3 },
+  { id: 't_lab4',        name: 'Inteligência Planetária',  cost: 1e6,    req: ['t_lab3'],        type: 'lab',  mult: 3 },
   { id: 't_auto',        name: 'Automação Industrial',     cost: 800,    req: ['t_lab'],         type: 'auto', interval: 1 },
   { id: 't_auto2',       name: 'Gestão por IA',            cost: 20000,  req: ['t_auto'],        type: 'auto', interval: 0.2 },
 ];

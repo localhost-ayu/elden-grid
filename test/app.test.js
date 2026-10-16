@@ -315,8 +315,8 @@ test('cabeçalho mostra uso da rede; Geradores: A liga/desliga a auto-compra', (
   app.state.techs.t_lab = true;
   app.state.rp = 1000;
   press('p');
-  for (let i = 0; i < 40; i++) press('down'); // Automação Industrial fica perto do fim
-  for (let i = 0; i < 40 && !/› .*Automação Industrial/.test(text()); i++) press('up');
+  for (let i = 0; i < 80; i++) press('down'); // Automação Industrial fica perto do fim
+  for (let i = 0; i < 80 && !/› .*Automação Industrial/.test(text()); i++) press('up');
   press('enter');
   assert.equal(app.state.techs.t_auto, true);
   assert.equal(app.state.auto.buy, true); // já começa ligada

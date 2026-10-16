@@ -131,3 +131,19 @@ test('Energia do Vácuo: oscila entre x0.2 e x5; Volantes de Inércia sobem o pi
   for (let t = 0; t < 300; t += 0.5) { s.t = t; assert.ok(genEnv(s, v) >= 1); }
   assert.ok(genEnv(s, v, true) > avg, 'o piso sobe a média do offline');
 });
+
+test('Armazenamento: o excedente da rede vale mais; toda pesquisa tem descrição', async () => {
+  const { sales, excessRate, capacity } = await import('../src/core/engine.js');
+  const { GRID } = await import('../src/data/grid.js');
+  const { TECHS } = await import('../src/data/research.js');
+  const { describe } = await import('../src/ui/screens/research.js');
+  const s = newState();
+  const kw = capacity(s) * 3;
+  const base = sales(s, kw).perSecond;
+  assert.equal(excessRate(s), GRID.excessPriceRate);
+  s.techs.t_storage = true;
+  s.techs.t_storage2 = true;
+  assert.ok(Math.abs(excessRate(s) - (GRID.excessPriceRate + 0.35)) < 1e-12);
+  assert.ok(sales(s, kw).perSecond > base);
+  for (const t of TECHS) assert.ok(describe(t).length > 0, `${t.id} sem descrição`);
+});
