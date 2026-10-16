@@ -57,12 +57,26 @@ function shopRow(s, item, selected) {
   return ' ' + paint(style + (selected ? C.bold : ''), text);
 }
 
-export function render(ctx) {
+// A loja rola sob um cabeçalho fixo (pontos e ascensão), mantendo a seleção à vista.
+// `ui.top` = primeiro item da loja visível.
+function shopWindow(ui, rows, room) {
+  if (rows.length <= room) return { shown: rows, more: '' };
+  const view = Math.max(1, room - 1); // uma linha para o indicador
+  const i = Math.max(0, (ui.sel ?? 0) - 1);
+  ui.top = Math.max(0, Math.min(ui.top ?? 0, rows.length - view));
+  if (i < ui.top) ui.top = i;
+  if (i >= ui.top + view) ui.top = i - view + 1;
+  const end = Math.min(rows.length, ui.top + view);
+  const more = paint(C.dim, `   itens ${ui.top + 1}–${end} de ${rows.length}  (↑↓ rola)`);
+  return { shown: rows.slice(ui.top, end), more };
+}
+
+export function render(ctx, height = Infinity) {
   const s = ctx.state;
   const ui = ctx.ui;
   const sel = clampSel(ui);
   const L = s.legacy;
-  const lines = [
+  const head = [
     '   ' + paint(C.bold + C.yellow, `${glyphs().legacy} ${L.points} ${L.points === 1 ? 'ponto' : 'pontos'} de legado`) +
       paint(C.dim, `  →  produção +${pct(legacyMult(s))}`) +
       paint(C.dim, `  ·  ascensões ${L.ascensions}  ·  offline até ${offlineMax(s) / 3600} h`),
@@ -71,12 +85,11 @@ export function render(ctx) {
     ...ascendBlock(s, sel === 0),
     '',
     '   ' + paint(C.bold, 'Loja do Legado') + paint(C.dim, ' '.repeat(16) + 'nível  próximo nível'),
-    ...SHOP.map((item, i) => shopRow(s, item, sel === i + 1)),
   ];
-  if (ui.confirm) {
-    lines.push('', '   ' + paint(C.yellow + C.bold, ui.confirm.text) + '  ' + paint(C.bold, '(S/N)'));
-  }
-  return lines;
+  const confirm = ui.confirm ? ['', '   ' + paint(C.yellow + C.bold, ui.confirm.text) + '  ' + paint(C.bold, '(S/N)')] : [];
+  const rows = SHOP.map((item, i) => shopRow(s, item, sel === i + 1));
+  const { shown, more } = shopWindow(ui, rows, height - head.length - confirm.length);
+  return [...head, ...shown, ...(more ? [more] : []), ...confirm];
 }
 
 function choose(ctx) {

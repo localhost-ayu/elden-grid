@@ -201,3 +201,22 @@ test('aba Legado: compra na loja e mensagens; cabe em 80×24', () => {
   app.key('enter');
   assert.match(text(), /Faltam 3 pontos para Turno da Noite/);
 });
+
+test('loja do legado rola sob o cabeçalho fixo e mantém a seleção à vista', async () => {
+  const legacyScreen = await import('../src/ui/screens/legacy.js');
+  const s = newState();
+  const ui = {};
+  const ctx = { state: s, ui, say() {} };
+  const plain = (h) => legacyScreen.render(ctx, h).map(stripAnsi);
+  const full = plain(Infinity);
+  assert.equal(full.filter((l) => SHOP.some((it) => l.includes(it.name))).length, SHOP.length);
+  const tight = plain(10); // cabeçalho de 7 linhas: 2 itens + indicador
+  assert.equal(tight.length, 10);
+  assert.match(tight.at(-1), /itens 1–2 de \d+/);
+  for (let i = 0; i < SHOP.length; i++) legacyScreen.key(ctx, 'down');
+  const end = plain(10);
+  assert.ok(end.some((l) => l.includes('›') && l.includes(SHOP.at(-1).name)), 'último item selecionado e visível');
+  assert.match(end.at(-1), new RegExp(`itens ${SHOP.length - 1}–${SHOP.length} de ${SHOP.length}`));
+  for (let i = 0; i < SHOP.length; i++) legacyScreen.key(ctx, 'up');
+  assert.match(plain(10)[3], /› ✦ Ascender/);
+});
