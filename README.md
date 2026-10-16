@@ -38,14 +38,18 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Eventos e crises.** Tempestades, picos de demanda e descobertas mudam o jogo por um
   tempo. Crises (blecaute, onda de calor, sobrecarga) ficam ativas até alguém agir: o
   manual de crise explica o minijogo de cada uma. Resolver sai de graça e dá um bônus;
-  falhar, chamar a equipe ou ignorar custa o menor entre 10% do caixa e 1 min de renda.
-- **Legado.** Depois de ganhar $25B numa partida dá para ascender: a partida recomeça e
-  você recebe pontos (+10% de produção cada ponto guardado) que podem ser trocados por
-  vantagens permanentes na loja do legado: começar com usinas, pesquisas, laboratórios,
-  resfriamento e transformadores, construir mais barato, marcos antecipados, seguro
-  contra crises, mais tempo offline e uma manivela que rende mais (e gira sozinha). A
-  rede cresce junto com o legado, então uma partida nova nunca começa saturada. Quando a loja acaba, o
-  **Monumento** (x1.1 de produção por nível, sem teto) dá destino aos pontos que sobram.
+  falhar, chamar a equipe ou ignorar custa o menor entre uma fração do caixa e alguns
+  segundos de renda. As crises têm nível (0 a 10) que sobe a cada ascensão: começam
+  fáceis e baratas e terminam pedindo atenção (até 25% do caixa ou 5 min de renda).
+- **Legado.** A ascensão fecha uma partida completa: pede $25B ganhos nela **e** uma usina
+  de antimatéria ou todas as pesquisas concluídas. Quanto mais a partida rende, mais
+  pontos ela dá. Ao ascender, a partida recomeça e você recebe pontos (+10% de produção
+  cada ponto guardado) que podem ser trocados por vantagens permanentes na loja do
+  legado: começar com usinas, pesquisas, laboratórios, resfriamento e transformadores,
+  construir mais barato, marcos antecipados, seguro contra crises, mais tempo offline e
+  uma manivela que rende mais (e gira sozinha). A rede cresce junto com o legado, então
+  uma partida nova nunca começa saturada. Quando a loja acaba, o **Monumento** (x1.1 de
+  produção por nível, sem teto) dá destino aos pontos que sobram.
 - **Modo disfarce.** Apareceu alguém? `\` (barra invertida) troca a tela inteira, de
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
@@ -79,7 +83,8 @@ npm run simulate       # ou: bun scripts/simulate.js 90 --seeds=5
 ```
 
 `scripts/simulate.js` joga sozinho usando só a lógica do jogo e imprime quando chegou a
-cada marco (primeira solar, nuclear, fusão, cada ascensão), as crises, quanto tempo a rede
+cada marco (primeira solar, nuclear, fusão, cada ascensão), as crises (o bot erra mais
+nas de nível alto, como um humano), quanto tempo a rede
 passou saturada, quando a loja do legado ficou completa e o nível do Monumento. Com
 `--challenge=<id> --tier=N` (ou `--daily=AAAA-MM-DD`), joga um desafio e mostra o tempo
 até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.

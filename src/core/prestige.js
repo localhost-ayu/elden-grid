@@ -9,8 +9,18 @@ import { peak } from './records.js';
 export const pointsFor = (money) => Math.floor(Math.sqrt(Math.max(0, money) / LEGACY.divisor));
 export const lifetimeEarned = (s) => s.legacy.lifetime + s.earned;
 export const legacyGain = (s) => Math.max(0, pointsFor(lifetimeEarned(s)) - s.legacy.earned);
+
+// Condições de fim de partida (LEGACY.gate): basta uma. Cada uma com o texto e se já foi
+// cumprida, para a aba Legado mostrar o checklist.
+const GATE = {
+  owned: (s, c) => (s.owned[c.gen] ?? 0) > 0,
+  techs: (s) => TECHS.every((t) => s.techs[t.id]),
+};
+export const gateStatus = (s) => LEGACY.gate.map((c) => ({ ...c, done: GATE[c.type](s, c) }));
+export const gateMet = (s) => gateStatus(s).some((c) => c.done);
+
 // Desafios e semente do dia (s.run) não ascendem: começam e terminam sem legado.
-export const canAscend = (s) => !s.run && s.earned >= LEGACY.minRunEarned && legacyGain(s) >= 1;
+export const canAscend = (s) => !s.run && s.earned >= LEGACY.minRunEarned && gateMet(s) && legacyGain(s) >= 1;
 
 // Quanto falta ganhar nesta partida para a prévia subir mais 1 ponto.
 export function nextPointIn(s) {

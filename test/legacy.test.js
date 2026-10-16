@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newState, migrate, fromSave, isValidState, SAVE_VERSION } from '../src/core/state.js';
+import { TECHS } from '../src/data/research.js';
 import { LEGACY, SHOP } from '../src/data/legacy.js';
 import {
-  pointsFor, legacyGain, canAscend, nextPointIn, legacyMult, buyShop, ascend, shopLevel,
+  pointsFor, legacyGain, canAscend, gateStatus, nextPointIn, legacyMult, buyShop, ascend, shopLevel,
 } from '../src/core/prestige.js';
 import { power, genCost, rpRate, tick, applyOffline } from '../src/core/engine.js';
 import { crank } from '../src/core/actions.js';
@@ -13,9 +14,11 @@ import { stripAnsi, visibleLength } from '../src/ui/format.js';
 
 const D = LEGACY.divisor;
 
+// Partida pronta para ascender: o mínimo ganho e uma condição do fim da partida.
 function ready() {
   const s = newState();
   s.earned = LEGACY.minRunEarned;
+  s.owned.antimatter = 1;
   return s;
 }
 
@@ -34,13 +37,20 @@ test('fórmula: raiz do dinheiro ganho em todas as partidas, menos o já recebid
   assert.equal(nextPointIn(s), 25 * D - 16 * D);
 });
 
-test('ascensão exige o mínimo ganho na partida e ao menos 1 ponto', () => {
+test('ascensão exige o mínimo ganho, antimatéria ou a árvore completa, e ao menos 1 ponto', () => {
   const s = newState();
   s.earned = LEGACY.minRunEarned - 1;
+  s.owned.antimatter = 1;
   assert.equal(canAscend(s), false);
   assert.equal(ascend(s), 0);
   s.earned = LEGACY.minRunEarned;
   assert.equal(canAscend(s), true);
+  s.owned.antimatter = 0;
+  assert.equal(canAscend(s), false, 'só dinheiro não basta');
+  assert.deepEqual(gateStatus(s).map((c) => c.done), [false, false]);
+  for (const t of TECHS) s.techs[t.id] = true;
+  assert.equal(canAscend(s), true, 'a árvore completa também fecha a partida');
+  assert.deepEqual(gateStatus(s).map((c) => c.done), [false, true]);
   s.legacy.earned = legacyGain(s) + s.legacy.earned; // já recebeu tudo
   assert.equal(canAscend(s), false);
 });
@@ -125,6 +135,7 @@ test('efeitos da loja: custo, pesquisa, manivela, offline, auto-compra e começo
   assert.equal(r.rate, 0.7);
   assert.equal(autoInterval(s), 1);
   s.earned = LEGACY.minRunEarned;
+  s.owned.antimatter = 1;
   ascend(s);
   assert.equal(s.owned.wind, 25);
   assert.equal(s.auto.buy, true);
@@ -189,7 +200,7 @@ test('aba Legado: compra na loja e mensagens; cabe em 80×24', () => {
   const { app, text } = make(s);
   app.key('l');
   app.key('enter');
-  assert.match(text(), /disponível após ganhar/);
+  assert.match(text(), /Para ascender: \$25\.00B nesta partida e antimatéria ou todas as pesquisas/);
   app.key('down');
   app.key('enter');
   assert.match(text(), /Falta 1 ponto para Começo Rápido/);
@@ -210,20 +221,19 @@ test('loja do legado rola sob o cabeçalho fixo e mantém a seleção à vista',
   const plain = (h) => legacyScreen.render(ctx, h).map(stripAnsi);
   const full = plain(Infinity);
   assert.equal(full.filter((l) => SHOP.some((it) => l.includes(it.name))).length, SHOP.length);
-  const tight = plain(10); // cabeçalho de 7 linhas: 2 itens + indicador
-  assert.equal(tight.length, 10);
+  const tight = plain(11); // cabeçalho de 8 linhas: 2 itens + indicador
+  assert.equal(tight.length, 11);
   assert.match(tight.at(-1), /itens 1–2 de \d+/);
   const n = SHOP.length + 1; // a loja e o Monumento
   for (let i = 0; i < n + 3; i++) legacyScreen.key(ctx, 'down');
-  const end = plain(10);
+  const end = plain(11);
   assert.ok(end.some((l) => l.includes('›') && l.includes('Monumento')), 'último item selecionado e visível');
   assert.match(end.at(-1), new RegExp(`itens ${n - 1}–${n} de ${n}`));
   for (let i = 0; i < n; i++) legacyScreen.key(ctx, 'up');
   assert.match(plain(10)[3], /› ✦ Ascender/);
 });
 
-test('loja 1.1: listas de Pesquisa Herdada incluem seus pré-requisitos e crescem por nível', async () => {
-  const { TECHS } = await import('../src/data/research.js');
+test('loja 1.1: listas de Pesquisa Herdada incluem seus pré-requisitos e crescem por nível', () => {
   const item = SHOP.find((x) => x.type === 'techs');
   let prev = [];
   for (const list of item.values) {
@@ -256,6 +266,7 @@ test('loja 1.1: a partida começa com pesquisas, resfriamento, transformadores e
   assert.equal(s.auto.buy, false); // nada de automação herdada
   s.legacy.shop.research = 3;
   s.earned = LEGACY.minRunEarned * 100;
+  s.owned.antimatter = 1;
   ascend(s);
   assert.equal(s.auto.buy, true); // t_auto veio pronta
   assert.equal(s.stats.techs, 0); // herdado não conta como pesquisado
@@ -282,7 +293,8 @@ test('loja 1.1: Marcos Antecipados baixam a exigência; Seguro de Rede barateia 
   s.legacy.shop.insurance = 2;
   assert.ok(Math.abs(damage(s) - full * 0.5) < 1e-9);
   s.legacy.shop.insurance = 3;
-  assert.equal(damage(s), 0);
+  assert.ok(damage(s) > 0, 'o seguro não zera o dano');
+  assert.ok(Math.abs(damage(s) - full * 0.35) < 1e-9);
 });
 
 test('Monumento: sem teto, custo crescente, multiplica a produção e sobrevive à ascensão', async () => {
@@ -302,6 +314,7 @@ test('Monumento: sem teto, custo crescente, multiplica a produção e sobrevive 
   assert.ok(Math.abs(power(s) / base - legacyMult(s)) < 1e-9);
   assert.ok(legacyMult(s) > 1 + LEGACY.bonusPerPoint * s.legacy.points); // o Monumento entra no total
   s.earned = 1e15;
+  s.owned.antimatter = 1;
   ascend(s);
   assert.equal(s.legacy.monument, 6);
   assert.ok(isValidState(s));

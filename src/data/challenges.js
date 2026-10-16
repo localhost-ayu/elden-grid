@@ -18,6 +18,7 @@
 //   cost           x no preço de fontes específicas ({ gerador: x })
 //   output         x na produção de fontes específicas ({ gerador: x })
 //   heat           x no alvo de calor dos reatores
+//   crisisLevel    nível fixo das crises (sem a regra: CRISIS.runLevel, em data/events.js)
 export const GOALS = [2.5e10, 1e11, 5e11, 2.5e12, 1e13];
 
 // Recompensas (valem nos slots 1–3, nunca dentro de um desafio). Cada nível completo de
@@ -41,7 +42,10 @@ export const CHALLENGES = [
     id: 'blackout', name: 'Apagão Eterno', icon: '⚠',
     desc: 'eventos e crises chegam sem parar',
     reward: { type: 'crisisTime', per: 15, name: 'Equipe de Plantão' },
-    rules: tiers((n) => ({ eventGap: [0.5, 0.4, 0.3, 0.25, 0.2][n - 1], crisisWeight: [2, 3, 4, 5, 6][n - 1], noReward: true })),
+    rules: tiers((n) => ({
+      eventGap: [0.5, 0.4, 0.3, 0.25, 0.2][n - 1], crisisWeight: [2, 3, 4, 5, 6][n - 1], noReward: true,
+      crisisLevel: [3, 5, 7, 9, 10][n - 1],
+    })),
   },
   {
     id: 'calm', name: 'Sem Vento', icon: '~',

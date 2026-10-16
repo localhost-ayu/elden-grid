@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/ui/app.js';
 import { newState } from '../src/core/state.js';
-import { SCHEDULE } from '../src/data/events.js';
+import { SCHEDULE, CRISIS } from '../src/data/events.js';
 import { stripAnsi, visibleLength } from '../src/ui/format.js';
 
 function make(crisisId) {
@@ -91,16 +91,20 @@ test('ignorar a crise: a equipe resolve sozinha no prazo e o manual fecha', () =
   assert.doesNotMatch(text(), /Manual de crise/);
 });
 
-test('todas as crises cabem em 80×24: alerta, jogando e confirmando', () => {
-  for (const id of ['blackout', 'heatwave_crisis', 'overload']) {
-    const { app, press } = make(id);
-    press('x');
-    fits(app);
-    press('enter');
-    app.update(0.1, 100);
-    fits(app);
-    press('p');
-    fits(app);
+test('todas as crises cabem em 80×24: alerta, jogando e confirmando, no nível 0 e no máximo', () => {
+  for (const level of [0, CRISIS.maxLevel]) {
+    for (const id of ['blackout', 'heatwave_crisis', 'overload']) {
+      const { app, press, text } = make(id);
+      app.state.legacy.ascensions = level;
+      press('x');
+      fits(app);
+      assert.match(text(), new RegExp(`crise nível ${level}/${CRISIS.maxLevel}`));
+      press('enter');
+      app.update(5, 100); // passa do tempo em que a sequência some no nível alto
+      fits(app);
+      press('p');
+      fits(app);
+    }
   }
 });
 

@@ -104,7 +104,7 @@ export const ACHIEVEMENTS = [
   { id: 'a_streak10', cat: 'crises', name: 'Em Série', desc: '10 crises vencidas seguidas', type: 'career', key: 'bestStreak', at: 10 },
   { id: 'a_streak25', cat: 'crises', name: 'Imparável', desc: '25 crises vencidas seguidas', type: 'career', key: 'bestStreak', at: 25 },
   { id: 'a_timing', cat: 'crises', name: 'Reflexos', desc: 'religue a rede em até 3 s', type: 'fastWin', game: 'timing', at: 3 },
-  { id: 'a_mash', cat: 'crises', name: 'Pistão Humano', desc: 'abra as válvulas em até 2 s', type: 'fastWin', game: 'mash', at: 2 },
+  { id: 'a_mash', cat: 'crises', name: 'Pistão Humano', desc: 'abra as válvulas em até 5 s', type: 'fastWin', game: 'mash', at: 5 },
   { id: 'a_seq', cat: 'crises', name: 'Dedos Rápidos', desc: 'remaneje os circuitos em até 2,5 s', type: 'fastWin', game: 'sequence', at: 2.5 },
   { id: 'a_events', cat: 'crises', name: 'Já Vi de Tudo', desc: 'presencie 100 eventos', type: 'sum', key: 'events', at: 100 },
   { id: 'a_crew', cat: 'crises', name: 'Terceirizado', desc: 'pague $1B às equipes de crise', type: 'career', key: 'crewPaid', at: 1e9 },

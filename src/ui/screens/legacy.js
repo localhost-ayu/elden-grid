@@ -1,9 +1,10 @@
 // Item 0 é a ascensão; depois a loja e, por último, o Monumento (sem teto). A ascensão apaga a partida, então só acontece
 // depois de uma prévia do que se ganha e do que se perde, com confirmação S/N.
 import { LEGACY, SHOP, MONUMENT } from '../../data/legacy.js';
+import { TECHS } from '../../data/research.js';
 import { offlineMax } from '../../core/engine.js';
 import {
-  ascend, buyMonument, buyShop, canAscend, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
+  ascend, buyMonument, buyShop, canAscend, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
 } from '../../core/prestige.js';
 import { C, paint, glyphs } from '../theme.js';
 import { fmt, bar } from '../format.js';
@@ -24,7 +25,7 @@ const EFFECT = {
   crank: (v) => `manivela rende ${v} s de produção`,
   techs: (v) => `começa com ${v.length} pesquisas prontas`,
   cooling: (v) => `reatores começam com ${v} ${v === 1 ? 'resfriamento' : 'resfriamentos'}`,
-  damage: (v) => (v === 0 ? 'crises perdidas não custam nada' : `crises perdidas custam ${pct(v)}`),
+  damage: (v) => `crises perdidas custam ${pct(v)}`,
   milestones: (v) => `marcos com ${pct(v).replace('-', '')} menos unidades`,
   transformers: (v) => `começa com ${v} ${v === 1 ? 'transformador' : 'transformadores'}`,
 };
@@ -51,11 +52,24 @@ function ascendBlock(s, selected) {
     ];
   }
   const need = LEGACY.minRunEarned;
+  const gl = glyphs();
+  const check = (ok) => (ok ? paint(C.green, gl.dot) : paint(C.dim, gl.dotEmpty));
+  const techs = TECHS.filter((t) => s.techs[t.id]).length;
+  const gate = gateStatus(s).map((c) => `${check(c.done)} ${paint(c.done ? C.green : C.dim, c.type === 'techs' ? `${c.label} (${techs}/${TECHS.length})` : c.label)}`);
   return [
     ' ' + paint(selected ? C.bold : '', `${mark} ${star} Ascender`) +
-      paint(C.dim, `   disponível após ganhar $${fmt(need)} nesta partida`),
-    '     ' + paint(C.yellow, bar(s.earned / need, 30)) + paint(C.dim, `  $${fmt(s.earned)} / $${fmt(need)}`),
+      paint(C.dim, '   fecha a partida: as duas condições abaixo'),
+    '     ' + check(s.earned >= need) + ' ' + paint(C.yellow, bar(s.earned / need, 20)) + paint(C.dim, `  $${fmt(s.earned)} / $${fmt(need)} ganhos`),
+    '     ' + paint(C.dim, 'e') + ' ' + gate.join(paint(C.dim, '  ou  ')),
   ];
+}
+
+// O que falta para ascender, numa frase.
+function missing(s) {
+  const parts = [];
+  if (s.earned < LEGACY.minRunEarned) parts.push(`$${fmt(LEGACY.minRunEarned)} nesta partida`);
+  if (!gateMet(s)) parts.push(LEGACY.gate.map((c) => c.short).join(' ou '));
+  return parts.join(' e ');
 }
 
 function shopRow(s, item, selected) {
@@ -119,7 +133,7 @@ function choose(ctx) {
   if (ui.sel === 0) {
     if (s.run) { ctx.say('Desafios não têm ascensão: a meta da partida está no topo da tela.', 'info'); return; }
     if (!canAscend(s)) {
-      ctx.say(`Ascensão disponível após ganhar $${fmt(LEGACY.minRunEarned)} nesta partida.`, 'info');
+      ctx.say(missing(s) ? `Para ascender: ${missing(s)}.` : 'Nada novo a ganhar ainda: o próximo ponto vem com mais dinheiro.', 'info');
       return;
     }
     const gain = legacyGain(s);

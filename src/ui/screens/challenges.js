@@ -20,8 +20,10 @@ const genName = (id) => GENERATORS.find((g) => g.id === id)?.short.toLowerCase()
 // A regra do nível em uma linha (o que muda em relação a uma partida normal).
 export function describeRule(r) {
   const parts = [];
-  if (r.eventGap) parts.push(`eventos ${(1 / r.eventGap).toFixed(1)}x mais frequentes`);
-  if (r.crisisWeight) parts.push(`crises x${r.crisisWeight}`);
+  if (r.eventGap) parts.push(`eventos x${(1 / r.eventGap).toFixed(1)}`);
+  const level = r.crisisLevel ? ` nível ${r.crisisLevel}` : '';
+  if (r.crisisWeight) parts.push(`crises x${r.crisisWeight}${level}`);
+  else if (level) parts.push(`crises${level}`);
   if (r.disabled) {
     const names = [...r.disabled.map(genName), ...(r.noCrank ? ['manivela'] : [])];
     parts.push(`sem ${names.length > 1 ? `${names.slice(0, -1).join(', ')} e ${names.at(-1)}` : names[0]}`);

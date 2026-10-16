@@ -10,6 +10,31 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [1.3.0] - 2026-10-16
+
+Pressão: partidas mais longas e crises que endurecem a cada ascensão.
+
+### Mudado
+- Ascender agora fecha uma partida completa: além de $25B ganhos na partida, é preciso
+  ter uma usina de antimatéria ou concluir todas as pesquisas. A aba Legado mostra as
+  condições com o que falta. Ficar mais tempo na partida continua rendendo mais pontos.
+- Crises têm nível de dificuldade, de 0 a 10, que sobe 1 por ascensão. O nível 0 é mais
+  fácil que antes; nos altos a faixa do timing estreita, a sequência fica mais longa e
+  some da tela depois de alguns segundos. O nível aparece no manual de crise.
+- Válvulas de alívio (onda de calor) com regra nova: em vez de encher a barra martelando
+  ← →, é preciso segurar a pressão numa faixa verde no ritmo; chegar a 100% estoura a
+  válvula. Nos níveis altos a faixa oscila. A conquista Pistão Humano passou a pedir as
+  válvulas abertas em até 5 s.
+- O custo de falhar ou chamar a equipe sobe com o nível da crise: de 8% do caixa ou 45 s
+  de renda (nível 0) até 25% do caixa ou 5 min de renda (nível 10). O bônus Rede afinada
+  dura de 45 s a 90 s, conforme o nível.
+- Desafios e semente do dia têm crises de nível fixo 3, igual para todos; no Apagão
+  Eterno o nível sobe com o desafio (I = 3 … V = 10).
+- Seguro de Rede nível 3 reduz o dano das crises a 35%, em vez de zerá-lo.
+- Loja do legado rebalanceada para o novo ritmo de pontos: os níveis mais caros de cada
+  item custam ~1.5x mais. No simulador, a 1ª ascensão sai em ~1 h com ~20 pontos e a
+  loja completa em ~17 h.
+
 ## [1.2.0] - 2026-10-16
 
 Desafios: partidas com regras próprias, recompensas que se acumulam e a semente do dia.
@@ -116,7 +141,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.0...v1.0.1

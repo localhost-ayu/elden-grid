@@ -51,16 +51,46 @@ export const EVENTS = [
 export const CRISES = {
   reboot: {
     title: 'Religar a rede', game: 'timing',
-    steps: ['O cursor corre da esquerda para a direita.', 'Aperte ESPAÇO com ele dentro da faixa: 3 acertos religam a rede.', '3 erros e a rede não volta.'],
+    steps: ['O cursor corre da esquerda para a direita.', 'Aperte ESPAÇO com ele dentro da faixa até completar os acertos.', 'Erros demais e a rede não volta.'],
   },
   valves: {
     title: 'Abrir as válvulas de alívio', game: 'mash',
-    steps: ['Alterne ← e → o mais rápido que puder para encher a pressão.', 'A pressão vaza sozinha: encha a barra antes do tempo acabar.'],
+    steps: [
+      'Alterne ← e → para subir a pressão; ela vaza sozinha.',
+      'Segure a pressão na faixa verde até o alívio encher: no ritmo, sem pressa.',
+      'Chegar a 100% estoura a válvula. Estouros demais e a crise está perdida.',
+    ],
   },
   rewire: {
     title: 'Remanejar os circuitos', game: 'sequence',
-    steps: ['Digite a sequência de setas mostrada, na ordem.', 'Cada tecla errada é um erro; 3 erros ou o tempo acabando = falha.'],
+    steps: [
+      'Digite a sequência de setas mostrada, na ordem.',
+      'Cada tecla errada é um erro; erros demais ou o tempo acabando = falha.',
+      'Em crises de nível alto as setas somem após alguns segundos: memorize.',
+    ],
   },
+};
+
+// Dificuldade das crises: o nível vai de 0 (começo do jogo) a `maxLevel` e sobe 1 por
+// ascensão. Desafios e semente do dia usam `runLevel` (igual para todo mundo), a não ser
+// que a regra do desafio diga outro. Cada parâmetro dos minijogos é [nível 0, nível
+// máximo], interpolado; inteiros são arredondados. O nível 0 é mais fácil que a 1.2 e o
+// máximo pede atenção de verdade.
+export const CRISIS = { maxLevel: 10, runLevel: 3 };
+
+export const DIFFICULTY = {
+  // speed: voltas por segundo; width: largura da faixa (fração da barra)
+  timing: { speed: [0.45, 0.85], width: [0.25, 0.12], need: [3, 5], maxMisses: [3, 2], timeLeft: [20, 16] },
+  // Pressão: cada seta alternada soma `gain`, e ela vaza `leak` por s. Ficar `hold` s
+  // (somados) dentro da faixa de largura `band` resolve; chegar a 1 estoura. O ritmo
+  // necessário é leak/gain apertos por s, então martelar as setas estoura a válvula.
+  // A partir do nível `drift.from`, a faixa oscila com amplitude `drift.value`.
+  mash: {
+    band: [0.35, 0.14], hold: [2.5, 6], gain: [0.1, 0.07], leak: [0.12, 0.3], maxBursts: [3, 2], timeLeft: [15, 15],
+    drift: { from: 6, value: [0.08, 0.16] },
+  },
+  // A partir do nível `hide.from`, as setas somem depois de `hide.value` s.
+  sequence: { length: [5, 9], timeLeft: [14, 11], maxErrors: [3, 2], hide: { from: 6, value: [4, 2] } },
 };
 
 export const SCHEDULE = {
@@ -72,7 +102,9 @@ export const SCHEDULE = {
 
 // Danos de uma crise = o menor entre uma fração do dinheiro guardado e alguns segundos
 // de renda: dói, mas nunca leva a poupança embora nem pune demais quem está ausente.
-export const DAMAGE = { moneyShare: 0.1, incomeSeconds: 60 };
+// Como os minijogos, sobem com o nível da crise: [nível 0, nível máximo].
+export const DAMAGE = { moneyShare: [0.08, 0.25], incomeSeconds: [45, 300] };
 
-// Resolver no braço sai de graça e ainda rende um bônus.
-export const REWARD = { id: 'tuned', name: 'Rede afinada', duration: 45, effects: [{ type: 'output', mult: 1.25 }] };
+// Resolver no braço sai de graça e ainda rende um bônus, mais longo nos níveis altos
+// (`duration`: [nível 0, nível máximo] em segundos).
+export const REWARD = { id: 'tuned', name: 'Rede afinada', duration: [45, 90], effects: [{ type: 'output', mult: 1.25 }] };
