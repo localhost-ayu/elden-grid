@@ -31,6 +31,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   (Equipe de Plantão), solar mais forte e já pesquisada (Brisa Solar), mais capacidade
   na rede (Rede Robusta), kWh mais caro (Contratos Futuros) e operação mais barata
   (Eficiência Térmica).
+- Semente do dia (menu → Desafios, última linha): a data define a seed da partida e
+  sorteia 1 ou 2 regras de desafio; todo mundo que joga no mesmo dia recebe a mesma
+  partida. Meta de $25B, contando só o tempo com o jogo aberto. Ao terminar, o jogo
+  guarda o recorde do dia e mostra um código (ex.: `EG-1016-38:12-K7Q`) para comparar
+  com os amigos.
 
 ### Alterado
 - Perfil compartilhado entre os slots em `~/.elden-grid/profile.json` (níveis de desafio

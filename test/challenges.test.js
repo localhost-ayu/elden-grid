@@ -215,3 +215,60 @@ test('recompensa vale ao voltar para os slots 1–3: jogo novo já traz a solar 
   assert.equal(app.slot, 1);
   assert.equal(app.state.techs.t_solar, true);
 });
+
+test('semente do dia: tela cabe em 80×24 em qualquer data do ano, com e sem pergunta aberta', async () => {
+  const { localDate } = await import('../src/core/challenges.js');
+  for (let d = 0; d < 366; d++) {
+    const now = Date.UTC(2026, 0, 1, 12) + d * 86400000;
+    const fresh = createApp({ store: { list: () => [], load: () => ({ status: 'empty' }), save: () => true, remove() {} }, now });
+    fresh.key('4');
+    for (let i = 0; i < CHALLENGES.length; i++) fresh.key('down');
+    const lines = fresh.lines(80, 24);
+    assert.equal(lines.length, 24);
+    for (const l of lines) assert.ok(visibleLength(l) <= 80, `${localDate(now)}: ${stripAnsi(l)}`);
+    assert.match(stripAnsi(lines.join('\n')), /Semente do dia \d\d\/\d\d:/);
+  }
+});
+
+test('semente do dia: mesma data = mesma partida e mesma regra; termina com código e recorde', async () => {
+  const { dailyChallenges, dailyCode, localDate } = await import('../src/core/challenges.js');
+  const now = Date.UTC(2026, 9, 16, 15);
+  const date = localDate(now);
+  const play = () => {
+    const profile = newProfile();
+    const data = {};
+    const store = {
+      list: () => [], remove() {},
+      load: (n) => (data[n] ? { status: 'ok', savedAt: 0, state: structuredClone(data[n]) } : { status: 'empty' }),
+      save: (n, st) => { data[n] = structuredClone(st); return true; },
+    };
+    const app = createApp({ store, now, profile: { read: () => profile, write() {} } });
+    app.key('4');
+    for (let i = 0; i < CHALLENGES.length; i++) app.key('down');
+    app.key('enter');
+    return { app, profile, text: () => app.lines(80, 24).map(stripAnsi).join('\n') };
+  };
+  const a = play();
+  const b = play();
+  assert.equal(a.app.slot, 'D');
+  assert.deepEqual(a.app.state.run, { daily: date });
+  assert.equal(a.app.state.events.rng, b.app.state.events.rng); // mesma seed
+  for (const id of dailyChallenges(date)) for (const k of Object.keys(challengeDefRules(id))) assert.ok(k in rules(a.app.state));
+  assert.match(a.text(), new RegExp(`Semente ${date.slice(8, 10)}/${date.slice(5, 7)} 0%`));
+
+  a.app.state.earned = GOALS[0];
+  a.app.state.stats.playTime = 2292;
+  a.app.update(0.1, now + 100);
+  assert.ok(Math.abs(a.profile.daily[date] - 2292.1) < 1e-6); // o quadro somou 0.1 s
+  assert.match(a.text(), new RegExp(`Código para os amigos: ${dailyCode(date, 2292.1)}`));
+  assert.match(dailyCode(date, 2292), /^EG-1016-38:12-[0-9A-Z]{3}$/);
+  // Na tela: recorde e código de hoje.
+  a.app.key('escape');
+  a.app.key('4');
+  for (let i = 0; i < CHALLENGES.length; i++) a.app.key('down');
+  assert.match(a.text(), /recorde de hoje: 38min {2}· {2}código: EG-1016-38:12-/);
+});
+
+function challengeDefRules(id) {
+  return CHALLENGES.find((c) => c.id === id).rules[0];
+}

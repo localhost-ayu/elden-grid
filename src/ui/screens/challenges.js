@@ -4,7 +4,7 @@
 import { CHALLENGES, GOALS, TIER_MULT } from '../../data/challenges.js';
 import { GENERATORS } from '../../data/generators.js';
 import { challengeTier, MAX_TIER } from '../../core/profile.js';
-import { challengeDef } from '../../core/challenges.js';
+import { challengeDef, dailyChallenges, dailyCode } from '../../core/challenges.js';
 import { totalTiers } from '../../core/rewards.js';
 import { C, paint, glyphs } from '../theme.js';
 import { fmt, bar } from '../format.js';
@@ -54,9 +54,17 @@ const times = (m) => `x${m < 100 ? m.toFixed(2) : fmt(m)}`;
 const pips = (n) => glyphs().dot.repeat(n) + glyphs().dotEmpty.repeat(MAX_TIER - n);
 const maxPlayable = (ctx, c) => Math.min(MAX_TIER, challengeTier(ctx.profile, c.id) + 1);
 
+// Linha extra depois dos desafios: a semente do dia.
+const DAILY = CHALLENGES.length;
+const dayLabel = (date) => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
+const runName = (run) => (run.daily
+  ? `Semente do dia ${dayLabel(run.daily)}`
+  : `${challengeDef(run.challenge)?.name ?? run.challenge} ${ROMAN[run.tier - 1]}`);
+
 function clamp(ctx) {
   const ui = ctx.ui;
-  ui.sel = Math.max(0, Math.min(ui.sel ?? 0, CHALLENGES.length - 1));
+  ui.sel = Math.max(0, Math.min(ui.sel ?? 0, DAILY));
+  if (ui.sel === DAILY) return { c: null, tier: 1 };
   const c = CHALLENGES[ui.sel];
   ui.tier ??= {};
   ui.tier[c.id] = Math.max(1, Math.min(ui.tier[c.id] ?? maxPlayable(ctx, c), maxPlayable(ctx, c)));
@@ -64,17 +72,46 @@ function clamp(ctx) {
 }
 
 function runLine(ctx) {
-  const run = ctx.challengeRun;
-  if (!run) return paint(C.dim, '   Slot D vazio: escolha um desafio e aperte Enter.');
-  const def = challengeDef(run.run.challenge);
-  const goal = GOALS[run.run.tier - 1];
-  const name = `${def?.name ?? run.run.challenge} ${ROMAN[run.run.tier - 1]}`;
-  if (run.run.done) return '   ' + paint(C.green, `Slot D: ${name} concluído ✓`) + paint(C.dim, '  (C volta a ele)');
-  return '   ' + paint(C.bold, `Em andamento no slot D: ${name}`) + paint(C.dim, `  ${bar(run.earned / goal, 12)} $${fmt(run.earned)} / $${fmt(goal)}`) +
+  const info = ctx.challengeRun;
+  if (!info) return paint(C.dim, '   Slot D vazio: escolha um desafio e aperte Enter.');
+  const { run, earned } = info;
+  const goal = run.daily ? GOALS[0] : GOALS[run.tier - 1];
+  if (run.done) return '   ' + paint(C.green, `Slot D: ${runName(run)} concluído ✓`) + paint(C.dim, '  (C volta a ele)');
+  return '   ' + paint(C.bold, `Slot D: ${runName(run)}`) + paint(C.dim, `  ${bar(earned / goal, 12)} $${fmt(earned)} / $${fmt(goal)}`) +
     paint(C.yellow, '  C continua');
 }
 
-export function render(ctx) {
+function challengeInfo(ctx, c, tier) {
+  const best = ctx.profile.challenges[c.id]?.best ?? {};
+  const records = Object.entries(best).map(([t, sec]) => `${ROMAN[t - 1]} ${shortTime(sec)}`).join('  ·  ');
+  const done = challengeTier(ctx.profile, c.id);
+  return [
+    '   ' + paint(C.bold, `${c.name} — nível `) + paint(C.yellow, `‹ ${ROMAN[tier - 1]} ›`) +
+      paint(C.dim, `   meta: ganhar $${fmt(GOALS[tier - 1])} na partida`),
+    paint(C.dim, `   regra: ${describeRule(c.rules[tier - 1])}`),
+    paint(C.dim, `   recordes: ${records || 'nenhum ainda'}`),
+    '   ' + paint(C.cyan, `${c.reward.name}: `) + paint(C.dim, `${rewardText(c, 1)} por nível`) +
+      (done ? paint(C.cyan, ` (agora ${rewardValue(c, done)})`) : ''),
+  ];
+}
+
+// A semente de hoje: regra sorteada, recorde de hoje e o código para os amigos.
+function dailyInfo(ctx) {
+  const date = ctx.today;
+  const names = dailyChallenges(date).map((id) => challengeDef(id).name).join(' + ');
+  const rules = dailyChallenges(date).map((id) => paint(C.dim, `   ${challengeDef(id).name}: ${describeRule(challengeDef(id).rules[0])}`));
+  const best = ctx.profile.daily[date];
+  return [
+    '   ' + paint(C.bold, `Semente do dia ${dayLabel(date)}: ${names}`) + paint(C.dim, `   meta: $${fmt(GOALS[0])}`),
+    ...rules,
+    paint(C.dim, '   mesma partida para todo mundo hoje; conta só o tempo com o jogo aberto'),
+    best
+      ? '   ' + paint(C.cyan, `recorde de hoje: ${shortTime(best)}  ·  código: ${dailyCode(date, best)}`)
+      : paint(C.dim, '   recorde de hoje: nenhum ainda (o código aparece ao terminar)'),
+  ];
+}
+
+export function render(ctx, height = Infinity) {
   const ui = ctx.ui;
   const { c, tier } = clamp(ctx);
   const lines = [
@@ -89,20 +126,13 @@ export function render(ctx) {
     const row = `${selected ? '›' : ' '} ${ch.icon} ${ch.name.padEnd(18)} ${pips(done)}   ${ch.desc}`;
     lines.push(' ' + paint(selected ? C.bold + C.yellow : done === MAX_TIER ? C.green : '', row));
   });
-  const best = ctx.profile.challenges[c.id]?.best ?? {};
-  const records = Object.entries(best).map(([t, sec]) => `${ROMAN[t - 1]} ${shortTime(sec)}`).join('  ·  ');
-  lines.push(
-    '',
-    '   ' + paint(C.bold, `${c.name} — nível `) + paint(C.yellow, `‹ ${ROMAN[tier - 1]} ›`) +
-      paint(C.dim, `   meta: ganhar $${fmt(GOALS[tier - 1])} na partida`),
-    paint(C.dim, `   regra: ${describeRule(c.rules[tier - 1])}`),
-    paint(C.dim, `   recordes: ${records || 'nenhum ainda'}`),
-    '   ' + paint(C.cyan, `${c.reward.name}: `) + paint(C.dim, `${rewardText(c, 1)} por nível`) +
-      (challengeTier(ctx.profile, c.id) ? paint(C.cyan, ` (agora ${rewardValue(c, challengeTier(ctx.profile, c.id))})`) : ''),
-    '',
-    runLine(ctx),
-  );
+  const today = ctx.profile.daily[ctx.today];
+  const dailyRow = `${ui.sel === DAILY ? '›' : ' '} ${glyphs().legacy} ${'Semente do dia'.padEnd(18)} ${today ? `${shortTime(today)}`.padEnd(5) : '     '}   mesma partida para todos, hoje (${dayLabel(ctx.today)})`;
+  lines.push(' ' + paint(ui.sel === DAILY ? C.bold + C.yellow : C.cyan, dailyRow));
+  lines.push('', ...(c ? challengeInfo(ctx, c, tier) : dailyInfo(ctx)), '', runLine(ctx));
   if (ui.confirm) lines.push('', '   ' + paint(C.yellow + C.bold, ui.confirm.text) + '  ' + paint(C.bold, '(S/N)'));
+  // Sem espaço (pergunta aberta em 80×24): tira linhas em branco, de baixo para cima.
+  while (lines.length > height && lines.includes('')) lines.splice(lines.lastIndexOf(''), 1);
   return lines;
 }
 
@@ -117,6 +147,7 @@ export function key(ctx, k) {
   if (k === 'up') { ui.sel--; return true; }
   if (k === 'down') { ui.sel++; return true; }
   if (k === 'left' || k === 'right') {
+    if (!c) return true; // a semente do dia não tem nível
     ui.tier[c.id] = tier + (k === 'left' ? -1 : 1);
     if (k === 'right' && tier === maxPlayable(ctx, c) && tier < MAX_TIER) ctx.say(`Complete o nível ${ROMAN[tier - 1]} para liberar o próximo.`, 'info');
     return true;
@@ -128,10 +159,11 @@ export function key(ctx, k) {
   }
   if (k !== 'enter') return false;
   const run = ctx.challengeRun?.run;
-  if (run && run.challenge === c.id && run.tier === tier && !run.done) { ctx.continueChallenge(); return true; }
-  const start = () => ctx.startChallenge(c.id, tier);
-  if (run && !run.done) {
-    ui.confirm = { text: `Abandonar ${challengeDef(run.challenge)?.name} ${ROMAN[run.tier - 1]} e começar ${c.name} ${ROMAN[tier - 1]}?`, run: start };
-  } else start();
+  const same = run && !run.done && (c ? run.challenge === c.id && run.tier === tier : run.daily === ctx.today);
+  if (same) { ctx.continueChallenge(); return true; }
+  const start = c ? () => ctx.startChallenge(c.id, tier) : () => ctx.startDaily();
+  const target = c ? `${c.name} ${ROMAN[tier - 1]}` : `a semente do dia ${dayLabel(ctx.today)}`;
+  if (run && !run.done) ui.confirm = { text: `Abandonar ${runName(run)} e começar ${target}?`, run: start };
+  else start();
   return true;
 }

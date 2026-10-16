@@ -55,6 +55,9 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   num slot separado (D), começam do zero sem legado e não tocam nos saves 1–3; o
   progresso e os recordes vão para um perfil compartilhado, e cada nível completo deixa
   os slots 1–3 mais fortes (x1.1 de produção e uma vantagem temática por nível).
+- **Semente do dia.** Uma partida por dia igual para todo mundo (mesma seed, mesmas
+  regras sorteadas): quem chega a $25B mais rápido? Ao terminar, o jogo mostra um código
+  com o tempo para mandar aos amigos.
 - **Conquistas.** 82 metas em oito categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).

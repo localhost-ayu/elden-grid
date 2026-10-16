@@ -29,8 +29,8 @@ import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
 import { ROMAN, rewardText } from './screens/challenges.js';
-import { newProfile, completeChallenge } from '../core/profile.js';
-import { applyRunStart, challengeDef, goalReached, runGoal } from '../core/challenges.js';
+import { newProfile, completeChallenge, recordDaily } from '../core/profile.js';
+import { applyRunStart, challengeDef, goalReached, runGoal, localDate, dailySeed, dailyChallenges, dailyCode } from '../core/challenges.js';
 import { useProfile, rewardStart } from '../core/rewards.js';
 import { TIER_MULT } from '../data/challenges.js';
 import { DEFAULT_SETTINGS } from '../storage/settings.js';
@@ -60,6 +60,7 @@ const FULL = {
 };
 
 export const CHALLENGE_SLOT = 'D';
+export const dayLabel = (date) => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
 
 const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 
@@ -192,7 +193,7 @@ export function createApp({
   function challengeRun() {
     if (app.challengeCache === undefined) {
       const st = app.slot === CHALLENGE_SLOT ? app.state : store.load(CHALLENGE_SLOT)?.state;
-      app.challengeCache = st?.run?.challenge ? { run: st.run, earned: st.earned } : null;
+      app.challengeCache = st?.run ? { run: st.run, earned: st.earned, time: st.stats.playTime } : null;
     }
     return app.challengeCache;
   }
@@ -208,6 +209,19 @@ export function createApp({
     say(`Desafio ${challengeDef(id).name} ${ROMAN[tier - 1]}: ganhe $${fmt(runGoal(s))} nesta partida. Boa sorte!`, 'ok', 8000);
   }
 
+  // Semente do dia: mesma seed e mesmas regras para quem joga na mesma data (local).
+  function startDaily() {
+    const date = localDate(app.now);
+    const s = newState(dailySeed(date));
+    s.run = { daily: date };
+    applyRunStart(s);
+    open(CHALLENGE_SLOT, s);
+    save();
+    app.mode = 'game';
+    const names = dailyChallenges(date).map((id) => challengeDef(id).name).join(' + ');
+    say(`Semente do dia ${dayLabel(date)} (${names}): ganhe $${fmt(runGoal(s))} o mais rápido que puder.`, 'ok', 8000);
+  }
+
   // Desafio é jogado ativo: abrir o slot D não credita progresso offline.
   function continueChallenge() {
     if (app.slot === CHALLENGE_SLOT && app.state) { app.mode = 'game'; return; }
@@ -220,6 +234,7 @@ export function createApp({
   function finishChallenge() {
     const s = app.state;
     s.run.done = true;
+    if (s.run.daily) return finishDaily(s);
     const { challenge, tier } = s.run;
     const fresh = completeChallenge(app.profile, challenge, tier, s.stats.playTime);
     profileStore?.write(app.profile);
@@ -325,6 +340,8 @@ export function createApp({
     get challengeRun() { return challengeRun(); },
     startChallenge,
     continueChallenge,
+    startDaily,
+    today: localDate(app.now),
     deleteSlot,
     // A partida mudou por inteiro: gráficos e partículas da anterior não fazem sentido.
     ascended() {
@@ -536,10 +553,20 @@ export function createApp({
     ];
   }
 
+  function finishDaily(s) {
+    const date = s.run.daily;
+    const time = s.stats.playTime;
+    const best = recordDaily(app.profile, date, time);
+    profileStore?.write(app.profile);
+    save();
+    say(`${glyphs().legacy} SEMENTE DO DIA ${dayLabel(date)} em ${fmtDuration(time)}${best ? ' (recorde!)' : ''}. ` +
+      `Código para os amigos: ${dailyCode(date, time)}`, 'ok', 60000);
+  }
+
   // No slot D: qual desafio e quanto falta (ou ✓ quando concluído).
   function challengeBadge(s) {
-    if (!s.run?.challenge) return '';
-    const label = `${challengeDef(s.run.challenge)?.name} ${ROMAN[s.run.tier - 1]}`;
+    if (!s.run) return '';
+    const label = s.run.daily ? `Semente ${dayLabel(s.run.daily)}` : `${challengeDef(s.run.challenge)?.name} ${ROMAN[s.run.tier - 1]}`;
     if (s.run.done) return '  ' + paint(C.green, `${label} ✓`);
     return '  ' + paint(C.mag + C.bold, `${label} ${fmtPct(Math.min(1, s.earned / runGoal(s)))}`);
   }
