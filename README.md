@@ -123,6 +123,11 @@ Para adicionar uma fonte de energia, um evento ou uma pesquisa, quase sempre bas
 `src/data/`: os testes de consistência dos dados avisam se faltar alguma peça (arte da
 fonte, pesquisa que a destrava, símbolo sem equivalente ASCII).
 
+## Versões
+
+O histórico de mudanças de cada versão está no [`CHANGELOG.md`](CHANGELOG.md), e cada
+versão lançada tem uma tag `vX.Y.Z` no git.
+
 ## Licença
 
 Código disponível (*source-available*) sob a
