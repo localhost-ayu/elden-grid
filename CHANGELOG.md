@@ -24,6 +24,8 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - O custo de falhar ou chamar a equipe sobe com o nível da crise: de 8% do caixa ou 45 s
   de renda (nível 0) até 25% do caixa ou 5 min de renda (nível 10). O bônus Rede afinada
   dura de 45 s a 90 s, conforme o nível.
+- Desafios e semente do dia têm crises de nível fixo 3, igual para todos; no Apagão
+  Eterno o nível sobe com o desafio (I = 3 … V = 10).
 - Seguro de Rede nível 3 reduz o dano das crises a 35%, em vez de zerá-lo.
 
 ## [1.2.0] - 2026-10-16

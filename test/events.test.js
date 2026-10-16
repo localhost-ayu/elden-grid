@@ -254,6 +254,12 @@ test('nível da crise: parâmetros vão do fácil (0) ao difícil (máximo)', ()
   assert.equal(crisisLevel(s), CRISIS.maxLevel);
   s.run = { daily: '2026-10-16' };
   assert.equal(crisisLevel(s), CRISIS.runLevel);
+  s.run = { challenge: 'calm', tier: 5 };
+  assert.equal(crisisLevel(s), CRISIS.runLevel);
+  s.run = { challenge: 'blackout', tier: 1 };
+  assert.equal(crisisLevel(s), 3);
+  s.run = { challenge: 'blackout', tier: 5 };
+  assert.equal(crisisLevel(s), CRISIS.maxLevel, 'Apagão Eterno V: crises no nível máximo');
 });
 
 test('save v6 migra para v7; minijogo pela metade volta ao alerta ao carregar', () => {
