@@ -30,8 +30,8 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Treze fontes, cada uma com personalidade.** A eólica segue o vento, a solar o dia e a
   noite, a maremotriz a maré, a hidrelétrica o reservatório; gás e fusão têm custo de
   operação; nuclear, fusão e antimatéria esquentam e podem desligar se ninguém resfriar.
-  Depois da antimatéria vem a **Fronteira** (página 2 da aba Geradores): o Enxame Solar
-  Orbital só se compra nas janelas de lançamento, o Kugelblitz rende o quanto as outras
+  Depois da antimatéria vem a **Fronteira** (página 2 da aba Geradores): o Enxame Orbital
+  só se compra nas janelas de lançamento, o Kugelblitz rende o quanto as outras
   fontes conseguem alimentá-lo e a Energia do Vácuo oscila entre x0.2 e x5.
 - **Pesquisa destrava o resto.** Laboratórios geram Pontos de Pesquisa (PP) para uma árvore
   de 45 techs: novas fontes, multiplicadores, capacidade da rede, armazenamento e

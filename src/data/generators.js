@@ -30,7 +30,7 @@ export const GENERATORS = [
   { id: 'fusion',     key: '9', name: 'Reator de Fusão', short: 'Fusão',    baseCost: 4e6,    growth: 1.15, output: 60000,   icon: '(*)', art: 'fusion',     unlock: 't_fusion',    traits: [{ type: 'upkeep', money: 11000 }, { type: 'heat', base: 0.85 }] },
   { id: 'antimatter', key: '0', name: 'Antimatéria', short: 'Antimatéria',        baseCost: 8e7,    growth: 1.16, output: 1.2e6,   icon: '<@>', art: 'antimatter', unlock: 't_antimatter', traits: [{ type: 'heat', base: 1.05 }] },
   // ---- Fronteira (1.4): página 2 da aba Geradores ----
-  { id: 'swarm',      key: '1', name: 'Enxame Solar Orbital', short: 'Enxame',   baseCost: 3e9,    growth: 1.16, output: 3e7,     icon: '-O-', art: 'swarm',      unlock: 't_orbital',   traits: [{ type: 'launch', period: 40, window: 8 }] },
+  { id: 'swarm',      key: '1', name: 'Enxame Orbital', short: 'Enxame',         baseCost: 3e9,    growth: 1.16, output: 3e7,     icon: '-O-', art: 'swarm',      unlock: 't_orbital',   traits: [{ type: 'launch', period: 40, window: 8 }] },
   { id: 'kugelblitz', key: '2', name: 'Kugelblitz', short: 'Kugelblitz',          baseCost: 1.2e11, growth: 1.17, output: 8e8,     icon: '(@)', art: 'kugelblitz', unlock: 't_kugel',     traits: [{ type: 'feed', share: 0.6 }] },
   { id: 'vacuum',     key: '3', name: 'Energia do Vácuo', short: 'Vácuo',       baseCost: 5e12,   growth: 1.18, output: 1.5e10,  icon: '<~>', art: 'vacuum',     unlock: 't_vacuum',    traits: [{ type: 'vacuum', min: 0.2, max: 5 }] },
 ];

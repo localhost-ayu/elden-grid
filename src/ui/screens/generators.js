@@ -85,7 +85,7 @@ function items(s, page = 0) {
 const cols = (mark, key, name, qty, out, cost, cond) =>
   `${mark} ${key} ${name.padEnd(18)} ${qty.padEnd(5)} ${out.padStart(11)} ${cost.padStart(13)}  ${cond}`;
 const header = (amount, page, pages) =>
-  cols(' ', '   ', pages > 1 ? `fonte · pág. ${page + 1}/${pages} ←→` : 'fonte', 'qtd', 'por unid.', `custo ${bulkLabel(amount)}`, 'condição');
+  cols(' ', '   ', pages > 1 ? `fonte  pág ${page + 1}/${pages} ←→` : 'fonte', 'qtd', 'por unid.', `custo ${bulkLabel(amount)}`, 'condição');
 
 // Custo exibido: no MAX mostra quantas unidades entram ("x37 $1.2k"); sem saldo para
 // nenhuma, mostra o preço de 1 (apagado), para o jogador saber quanto falta.
@@ -193,8 +193,10 @@ export function render(ctx, height, width) {
   let room = height - 1 - panel.length - rows.length;
   const shownExtra = room >= extra.length ? extra : [];
   room -= shownExtra.length;
-  const cardRows = sceneCards(s).length ? Math.floor(room / CARD_H) : 0;
-  const scene = cardRows ? sceneRows(s, ctx.anim, width, cardRows) : [];
+  // Com mais de uma página, os cards acima da lista são os da página aberta.
+  const cardPage = pageCount(s) > 1 ? page : null;
+  const cardRows = sceneCards(s, cardPage).length ? Math.floor(room / CARD_H) : 0;
+  const scene = cardRows ? sceneRows(s, ctx.anim, width, cardRows, cardPage) : [];
   const plant = !scene.length && room >= 1 ? [plantRow(s, width)] : [];
   const listRoom = height - 1 - panel.length - shownExtra.length - plant.length - scene.length;
   // As partículas de venda/manivela saem das usinas, nunca do meio da lista.
