@@ -1,11 +1,14 @@
 // Página longa com rolagem: cada linha compara esta partida com todas as partidas.
+// V alterna para a lista de conquistas (mesma rolagem).
 import { GENERATORS } from '../../data/generators.js';
+import { ACHIEVEMENTS, ACHIEVEMENT_BONUS, CATEGORIES } from '../../data/achievements.js';
+import { achievementCount, achievementProgress, hasAchievement } from '../../core/achievements.js';
 import { EVENTS } from '../../data/events.js';
 import { HOT_GENERATORS } from '../../core/heat.js';
-import { C, paint } from '../theme.js';
-import { fmt, fmtDuration } from '../format.js';
+import { C, paint, glyphs } from '../theme.js';
+import { fmt, fmtDuration, bar } from '../format.js';
 
-export const help = '↑↓ rolar  PgUp/PgDn página  Home/End  espaço manivela  Tab abas  M menu  Q sair';
+export const help = (ctx) => `↑↓ PgUp/PgDn rolar  V ${ctx.ui.view === 'ach' ? 'estatísticas' : 'conquistas'}  espaço manivela  Tab abas  M menu  Q sair`;
 
 const LABEL_W = 36;
 const COL_W = 20;
@@ -120,19 +123,57 @@ function line(r) {
     paint(C.yellow, cut(r.all, COL_W).padStart(COL_W));
 }
 
+const NAME_W = 26;
+const DESC_W = 37;
+
+// Secretas ficam ocultas até sair; as outras mostram quanto falta.
+function achievementLines(s) {
+  const out = [];
+  for (const cat of CATEGORIES) {
+    const list = ACHIEVEMENTS.filter((a) => a.cat === cat.id);
+    const got = list.filter((a) => hasAchievement(s, a.id)).length;
+    out.push(' ' + paint(C.bold + C.cyan, cat.name) + paint(C.dim, `  ${got}/${list.length}`));
+    for (const a of list) {
+      const done = hasAchievement(s, a.id);
+      const hidden = a.secret && !done;
+      const name = cut(hidden ? '???' : a.name, NAME_W - 1).padEnd(NAME_W);
+      const desc = cut(hidden ? 'conquista secreta' : a.desc, DESC_W - 1).padEnd(DESC_W);
+      if (done) {
+        out.push('   ' + paint(C.yellow, '★ ') + paint(C.bold, name) + desc);
+        continue;
+      }
+      const p = achievementProgress(s, a);
+      const meter = hidden || p === 0 ? '' : paint(C.dim, bar(p, 6) + ` ${String(Math.floor(p * 100)).padStart(2)}%`);
+      out.push('   ' + paint(C.dim, glyphs().empty + ' ' + name + desc) + meter);
+    }
+  }
+  return out;
+}
+
 export function render(ctx, height) {
-  const all = rows(ctx.state).map(line);
+  const s = ctx.state;
+  const ach = ctx.ui.view === 'ach';
+  const all = ach ? achievementLines(s) : rows(s).map(line);
   const view = height - 2;
   const max = Math.max(0, all.length - view);
   const top = (ctx.ui.scroll = Math.max(0, Math.min(ctx.ui.scroll ?? 0, max)));
-  const head = '   ' + paint(C.bold, 'Estatísticas'.padEnd(LABEL_W - 2)) + paint(C.bold + C.green, 'Esta partida'.padStart(COL_W)) +
-    '  ' + paint(C.bold + C.yellow, 'Todas'.padStart(COL_W));
+  const n = achievementCount(s);
+  const head = ach
+    ? '   ' + paint(C.bold, `Conquistas  ${n}/${ACHIEVEMENTS.length}`) +
+      paint(C.dim, `  ·  produção +${Math.round(n * ACHIEVEMENT_BONUS * 100)}%  ·  cada uma vale +${Math.round(ACHIEVEMENT_BONUS * 100)}% e fica para sempre`)
+    : '   ' + paint(C.bold, 'Estatísticas'.padEnd(LABEL_W - 2)) + paint(C.bold + C.green, 'Esta partida'.padStart(COL_W)) +
+      '  ' + paint(C.bold + C.yellow, 'Todas'.padStart(COL_W));
   const where = max ? paint(C.dim, `   linhas ${top + 1}–${Math.min(all.length, top + view)} de ${all.length}  (↑↓ rola)`) : '';
   return [head, ...all.slice(top, top + view), where];
 }
 
 export function key(ctx, k) {
   const ui = ctx.ui;
+  if (k === 'v' || k === 'V') {
+    ui.view = ui.view === 'ach' ? 'stats' : 'ach';
+    ui.scroll = 0;
+    return true;
+  }
   const step = { up: -1, down: 1, pageup: -10, pagedown: 10, home: -Infinity, end: Infinity }[k];
   if (step === undefined) return false;
   ui.scroll = Math.max(0, (ui.scroll ?? 0) + step);

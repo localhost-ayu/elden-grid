@@ -7,6 +7,7 @@ import { MINIGAMES } from './minigames.js';
 import { power, income, rpRate, gridLoad } from './engine.js';
 import { HOT_GENERATORS } from './heat.js';
 import { add, best } from './records.js';
+import { shopValue } from './prestige.js';
 
 const hasReactor = (s) => HOT_GENERATORS.some((g) => s.owned[g.id] > 0);
 const REQUIRES = {
@@ -31,7 +32,9 @@ const scheduleNext = (s) => {
 };
 
 export const crisisDef = (s) => s.events.crisis && CRISES[eventDef(s.events.crisis.id).crisis];
-export const damage = (s) => Math.max(0, Math.min(s.money * DAMAGE.moneyShare, income(s) * DAMAGE.incomeSeconds));
+// Seguro de Rede (Legado) reduz a conta, até zerar.
+export const damage = (s) =>
+  Math.max(0, Math.min(s.money * DAMAGE.moneyShare, income(s) * DAMAGE.incomeSeconds) * shopValue(s, 'damage', 1));
 // Evento em andamento (não conta o bônus de recompensa), ou null.
 export const currentEvent = (s) => s.events.effects.find((a) => a.id !== REWARD.id && isActive(s, a)) ?? null;
 

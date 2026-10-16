@@ -201,3 +201,178 @@ test('aba Legado: compra na loja e mensagens; cabe em 80×24', () => {
   app.key('enter');
   assert.match(text(), /Faltam 3 pontos para Turno da Noite/);
 });
+
+test('loja do legado rola sob o cabeçalho fixo e mantém a seleção à vista', async () => {
+  const legacyScreen = await import('../src/ui/screens/legacy.js');
+  const s = newState();
+  const ui = {};
+  const ctx = { state: s, ui, say() {} };
+  const plain = (h) => legacyScreen.render(ctx, h).map(stripAnsi);
+  const full = plain(Infinity);
+  assert.equal(full.filter((l) => SHOP.some((it) => l.includes(it.name))).length, SHOP.length);
+  const tight = plain(10); // cabeçalho de 7 linhas: 2 itens + indicador
+  assert.equal(tight.length, 10);
+  assert.match(tight.at(-1), /itens 1–2 de \d+/);
+  const n = SHOP.length + 1; // a loja e o Monumento
+  for (let i = 0; i < n + 3; i++) legacyScreen.key(ctx, 'down');
+  const end = plain(10);
+  assert.ok(end.some((l) => l.includes('›') && l.includes('Monumento')), 'último item selecionado e visível');
+  assert.match(end.at(-1), new RegExp(`itens ${n - 1}–${n} de ${n}`));
+  for (let i = 0; i < n; i++) legacyScreen.key(ctx, 'up');
+  assert.match(plain(10)[3], /› ✦ Ascender/);
+});
+
+test('loja 1.1: listas de Pesquisa Herdada incluem seus pré-requisitos e crescem por nível', async () => {
+  const { TECHS } = await import('../src/data/research.js');
+  const item = SHOP.find((x) => x.type === 'techs');
+  let prev = [];
+  for (const list of item.values) {
+    for (const id of list) {
+      const t = TECHS.find((x) => x.id === id);
+      assert.ok(t, id);
+      for (const r of t.req) assert.ok(list.includes(r), `${id} precisa de ${r}`);
+    }
+    assert.ok(prev.every((id) => list.includes(id)));
+    prev = list;
+  }
+  for (const it of SHOP) {
+    assert.equal(it.costs.length, it.values.length, it.id);
+    assert.ok(it.costs.every((c, i) => i === 0 || c > it.costs[i - 1]), `${it.id}: custos crescentes`);
+  }
+});
+
+test('loja 1.1: a partida começa com pesquisas, resfriamento, transformadores e auto-compra', () => {
+  const s = ready();
+  s.legacy.shop = { research: 1, thermal: 2, inherited: 3, start: 5, grants: 4 };
+  ascend(s);
+  // Pesquisa Herdada 1 + Começo Rápido 5 (alta tensão, solar, hidro, biomassa e gás).
+  for (const id of ['t_wind2', 't_lab', 't_hv', 't_hydro', 't_gas']) assert.equal(s.techs[id], true, id);
+  assert.equal(s.techs.t_auto, undefined);
+  assert.equal(s.labs, 10);
+  assert.equal(s.cooling.nuclear, 2);
+  assert.equal(s.cooling.antimatter, 2);
+  assert.equal(s.transformers, 3);
+  assert.equal(s.owned.wind, 50);
+  assert.equal(s.auto.buy, false); // nada de automação herdada
+  s.legacy.shop.research = 3;
+  s.earned = LEGACY.minRunEarned * 100;
+  ascend(s);
+  assert.equal(s.auto.buy, true); // t_auto veio pronta
+  assert.equal(s.stats.techs, 0); // herdado não conta como pesquisado
+  assert.ok(isValidState(s));
+});
+
+test('loja 1.1: Marcos Antecipados baixam a exigência; Seguro de Rede barateia as crises', async () => {
+  const { milestones, genModMult } = await import('../src/core/engine.js');
+  const { GENERATORS } = await import('../src/data/generators.js');
+  const { damage } = await import('../src/core/incidents.js');
+  const { buyGenBulk } = await import('../src/core/actions.js');
+  const s = newState();
+  assert.deepEqual(milestones(s).map((m) => m.at), [25, 50, 100]);
+  s.legacy.shop.early = 2;
+  assert.deepEqual(milestones(s).map((m) => m.at), [15, 30, 60]);
+  s.money = 1e9;
+  buyGenBulk(s, 'wind', 15);
+  assert.equal(s.stats.milestones, 1);
+  assert.equal(genModMult(s, GENERATORS[0], 'output'), 2);
+
+  s.owned.wind = 100;
+  const full = damage(s);
+  assert.ok(full > 0);
+  s.legacy.shop.insurance = 2;
+  assert.ok(Math.abs(damage(s) - full * 0.5) < 1e-9);
+  s.legacy.shop.insurance = 3;
+  assert.equal(damage(s), 0);
+});
+
+test('Monumento: sem teto, custo crescente, multiplica a produção e sobrevive à ascensão', async () => {
+  const { buyMonument, monumentCost, monumentMult } = await import('../src/core/prestige.js');
+  const { MONUMENT } = await import('../src/data/legacy.js');
+  const s = newState();
+  s.owned.wind = 10;
+  const base = power(s);
+  assert.equal(buyMonument(s), false);
+  s.legacy.points = 1000;
+  const costs = [];
+  for (let i = 0; i < 6; i++) { costs.push(monumentCost(s)); assert.equal(buyMonument(s), true); }
+  assert.equal(costs[0], MONUMENT.baseCost);
+  assert.ok(costs.every((c, i) => i === 0 || c >= costs[i - 1]));
+  assert.equal(s.legacy.points, 1000 - costs.reduce((a, b) => a + b, 0));
+  assert.ok(Math.abs(monumentMult(s) - MONUMENT.mult ** 6) < 1e-9);
+  assert.ok(Math.abs(power(s) / base - legacyMult(s)) < 1e-9);
+  assert.ok(legacyMult(s) > 1 + LEGACY.bonusPerPoint * s.legacy.points); // o Monumento entra no total
+  s.earned = 1e15;
+  ascend(s);
+  assert.equal(s.legacy.monument, 6);
+  assert.ok(isValidState(s));
+});
+
+test('Monumento na aba Legado: Enter compra e avisa; sem pontos, diz quanto falta', () => {
+  const s = newState();
+  s.legacy.points = 15;
+  const store = { list: () => [1, 2, 3].map((n) => ({ slot: n, status: n === 1 ? 'ok' : 'empty', savedAt: null, state: s })), load: () => ({ status: 'ok', savedAt: null, state: s }), save: () => true, remove() {} };
+  const app = createApp({ store, now: 0 });
+  app.key('1');
+  app.key('l');
+  for (let i = 0; i < SHOP.length + 1; i++) app.key('down');
+  app.key('enter');
+  const text = () => app.lines(80, 24).map(stripAnsi).join('\n');
+  assert.equal(s.legacy.monument, 1);
+  assert.match(text(), /Monumento nível 1: produção x1\.10/);
+  app.key('enter');
+  assert.match(text(), /Faltam 15 pontos para o próximo nível do Monumento/);
+});
+
+test('loja 1.1: Contratos barateiam laboratórios (e, nos níveis 4–5, resfriamento e transformadores)', async () => {
+  const { labCost, transformerCost } = await import('../src/core/engine.js');
+  const { nextCooling } = await import('../src/core/heat.js');
+  const { GENERATORS } = await import('../src/data/generators.js');
+  const nuclear = GENERATORS.find((g) => g.id === 'nuclear');
+  const s = newState();
+  const lab0 = labCost(s);
+  const cool0 = nextCooling(s, nuclear).cost;
+  const tr0 = transformerCost(s);
+  s.legacy.shop.contracts = 3;
+  assert.equal(labCost(s), Math.ceil(lab0 * 0.7));
+  assert.equal(nextCooling(s, nuclear).cost, cool0);
+  s.legacy.shop.contracts = 4;
+  assert.ok(Math.abs(nextCooling(s, nuclear).cost - cool0 * 0.7) < 1e-6);
+  assert.equal(transformerCost(s), tr0);
+  s.legacy.shop.contracts = 5;
+  assert.equal(transformerCost(s), Math.ceil(tr0 * 0.7));
+});
+
+test('loja 1.1: manivela automática só nos primeiros minutos da partida', async () => {
+  const { autoCrankStep } = await import('../src/core/automation.js');
+  const { AUTO_CRANK_SECONDS } = await import('../src/data/legacy.js');
+  const s = newState();
+  assert.equal(autoCrankStep(s, 10), 0);
+  s.legacy.shop.goldcrank = 5;
+  assert.equal(autoCrankStep(s, 10), 40);
+  assert.equal(s.stats.cranks, 40);
+  s.stats.playTime = AUTO_CRANK_SECONDS;
+  assert.equal(autoCrankStep(s, 10), 0);
+});
+
+test('o legado não satura a rede: capacidade cresce com os multiplicadores permanentes', async () => {
+  const { gridLoad } = await import('../src/core/engine.js');
+  const s = newState();
+  s.owned.wind = 20;
+  const load = gridLoad(s);
+  s.legacy.points = 400;
+  s.legacy.monument = 5;
+  s.achievements = { a_mwh: 0, a_gwh: 0 };
+  assert.ok(Math.abs(gridLoad(s) - load) < 1e-9);
+});
+
+test('textos da loja cabem na coluna de efeito (40)', async () => {
+  const legacyScreen = await import('../src/ui/screens/legacy.js');
+  const s = newState();
+  for (const it of SHOP) {
+    for (let lvl = 0; lvl <= it.costs.length; lvl++) {
+      s.legacy.shop[it.id] = lvl;
+      const row = legacyScreen.render({ state: s, ui: {}, say() {} }).map(stripAnsi).find((l) => l.includes(it.name));
+      assert.ok(visibleLength(row) <= 80, `${it.id} nível ${lvl}: ${row}`);
+    }
+  }
+});

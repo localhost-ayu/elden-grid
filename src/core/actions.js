@@ -3,11 +3,10 @@
 import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import {
-  power, price, genUnlocked, labUnlocked, techVisible, genBulk, labBulk, nextUpgrade, transformerCost,
+  power, price, genUnlocked, labUnlocked, techVisible, genBulk, labBulk, nextUpgrade, transformerCost, milestones,
 } from './engine.js';
 import { isHot, nextCooling } from './heat.js';
 import { shopValue } from './prestige.js';
-import { MILESTONES } from '../data/upgrades.js';
 import { add, crankTap } from './records.js';
 
 // Rende uma fração da produção de 1 s (mínimo 1 kWh): continua útil a partida toda.
@@ -39,7 +38,7 @@ export function buyGenBulk(s, id, amount = 1) {
   if (b.n > 1) add(s, 'bulkPurchases');
   add(s, 'bought', b.n, id);
   add(s, 'moneySpent', b.cost);
-  add(s, 'milestones', MILESTONES.filter((m) => before < m.at && s.owned[id] >= m.at).length);
+  add(s, 'milestones', milestones(s).filter((m) => before < m.at && s.owned[id] >= m.at).length);
   return b.n;
 }
 

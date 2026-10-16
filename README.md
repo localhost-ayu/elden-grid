@@ -41,11 +41,18 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   falhar, chamar a equipe ou ignorar custa o menor entre 10% do caixa e 1 min de renda.
 - **Legado.** Depois de ganhar $25B numa partida dá para ascender: a partida recomeça e
   você recebe pontos (+10% de produção cada ponto guardado) que podem ser trocados por
-  vantagens permanentes na loja do legado.
+  vantagens permanentes na loja do legado: começar com usinas, pesquisas, laboratórios,
+  resfriamento e transformadores, construir mais barato, marcos antecipados, seguro
+  contra crises, mais tempo offline e uma manivela que rende mais (e gira sozinha). A
+  rede cresce junto com o legado, então uma partida nova nunca começa saturada. Quando a loja acaba, o
+  **Monumento** (x1.1 de produção por nível, sem teto) dá destino aos pontos que sobram.
 - **Modo disfarce.** Apareceu alguém? `\` (barra invertida) troca a tela inteira, de
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
   continua produzindo e pausa eventos e crises; `\` de novo volta e mostra quanto rendeu.
+- **Conquistas.** 82 metas em oito categorias (algumas secretas), da primeira faísca a
+  um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
+  ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%
   da produção e mostra um resumo.
 
@@ -64,8 +71,8 @@ npm run simulate       # ou: bun scripts/simulate.js 90 --seeds=5
 ```
 
 `scripts/simulate.js` joga sozinho usando só a lógica do jogo e imprime quando chegou a
-cada marco (primeira solar, nuclear, fusão, cada ascensão), as crises e quanto tempo a rede
-passou saturada. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
+cada marco (primeira solar, nuclear, fusão, cada ascensão), as crises, quanto tempo a rede
+passou saturada, quando a loja do legado ficou completa e o nível do Monumento. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
 
 ## Controles
 
@@ -77,7 +84,7 @@ passou saturada. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
 | Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento |
 | Legado | `↑↓` + `Enter` ascende ou compra na loja (com confirmação `S`/`N`) |
-| Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` |
+| Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` · `V` conquistas |
 | Opções | `↑↓` escolhe, `←→`/`Enter` muda |
 
 ## Saves e opções

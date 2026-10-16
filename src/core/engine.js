@@ -5,9 +5,10 @@ import { GRID } from '../data/grid.js';
 import { MILESTONES, UPGRADE_TRACK, UPGRADE_OVERRIDES, UPGRADE_NAMES } from '../data/upgrades.js';
 import { envFactor } from './traits.js';
 import { heatFactor, heatStep } from './heat.js';
-import { legacyMult, shopValue } from './prestige.js';
+import { contractDiscount, legacyMult, shopValue } from './prestige.js';
 import { eventMult } from './events.js';
 import { add, peak } from './records.js';
+import { ACHIEVEMENT_BONUS } from '../data/achievements.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -34,7 +35,12 @@ export const upgradeTrack = (g) => UPGRADE_TRACK.map((lvl, i) => ({
 }));
 export const upgradeLevel = (s, g) => s.upgrades[g.id] ?? 0;
 export const nextUpgrade = (s, g) => upgradeTrack(g)[upgradeLevel(s, g)] ?? null;
-export const nextMilestone = (s, g) => MILESTONES.find((m) => s.owned[g.id] < m.at) ?? null;
+// Marcos Antecipados (Legado) baixam a quantidade exigida por cada marco.
+export const milestones = (s) => {
+  const k = shopValue(s, 'milestones', 1);
+  return MILESTONES.map((m) => ({ ...m, at: Math.max(1, Math.round(m.at * k)) }));
+};
+export const nextMilestone = (s, g) => milestones(s).find((m) => s.owned[g.id] < m.at) ?? null;
 
 // Pesquisas, upgrades e marcos viram uma lista de { type, mult, source }; produção,
 // custo e operação são o produto dos do tipo certo. Uma nova fonte de bônus é só mais
@@ -47,7 +53,7 @@ export function genModifiers(s, g) {
   for (const u of upgradeTrack(g).slice(0, upgradeLevel(s, g))) {
     for (const e of u.effects) mods.push({ ...e, source: u.name });
   }
-  for (const m of MILESTONES) {
+  for (const m of milestones(s)) {
     if (s.owned[g.id] >= m.at) mods.push({ type: 'output', mult: m.mult, source: `marco ${m.at}` });
   }
   const contracts = shopValue(s, 'cost');
@@ -57,7 +63,11 @@ export function genModifiers(s, g) {
 const modMult = (mods, type) => mods.reduce((m, x) => (x.type === type ? m * x.mult : m), 1);
 export const genModMult = (s, g, type) => modMult(genModifiers(s, g), type);
 
-// Os multiplicadores globais (pesquisa e Legado) entram em power(), uma vez só.
+// Cada conquista soma ACHIEVEMENT_BONUS. Fica aqui (e não em core/achievements.js, que
+// consulta o engine para avaliar as condições) para não haver ciclo de imports.
+export const achievementMult = (s) => 1 + ACHIEVEMENT_BONUS * Object.keys(s.achievements).length;
+
+// Os multiplicadores globais (pesquisa, Legado e conquistas) entram em power(), uma vez só.
 export function genPower(s, g, average = false) {
   if (!s.owned[g.id]) return 0;
   const out = genModMult(s, g, 'output');
@@ -66,7 +76,7 @@ export function genPower(s, g, average = false) {
   return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev;
 }
 export const power = (s, average = false) =>
-  GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global') * legacyMult(s);
+  GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global') * permanentMult(s);
 
 export const genUpkeep = (g) => g.traits.reduce((sum, tr) => sum + (tr.type === 'upkeep' ? tr.money : 0), 0);
 export const upkeep = (s) =>
@@ -78,9 +88,16 @@ export const priceBase = (s) => mult(s, 'price');
 export const price = (s) => (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price');
 export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 
+// Multiplicadores que atravessam partidas (Legado e conquistas). A rede cresce junto com
+// eles: senão quem tem muito legado começa toda partida com a rede saturada (1000%+),
+// vendendo quase tudo com desconto. O gargalo volta a ser o que se constrói na partida.
+export const permanentMult = (s) => legacyMult(s) * achievementMult(s);
+
 export const capacity = (s) =>
-  GRID.baseCapacity * mult(s, 'capacity') * GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity');
-export const transformerCost = (s) => Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers);
+  GRID.baseCapacity * mult(s, 'capacity') * GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity') *
+  permanentMult(s);
+export const transformerCost = (s) =>
+  Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
 
 // { full, excess, perSecond }: kW a preço cheio, kW excedentes (com desconto) e $/s.
 export function sales(s, kw) {
@@ -130,9 +147,9 @@ function bulk(base, growth, owned, money, m, amount) {
 }
 
 export const genCost = (s, g) => unitCost(g.baseCost, g.growth, s.owned[g.id], genModMult(s, g, 'cost'));
-export const labCost = (s) => unitCost(LAB.baseCost, LAB.growth, s.labs, 1);
+export const labCost = (s) => unitCost(LAB.baseCost, LAB.growth, s.labs, shopValue(s, 'cost', 1));
 export const genBulk = (s, g, amount) => bulk(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost'), amount);
-export const labBulk = (s, amount) => bulk(LAB.baseCost, LAB.growth, s.labs, s.money, 1, amount);
+export const labBulk = (s, amount) => bulk(LAB.baseCost, LAB.growth, s.labs, s.money, shopValue(s, 'cost', 1), amount);
 export const genAffordable = (s, g) => maxAffordable(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost')).n;
 export const genUnlocked = (g, s) => g.unlock === null || bought(s, g.unlock);
 export const labUnlocked = (s) => s.totalEnergy >= LAB.unlockAt || s.labs > 0;

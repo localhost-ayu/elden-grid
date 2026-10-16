@@ -2,7 +2,7 @@
 // linhas (para o screen.js), por isso dá para testar sem TTY.
 import { newState } from '../core/state.js';
 import { tick, power, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
-import { autoStep } from '../core/automation.js';
+import { autoStep, autoCrankStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
 import { crank } from '../core/actions.js';
@@ -14,6 +14,8 @@ import { fmt, fmtPct, fmtClock, visibleLength, setNumberFormat } from './format.
 import { REWARD } from '../data/events.js';
 import { eventDef, isActive } from '../core/events.js';
 import { eventsStep, currentEvent, holdEvents } from '../core/incidents.js';
+import { checkAchievements } from '../core/achievements.js';
+import { ACHIEVEMENT_BONUS } from '../data/achievements.js';
 import { STEALTH_KEY, createDisguise, stepDisguise, disguiseKey, renderDisguise } from './stealth.js';
 import * as crisis from './screens/crisis.js';
 import * as menu from './screens/menu.js';
@@ -265,6 +267,14 @@ export function createApp({
     spawn(app.particles, { text: `+$${fmt(kwh * price(app.state))}`, st: C.green, x: x + 0.12, y: 0, vy: 3, life: 1.6 });
   }
 
+  // Várias de uma vez (um save antigo que já cumpria muitas) viram uma mensagem só.
+  function celebrate(list) {
+    if (!list.length) return;
+    const bonus = `+${Math.round(ACHIEVEMENT_BONUS * 100)}% de produção`;
+    if (list.length > 2) say(`★ ${list.length} conquistas desbloqueadas! (${bonus} cada) Veja em Estatísticas, tecla V.`, 'ok', 8000);
+    else for (const a of list) say(`★ Conquista: ${a.name} — ${a.desc} (${bonus})`, 'ok', 6000);
+  }
+
   // Notas do core/incidents.js viram mensagens no rodapé.
   function announce(note) {
     if (!note) return;
@@ -324,9 +334,11 @@ export function createApp({
     if (app.state) {
       const shutdowns = tick(app.state, dt);
       autoStep(app.state, dt);
+      autoCrankStep(app.state, dt);
       if (app.stealth) holdEvents(app.state, dt);
       else eventsStep(app.state, dt).forEach(announce);
       if (!app.state.events.crisis) app.crisisOpen = false;
+      celebrate(checkAchievements(app.state));
       sampleHistory(app.history, app.state);
       // Animações desligadas: os números saltam direto para o valor real.
       const roll = animations() === 'off' ? (_, target) => target : (cur, target) => easeTo(cur, target, dt);
