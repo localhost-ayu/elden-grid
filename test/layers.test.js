@@ -10,8 +10,8 @@ import { applyOffline, power, income, price } from '../src/core/engine.js';
 
 const SRC = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
-test('data/ e core/ não importam fs/os/readline nem usam process.stdout/ANSI', () => {
-  const forbidden = [/node:fs|['"]fs['"]/, /node:os|['"]os['"]/, /readline/, /process\.std(out|in)/, /\\x1b/];
+test('data/ e core/ não importam fs/os/readline nem usam process.stdout/ANSI, rede ou git', () => {
+  const forbidden = [/node:fs|['"]fs['"]/, /node:os|['"]os['"]/, /readline/, /process\.std(out|in)/, /\\x1b/, /\bfetch\(/, /child_process/];
   for (const dir of ['data', 'core']) {
     for (const f of fs.readdirSync(path.join(SRC, dir))) {
       const code = fs.readFileSync(path.join(SRC, dir, f), 'utf8');

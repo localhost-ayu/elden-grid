@@ -8,6 +8,7 @@ import { isDay, reservoirLevel, tideRising } from '../../core/traits.js';
 import { heatLevel, isShutdown, shutdownLeft } from '../../core/heat.js';
 import { buyGenBulk, buyLabBulk, buyUpgrade } from '../../core/actions.js';
 import { autoAvailable, autoInterval, toggleAuto } from '../../core/automation.js';
+import { genDisabled } from '../../core/challenges.js';
 import { C, paint } from '../theme.js';
 import { fmt, visibleLength } from '../format.js';
 import { scrollWindow } from '../list.js';
@@ -121,8 +122,9 @@ function detail(s, it) {
 }
 
 // Prévia da próxima fonte ainda bloqueada: mostra ao jogador o que perseguir.
+// Fontes desligadas por um desafio não entram: elas nunca vão abrir nesta partida.
 function teaser(s) {
-  const g = GENERATORS.find((x) => !genUnlocked(x, s));
+  const g = GENERATORS.find((x) => !genUnlocked(x, s) && !genDisabled(s, x));
   if (!g) return [];
   const tech = TECHS.find((t) => t.id === g.unlock);
   return [' ' + paint(C.dim, `${cols(' ', `[${g.key}]`, g.name, '', '', '', '').trimEnd()} — requer pesquisa: ${tech.name}`)];
@@ -192,6 +194,7 @@ function buy(ctx, it) {
     return ctx.say(`Sem dinheiro para ${bulkLabel(amount)} Laboratório ($${fmt(labBulk(s, amount).cost)}).`, 'err');
   }
   const g = it.gen;
+  if (genDisabled(s, g)) return ctx.say(`${g.name} está desligada neste desafio.`, 'err');
   if (!genUnlocked(g, s)) return ctx.say(`${g.name} ainda está bloqueado (pesquisa).`, 'err');
   const before = s.owned[g.id];
   const n = buyGenBulk(s, g.id, amount);

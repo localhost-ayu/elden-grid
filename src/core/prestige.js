@@ -2,13 +2,15 @@
 // consulta os efeitos daqui (engine -> prestige, sem ciclo de imports).
 import { LEGACY, SHOP, MONUMENT } from '../data/legacy.js';
 import { TECHS } from '../data/research.js';
+import { rewardStart } from './rewards.js';
 import { newState } from './state.js';
 import { peak } from './records.js';
 
 export const pointsFor = (money) => Math.floor(Math.sqrt(Math.max(0, money) / LEGACY.divisor));
 export const lifetimeEarned = (s) => s.legacy.lifetime + s.earned;
 export const legacyGain = (s) => Math.max(0, pointsFor(lifetimeEarned(s)) - s.legacy.earned);
-export const canAscend = (s) => s.earned >= LEGACY.minRunEarned && legacyGain(s) >= 1;
+// Desafios e semente do dia (s.run) não ascendem: começam e terminam sem legado.
+export const canAscend = (s) => !s.run && s.earned >= LEGACY.minRunEarned && legacyGain(s) >= 1;
 
 // Quanto falta ganhar nesta partida para a prévia subir mais 1 ponto.
 export function nextPointIn(s) {
@@ -90,6 +92,7 @@ function startRun(s) {
   for (const id of [...shopValue(s, 'techs', []), ...(shopPerk(s, 'start').techs ?? [])]) s.techs[id] = true;
   for (const id of Object.keys(s.cooling)) s.cooling[id] = shopValue(s, 'cooling', 0);
   s.transformers = shopValue(s, 'transformers', 0);
+  rewardStart(s);
   const autoTech = TECHS.some((t) => t.type === 'auto' && s.techs[t.id]);
   if (autoTech || shopValue(s, 'auto') !== null) s.auto.buy = true;
 }

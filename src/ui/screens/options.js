@@ -34,6 +34,11 @@ const OPTIONS = [
     name: { build: 'testes rodando', logs: 'log de servidor', shell: 'terminal vazio' },
     hint: '\\ (barra invertida) esconde o jogo de qualquer tela; \\ de novo volta',
   },
+  {
+    key: 'updateCheck', label: 'Checar atualizações',
+    name: { true: 'ligado (1x por dia)', false: 'desligado' },
+    hint: 'procura versão nova no GitHub, 1x por dia; sem internet, nada muda',
+  },
 ];
 
 const ACTIONS = [
@@ -49,7 +54,9 @@ export function render(ctx) {
   ui.sel = Math.max(0, Math.min(ui.sel ?? 0, COUNT - 1));
   ui.importSlot ??= ctx.currentSlot ?? 1;
   const settings = ctx.settings;
-  const lines = ['', '   ' + paint(C.bold, 'Opções') + paint(C.dim, '  (valem na hora e ficam salvas em ~/.elden-grid/settings.json)'), ''];
+  const version = !ctx.version ? '' : ctx.hasUpdate ? `  ·  v${ctx.version} (nova: ${ctx.latestVersion})` : `  ·  v${ctx.version}`;
+  // Sem linha em branco no topo: na aba (15 linhas em 80×24) cada linha conta.
+  const lines = ['   ' + paint(C.bold, 'Opções') + paint(C.dim, `  (valem na hora; ficam em ~/.elden-grid/settings.json)${version}`), ''];
   OPTIONS.forEach((opt, i) => {
     const selected = ui.sel === i;
     const locked = opt.key === 'colors' && ctx.noColor;

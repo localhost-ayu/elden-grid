@@ -121,3 +121,25 @@ test('UI: aviso ao conquistar (agrupado se forem muitas) e V alterna para a list
   b.app.update(0.1, 100);
   assert.match(b.text(), /★ \d+ conquistas desbloqueadas!/);
 });
+
+test('conquistas de desafio olham o perfil compartilhado e saem no save aberto', async () => {
+  const { useProfile } = await import('../src/core/rewards.js');
+  const { newProfile, completeChallenge, recordDaily } = await import('../src/core/profile.js');
+  const { CHALLENGES } = await import('../src/data/challenges.js');
+  for (const a of ACHIEVEMENTS.filter((x) => x.type === 'challenge')) assert.ok(CHALLENGES.some((c) => c.id === a.challenge), a.id);
+  const p = newProfile();
+  useProfile(p);
+  try {
+    const s = newState();
+    assert.deepEqual(checkAchievements(s).filter((a) => a.cat === 'challenges'), []);
+    for (const c of CHALLENGES) completeChallenge(p, c.id, 1, 2000);
+    for (let t = 2; t <= 5; t++) completeChallenge(p, 'fuel', t, 2000);
+    recordDaily(p, '2026-10-16', 1700);
+    const got = checkAchievements(s).map((a) => a.id);
+    for (const id of ['c_tiers1', 'c_all1', 'c_fuel', 'c_daily1', 'c_dfast30']) assert.ok(got.includes(id), id);
+    for (const id of ['c_tiers10', 'c_all3', 'c_calm', 'c_daily7', 'c_dfast20']) assert.ok(!got.includes(id), id);
+    assert.ok(Math.abs(achievementProgress(s, byId('c_tiers10')) - 0.9) < 1e-9);
+  } finally {
+    useProfile(null);
+  }
+});

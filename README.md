@@ -50,7 +50,15 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
   continua produzindo e pausa eventos e crises; `\` de novo volta e mostra quanto rendeu.
-- **Conquistas.** 82 metas em oito categorias (algumas secretas), da primeira faísca a
+- **Desafios.** Cinco partidas com regras que mudam o jogo (crises sem parar, sem vento,
+  rede velha, mercado em queda, combustível caro), cada uma com 5 níveis de meta. Ficam
+  num slot separado (D), começam do zero sem legado e não tocam nos saves 1–3; o
+  progresso e os recordes vão para um perfil compartilhado, e cada nível completo deixa
+  os slots 1–3 mais fortes (x1.1 de produção e uma vantagem temática por nível).
+- **Semente do dia.** Uma partida por dia igual para todo mundo (mesma seed, mesmas
+  regras sorteadas): quem chega a $25B mais rápido? Ao terminar, o jogo mostra um código
+  com o tempo para mandar aos amigos.
+- **Conquistas.** 97 metas em nove categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%
@@ -72,7 +80,9 @@ npm run simulate       # ou: bun scripts/simulate.js 90 --seeds=5
 
 `scripts/simulate.js` joga sozinho usando só a lógica do jogo e imprime quando chegou a
 cada marco (primeira solar, nuclear, fusão, cada ascensão), as crises, quanto tempo a rede
-passou saturada, quando a loja do legado ficou completa e o nível do Monumento. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
+passou saturada, quando a loja do legado ficou completa e o nível do Monumento. Com
+`--challenge=<id> --tier=N` (ou `--daily=AAAA-MM-DD`), joga um desafio e mostra o tempo
+até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
 
 ## Controles
 
@@ -82,10 +92,21 @@ passou saturada, quando a loja do legado ficou completa e o nível do Monumento.
 | Em qualquer aba | `G` `P` `R` `L` `E` `O` (ou `Tab`/`Shift+Tab`) trocam de aba · `espaço` gira a manivela · `X` abre o manual de crise · `M`/`Esc` menu (salva) · `Q` sai (salva) |
 | Geradores | `↑↓` + `Enter` ou `0`–`9` compram · `B` lote · `U` upgrade · `A` auto-compra · `V` cena das usinas |
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
+| Desafios | `↑↓` desafio · `←→` nível · `Enter` joga · `C` continua a partida do slot D |
 | Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento |
 | Legado | `↑↓` + `Enter` ascende ou compra na loja (com confirmação `S`/`N`) |
 | Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` · `V` conquistas |
 | Opções | `↑↓` escolhe, `←→`/`Enter` muda |
+
+## Versão e atualizações
+
+A versão aparece na tela de título. Uma vez por dia, em segundo plano, o jogo consulta as
+tags do repositório no GitHub e avisa quando há versão nova. Sem internet nada trava: o
+aviso só não aparece. Se a pasta do jogo for um clone git limpo na `main`, o item
+**Atualizar** do título roda `git pull --ff-only` (os saves ficam em `~/.elden-grid/` e
+não são tocados); senão, é só rodar `git pull` ou baixar a versão nova em
+[Releases](https://github.com/localhost-ayu/elden-grid/releases). Para não consultar a
+rede: Opções → Checar atualizações, ou `ELDEN_GRID_NO_UPDATE_CHECK=1`.
 
 ## Saves e opções
 
@@ -95,9 +116,12 @@ chamava Reactor ASCII, em `~/.reactor-ascii/`, são movidos para lá na primeira
 - `slot1.json` … `slot3.json` (e `.bak`): três saves. A gravação é atômica (`.tmp` +
   `rename`) e um save corrompido é recuperado do backup sem derrubar o jogo. Saves de
   versões antigas são migrados degrau por degrau (`saveVersion`).
+- `slotD.json`: a partida de desafio em andamento.
+- `profile.json`: perfil compartilhado entre os slots (níveis de desafio e recordes).
 - `settings.json`: animações (ligadas, reduzidas, desligadas), 5/10/15 fps, símbolos
-  Unicode ou ASCII puro, cores 256/16/sem cor, números curtos ou científicos e intervalo
-  do autosave e o tipo de disfarce. A variável de ambiente `NO_COLOR` desliga as cores.
+  Unicode ou ASCII puro, cores 256/16/sem cor, números curtos ou científicos, intervalo
+  do autosave, tipo de disfarce e checagem de atualizações (com a última versão vista).
+  A variável de ambiente `NO_COLOR` desliga as cores.
 - `export-slotN.txt` / `import.txt`: o save em uma linha de texto (Base64), para levar
   para outra máquina. A exportação também tenta copiar o texto para a área de
   transferência do terminal (OSC 52).
@@ -108,7 +132,7 @@ chamava Reactor ASCII, em `~/.reactor-ascii/`, são movidos para lá na primeira
 index.js            liga terminal, storage e app; loop de quadros e autosave
 src/data/           só números e textos de balanceamento (fontes, pesquisa, eventos…)
 src/core/           regras do jogo, puras e determinísticas (sem terminal, sem disco)
-src/storage/        saves em slots, escrita atômica, migração, opções, exportação
+src/storage/        saves em slots, escrita atômica, migração, opções, exportação, versão
 src/ui/             tudo que toca o terminal: renderer, teclado, tema, telas, arte ASCII
 scripts/            simulação de balanceamento
 test/               node:test, sem dependências

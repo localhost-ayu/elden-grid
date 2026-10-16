@@ -8,6 +8,8 @@ import { power, income, rpRate, gridLoad } from './engine.js';
 import { HOT_GENERATORS } from './heat.js';
 import { add, best } from './records.js';
 import { shopValue } from './prestige.js';
+import { rules } from './challenges.js';
+import { reward } from './rewards.js';
 
 const hasReactor = (s) => HOT_GENERATORS.some((g) => s.owned[g.id] > 0);
 const REQUIRES = {
@@ -20,15 +22,18 @@ const REQUIRES = {
 
 export const eligibleEvents = (s) => EVENTS.filter((e) => !e.requires || REQUIRES[e.requires](s));
 
+// Desafios (Apagão Eterno) aumentam o peso das crises e encurtam o intervalo.
+const weight = (s, e) => e.weight * (e.crisis ? rules(s).crisisWeight : 1);
+
 function pick(s) {
   const list = eligibleEvents(s);
-  let r = rand(s) * list.reduce((sum, e) => sum + e.weight, 0);
-  for (const e of list) if ((r -= e.weight) < 0) return e;
+  let r = rand(s) * list.reduce((sum, e) => sum + weight(s, e), 0);
+  for (const e of list) if ((r -= weight(s, e)) < 0) return e;
   return list.at(-1);
 }
 
 const scheduleNext = (s) => {
-  s.events.next = s.t + SCHEDULE.gapMin + rand(s) * (SCHEDULE.gapMax - SCHEDULE.gapMin);
+  s.events.next = s.t + (SCHEDULE.gapMin + rand(s) * (SCHEDULE.gapMax - SCHEDULE.gapMin)) * rules(s).eventGap;
 };
 
 export const crisisDef = (s) => s.events.crisis && CRISES[eventDef(s.events.crisis.id).crisis];
@@ -43,7 +48,7 @@ function start(s, e) {
   add(s, 'events', 1, e.id);
   if (e.crisis) {
     s.events.effects.push({ id: e.id, until: null });
-    s.events.crisis = { id: e.id, deadline: s.t + SCHEDULE.crisisDeadline, game: null };
+    s.events.crisis = { id: e.id, deadline: s.t + SCHEDULE.crisisDeadline + reward(s, 'crisisTime'), game: null };
     return { type: 'crisis', id: e.id };
   }
   s.events.effects.push({ id: e.id, until: s.t + e.duration });
@@ -69,7 +74,8 @@ function resolve(s, outcome) {
     s.career.streak = 0;
   }
   s.events.effects = s.events.effects.filter((a) => a.id !== c.id);
-  if (outcome === 'won') s.events.effects.push({ id: REWARD.id, until: s.t + REWARD.duration });
+  // Apagão Eterno corta o bônus: com tantas crises, ele viraria vantagem.
+  if (outcome === 'won' && !rules(s).noReward) s.events.effects.push({ id: REWARD.id, until: s.t + REWARD.duration });
   s.events.crisis = null;
   scheduleNext(s);
   return { type: 'resolved', id: c.id, outcome, cost };

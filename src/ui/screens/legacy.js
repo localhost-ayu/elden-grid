@@ -36,6 +36,12 @@ const times = (m) => `x${m < 100 ? m.toFixed(2) : fmt(m)}`;
 function ascendBlock(s, selected) {
   const mark = selected ? '›' : ' ';
   const star = glyphs().legacy;
+  if (s.run) {
+    return [
+      ' ' + paint(selected ? C.bold : C.dim, `${mark} ${star} Sem ascensão nesta partida`),
+      paint(C.dim, '     Desafios e semente do dia começam e terminam sem legado. A meta está no topo.'),
+    ];
+  }
   if (canAscend(s)) {
     const gain = legacyGain(s);
     return [
@@ -111,6 +117,7 @@ function choose(ctx) {
   const s = ctx.state;
   const ui = ctx.ui;
   if (ui.sel === 0) {
+    if (s.run) { ctx.say('Desafios não têm ascensão: a meta da partida está no topo da tela.', 'info'); return; }
     if (!canAscend(s)) {
       ctx.say(`Ascensão disponível após ganhar $${fmt(LEGACY.minRunEarned)} nesta partida.`, 'info');
       return;

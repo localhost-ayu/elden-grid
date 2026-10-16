@@ -9,6 +9,8 @@ import { contractDiscount, legacyMult, shopValue } from './prestige.js';
 import { eventMult } from './events.js';
 import { add, peak } from './records.js';
 import { ACHIEVEMENT_BONUS } from '../data/achievements.js';
+import { rules, priceDecay, genDisabled } from './challenges.js';
+import { reward, rewardMult } from './rewards.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -58,6 +60,10 @@ export function genModifiers(s, g) {
   }
   const contracts = shopValue(s, 'cost');
   if (contracts) mods.push({ type: 'cost', mult: contracts, source: 'Legado' });
+  const rule = rules(s);
+  if (rule.cost[g.id]) mods.push({ type: 'cost', mult: rule.cost[g.id], source: 'Desafio' });
+  if (rule.output[g.id]) mods.push({ type: 'output', mult: rule.output[g.id], source: 'Desafio' });
+  if (g.id === 'solar' && reward(s, 'solar')) mods.push({ type: 'output', mult: 1 + reward(s, 'solar'), source: 'Desafios' });
   return mods;
 }
 const modMult = (mods, type) => mods.reduce((m, x) => (x.type === type ? m * x.mult : m), 1);
@@ -80,22 +86,23 @@ export const power = (s, average = false) =>
 
 export const genUpkeep = (g) => g.traits.reduce((sum, tr) => sum + (tr.type === 'upkeep' ? tr.money : 0), 0);
 export const upkeep = (s) =>
-  GENERATORS.reduce((sum, g) => sum + (genUpkeep(g) && s.owned[g.id] * genUpkeep(g) * genModMult(s, g, 'upkeep')), 0);
+  GENERATORS.reduce((sum, g) => sum + (genUpkeep(g) && s.owned[g.id] * genUpkeep(g) * genModMult(s, g, 'upkeep')), 0) *
+  rules(s).upkeep * (1 - reward(s, 'upkeep'));
 export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab') * shopValue(s, 'lab', 1);
 // Preço do kWh oscila ±20% numa senoide lenta (dá vida ao contador de dinheiro).
 // priceBase é a média da oscilação; priceRising vem da derivada (a seta de tendência).
-export const priceBase = (s) => mult(s, 'price');
+export const priceBase = (s) => mult(s, 'price') * priceDecay(s) * (1 + reward(s, 'price'));
 export const price = (s) => (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price');
 export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 
-// Multiplicadores que atravessam partidas (Legado e conquistas). A rede cresce junto com
+// Multiplicadores que atravessam partidas (Legado, conquistas e desafios). A rede cresce junto com
 // eles: senão quem tem muito legado começa toda partida com a rede saturada (1000%+),
 // vendendo quase tudo com desconto. O gargalo volta a ser o que se constrói na partida.
-export const permanentMult = (s) => legacyMult(s) * achievementMult(s);
+export const permanentMult = (s) => legacyMult(s) * achievementMult(s) * rewardMult(s);
 
 export const capacity = (s) =>
-  GRID.baseCapacity * mult(s, 'capacity') * GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity') *
-  permanentMult(s);
+  GRID.baseCapacity * mult(s, 'capacity') ** rules(s).capacityExp * GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity') *
+  permanentMult(s) * (1 + reward(s, 'capacity'));
 export const transformerCost = (s) =>
   Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
 
@@ -151,7 +158,7 @@ export const labCost = (s) => unitCost(LAB.baseCost, LAB.growth, s.labs, shopVal
 export const genBulk = (s, g, amount) => bulk(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost'), amount);
 export const labBulk = (s, amount) => bulk(LAB.baseCost, LAB.growth, s.labs, s.money, shopValue(s, 'cost', 1), amount);
 export const genAffordable = (s, g) => maxAffordable(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost')).n;
-export const genUnlocked = (g, s) => g.unlock === null || bought(s, g.unlock);
+export const genUnlocked = (g, s) => (g.unlock === null || bought(s, g.unlock)) && !genDisabled(s, g);
 export const labUnlocked = (s) => s.totalEnergy >= LAB.unlockAt || s.labs > 0;
 export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => bought(s, r));
 

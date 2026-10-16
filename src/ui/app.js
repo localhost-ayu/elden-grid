@@ -10,7 +10,7 @@ import { canAscend, legacyMult } from '../core/prestige.js';
 import { hourOfDay, isDay } from '../core/traits.js';
 import { C, paint, glyphs, setColorMode, setUnicode } from './theme.js';
 import { createParticles, easeTo, spawn, stepParticles } from './anim.js';
-import { fmt, fmtPct, fmtClock, visibleLength, setNumberFormat } from './format.js';
+import { fmt, fmtPct, fmtClock, fmtDuration, visibleLength, setNumberFormat } from './format.js';
 import { REWARD } from '../data/events.js';
 import { eventDef, isActive } from '../core/events.js';
 import { eventsStep, currentEvent, holdEvents } from '../core/incidents.js';
@@ -27,7 +27,14 @@ import * as stats from './screens/stats.js';
 import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
+import * as challenges from './screens/challenges.js';
+import { ROMAN, rewardText } from './screens/challenges.js';
+import { newProfile, completeChallenge, recordDaily } from '../core/profile.js';
+import { applyRunStart, challengeDef, goalReached, runGoal, localDate, dailySeed, dailyChallenges, dailyCode } from '../core/challenges.js';
+import { useProfile, rewardStart } from '../core/rewards.js';
+import { TIER_MULT } from '../data/challenges.js';
 import { DEFAULT_SETTINGS } from '../storage/settings.js';
+import { compareVersions, CHECK_EVERY_MS, RELEASES_URL } from '../storage/update.js';
 import { tooSmall, renderTooSmall } from './screens/too-small.js';
 
 // A 1ª letra do rótulo é a tecla direta, e é sublinhada na barra de abas.
@@ -49,7 +56,11 @@ const FULL = {
   slots: { screen: slots, title: 'Slots' },
   offline: { screen: offline, title: 'Bem-vindo de volta' },
   options: { screen: options, title: 'Opções' },
+  challenges: { screen: challenges, title: 'Desafios' },
 };
+
+export const CHALLENGE_SLOT = 'D';
+export const dayLabel = (date) => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
 
 const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 
@@ -60,10 +71,13 @@ const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 // `settings` é o objeto de opções; `onSettings(settings)` persiste quando ele muda.
 // `noColor`: NO_COLOR no ambiente (vence a opção de cores). `copy(text)`: tenta pôr o
 // texto na área de transferência do terminal; retorna se conseguiu. `who`: { user, host }
-// do sistema, para o prompt do disfarce parecer o do jogador.
+// do sistema, para o prompt do disfarce parecer o do jogador. `updater`: versão e
+// atualização (storage/update.js): { version, latest(), inspect(), pull() }.
+// `profile`: perfil compartilhado (storage/profile.js): { read(), write(p) }.
+// O store também guarda o slot de Desafio, com n = 'D' (fora da lista dos slots 1–3).
 export function createApp({
   store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random,
-  noColor = false, copy = () => false, who = {},
+  noColor = false, copy = () => false, who = {}, updater = null, profile: profileStore = null,
 }) {
   const app = {
     state: null,  // jogo aberto (null = nenhum slot carregado ainda)
@@ -83,8 +97,13 @@ export function createApp({
     // Disfarce ativo: { d (ui/stealth.js), money } — money = saldo ao esconder, para o
     // resumo da volta. Fica por cima de qualquer modo (menu, jogo, opções...).
     stealth: null,
+    // Atualização: 'pulling' enquanto o git pull roda; 'pulled' = baixada, falta reiniciar.
+    updating: null,
+    profile: profileStore?.read() ?? newProfile(),
+    challengeCache: undefined, // resumo do slot D para a tela de Desafios (undefined = reler)
     now,
   };
+  useProfile(app.profile); // as recompensas dos desafios valem a partir daqui
 
   const uiFor = (id) => (app.ui[id] ??= {});
 
@@ -104,6 +123,45 @@ export function createApp({
     settings[k] = v;
     applySettings();
     onSettings(settings);
+    if (k === 'updateCheck' && v) checkUpdates({ force: true });
+  }
+
+  // Em segundo plano e no máximo 1x por dia. Falhou (sem conexão, timeout)? Nada muda e
+  // a próxima abertura tenta de novo. Retorna a promessa para os testes esperarem.
+  function checkUpdates({ force = false } = {}) {
+    if (!updater || !settings.updateCheck) return Promise.resolve(null);
+    if (!force && app.now - (settings.lastUpdateCheck ?? 0) < CHECK_EVERY_MS) return Promise.resolve(null);
+    return Promise.resolve()
+      .then(() => updater.latest())
+      .then((v) => {
+        if (!v) return null;
+        settings.latestVersion = v;
+        settings.lastUpdateCheck = app.now;
+        onSettings(settings);
+        return v;
+      })
+      .catch(() => null);
+  }
+  const hasUpdate = () => !!updater && !!settings.latestVersion && compareVersions(settings.latestVersion, updater.version) > 0;
+
+  // Clone git limpo na main: pergunta e roda git pull. Senão, diz como atualizar à mão.
+  function selfUpdate(ask) {
+    if (app.updating) return;
+    const r = updater.inspect();
+    if (!r.canPull) {
+      say(`Atualização manual: ${r.reason}. Rode "git pull" na pasta do jogo ou baixe em ${RELEASES_URL}`, 'info', 15000);
+      return;
+    }
+    ask(`Baixar a versão ${settings.latestVersion} com git pull? Seus saves não são tocados.`, () => {
+      app.updating = 'pulling';
+      say('Baixando a atualização…', 'info', 60000);
+      return updater.pull().then((res) => {
+        app.messages = app.messages.filter((m) => m.text !== 'Baixando a atualização…');
+        app.updating = res.ok ? 'pulled' : null;
+        if (res.ok) say(`Versão ${settings.latestVersion} baixada! Saia (Q) e abra o jogo de novo para jogar com ela.`, 'ok', 30000);
+        else say(`Não deu para atualizar: ${res.reason}`, 'err', 15000);
+      });
+    });
   }
 
   function exportSave() {
@@ -129,7 +187,63 @@ export function createApp({
   }
 
   const slotList = () => (app.slotCache ??= store.list());
-  const dirty = () => { app.slotCache = null; };
+  const dirty = () => { app.slotCache = null; app.challengeCache = undefined; };
+
+  // { run, earned } da partida do slot D, ou null.
+  function challengeRun() {
+    if (app.challengeCache === undefined) {
+      const st = app.slot === CHALLENGE_SLOT ? app.state : store.load(CHALLENGE_SLOT)?.state;
+      app.challengeCache = st?.run ? { run: st.run, earned: st.earned, time: st.stats.playTime } : null;
+    }
+    return app.challengeCache;
+  }
+
+  // Partida nova no slot D: estado comum, sem legado, marcado com a regra do desafio.
+  function startChallenge(id, tier) {
+    const s = newState(Math.floor(rng() * 2 ** 32));
+    s.run = { challenge: id, tier };
+    applyRunStart(s);
+    open(CHALLENGE_SLOT, s);
+    save();
+    app.mode = 'game';
+    say(`Desafio ${challengeDef(id).name} ${ROMAN[tier - 1]}: ganhe $${fmt(runGoal(s))} nesta partida. Boa sorte!`, 'ok', 8000);
+  }
+
+  // Semente do dia: mesma seed e mesmas regras para quem joga na mesma data (local).
+  function startDaily() {
+    const date = localDate(app.now);
+    const s = newState(dailySeed(date));
+    s.run = { daily: date };
+    applyRunStart(s);
+    open(CHALLENGE_SLOT, s);
+    save();
+    app.mode = 'game';
+    const names = dailyChallenges(date).map((id) => challengeDef(id).name).join(' + ');
+    say(`Semente do dia ${dayLabel(date)} (${names}): ganhe $${fmt(runGoal(s))} o mais rápido que puder.`, 'ok', 8000);
+  }
+
+  // Desafio é jogado ativo: abrir o slot D não credita progresso offline.
+  function continueChallenge() {
+    if (app.slot === CHALLENGE_SLOT && app.state) { app.mode = 'game'; return; }
+    const r = store.load(CHALLENGE_SLOT);
+    if (!usable(r)) { say('A partida de desafio não pôde ser carregada.', 'err'); return; }
+    open(CHALLENGE_SLOT, r.state);
+    app.mode = 'game';
+  }
+
+  function finishChallenge() {
+    const s = app.state;
+    s.run.done = true;
+    if (s.run.daily) return finishDaily(s);
+    const { challenge, tier } = s.run;
+    const fresh = completeChallenge(app.profile, challenge, tier, s.stats.playTime);
+    profileStore?.write(app.profile);
+    save();
+    const def = challengeDef(challenge);
+    const name = `${def.name} ${ROMAN[tier - 1]}`;
+    say(`${glyphs().legacy} DESAFIO CONCLUÍDO: ${name} em ${fmtDuration(s.stats.playTime)}!` +
+      (fresh ? ` Nos slots 1–3: produção x${TIER_MULT} e ${rewardText(def, 1)}.` : ' (nível já completo: vale como recorde)'), 'ok', 15000);
+  }
 
   function save() {
     if (!app.state || !app.slot) return true;
@@ -140,6 +254,7 @@ export function createApp({
   }
 
   function remember(n) {
+    if (n === CHALLENGE_SLOT) return; // "Continuar" é para os slots 1–3
     if (settings.lastSlot !== n) { settings.lastSlot = n; onSettings(settings); }
   }
 
@@ -170,7 +285,9 @@ export function createApp({
   }
 
   function newGame(n) {
-    open(n, newState(Math.floor(rng() * 2 ** 32)));
+    const s = newState(Math.floor(rng() * 2 ** 32));
+    rewardStart(s);
+    open(n, s);
     save(); // ocupa o slot já, para aparecer como usado na lista
     app.mode = 'game';
     say(`Novo jogo no slot ${n}! Gire a manivela (espaço) e compre sua primeira turbina.`, 'ok', 6000);
@@ -219,6 +336,12 @@ export function createApp({
     },
     loadSlot,
     newGame,
+    get profile() { return app.profile; },
+    get challengeRun() { return challengeRun(); },
+    startChallenge,
+    continueChallenge,
+    startDaily,
+    today: localDate(app.now),
     deleteSlot,
     // A partida mudou por inteiro: gráficos e partículas da anterior não fazem sentido.
     ascended() {
@@ -229,6 +352,11 @@ export function createApp({
     close: () => { app.crisisOpen = false; },
     announce,
     quit: () => onQuit(),
+    version: updater?.version ?? null,
+    latestVersion: settings.latestVersion,
+    get hasUpdate() { return hasUpdate(); },
+    get updating() { return app.updating; },
+    selfUpdate,
   });
 
   function toMenu() {
@@ -261,6 +389,7 @@ export function createApp({
   // A partícula nasce da ação: girar a manivela solta o que ela rendeu.
   function crankBurst() {
     const kwh = crank(app.state);
+    if (!kwh) { say('A manivela está desligada neste desafio.', 'info', 2000); return; }
     if (animations() !== 'on') return;
     const x = 0.5 + rng() * 0.35;
     spawn(app.particles, { text: `+${fmt(kwh)} kWh`, st: C.cyan, x, y: 0, vy: 4, life: 1.6 });
@@ -339,6 +468,7 @@ export function createApp({
       else eventsStep(app.state, dt).forEach(announce);
       if (!app.state.events.crisis) app.crisisOpen = false;
       celebrate(checkAchievements(app.state));
+      if (goalReached(app.state)) finishChallenge();
       sampleHistory(app.history, app.state);
       // Animações desligadas: os números saltam direto para o valor real.
       const roll = animations() === 'off' ? (_, target) => target : (cur, target) => easeTo(cur, target, dt);
@@ -418,8 +548,27 @@ export function createApp({
       // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
       paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`) +
       (s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : '') +
-      (s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${Math.round((legacyMult(s) - 1) * 100)}%`) : ''),
+      (s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${Math.round((legacyMult(s) - 1) * 100)}%`) : '') +
+      challengeBadge(s),
     ];
+  }
+
+  function finishDaily(s) {
+    const date = s.run.daily;
+    const time = s.stats.playTime;
+    const best = recordDaily(app.profile, date, time);
+    profileStore?.write(app.profile);
+    save();
+    say(`${glyphs().legacy} SEMENTE DO DIA ${dayLabel(date)} em ${fmtDuration(time)}${best ? ' (recorde!)' : ''}. ` +
+      `Código para os amigos: ${dailyCode(date, time)}`, 'ok', 60000);
+  }
+
+  // No slot D: qual desafio e quanto falta (ou ✓ quando concluído).
+  function challengeBadge(s) {
+    if (!s.run) return '';
+    const label = s.run.daily ? `Semente ${dayLabel(s.run.daily)}` : `${challengeDef(s.run.challenge)?.name} ${ROMAN[s.run.tier - 1]}`;
+    if (s.run.done) return '  ' + paint(C.green, `${label} ✓`);
+    return '  ' + paint(C.mag + C.bold, `${label} ${fmtPct(Math.min(1, s.earned / runGoal(s)))}`);
   }
 
   // Cor: acima (verde) ou abaixo (amarelo) da média; seta: subindo ou descendo agora.
@@ -467,8 +616,9 @@ export function createApp({
     const room = (h) => rows - h.length - 2 - MAX_MESSAGES;
     if (app.mode === 'menu') {
       header = [];
-      help = menu.help;
-      body = menu.render(ctx('menu'), room(header), cols);
+      const c = ctx('menu');
+      help = helpOf(menu, c);
+      body = menu.render(c, room(header), cols);
     } else if (app.mode === 'game') {
       header = [tabBar(), ...statsLines(), banner(cols)];
       const tab = app.crisisOpen ? { id: 'crisis', screen: crisis } : TABS[app.tab];
@@ -503,9 +653,12 @@ export function createApp({
     });
   }
 
+  checkUpdates();
+
   return {
     key,
     update,
+    checkUpdates,
     lines,
     overlays,
     say,

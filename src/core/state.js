@@ -25,6 +25,9 @@ export function newState(seed = 1) {
     // Sobrevive à ascensão. earned = pontos já recebidos; points = não gastos.
     legacy: { points: 0, earned: 0, lifetime: 0, ascensions: 0, shop: {}, monument: 0 },
     achievements: {}, // { id: tempo de jogo da carreira ao conquistar } — sobrevive à ascensão
+    // Partida especial do slot de Desafio: { challenge, tier } ou { daily: 'AAAA-MM-DD' }.
+    // null = partida normal (slots 1–3).
+    run: null,
     // effects: [{ id, until }] (until null = crise em aberto); crisis: { id, deadline, game }
     events: { rng: seed >>> 0, next: SCHEDULE.first, effects: [], crisis: null, seen: 0 },
     stats: newStats(),  // esta partida
@@ -43,7 +46,8 @@ export function newState(seed = 1) {
 //   v7 = state.events
 //   v8 = state.stats, state.career
 //   v9 = state.achievements, state.legacy.monument, state.auto.crank (fromSave preenche)
-export const SAVE_VERSION = 9;
+//   v10 = state.run (fromSave preenche com null)
+export const SAVE_VERSION = 10;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -67,6 +71,7 @@ const MIGRATIONS = {
   },
   // Conquistas começam vazias: o que o save antigo já cumpre sai no primeiro quadro.
   8: (raw) => ({ ...raw, saveVersion: 9, state: { ...raw.state, achievements: raw.state?.achievements ?? {} } }),
+  9: (raw) => ({ ...raw, saveVersion: 10 }),
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.
@@ -105,6 +110,10 @@ export function fromSave(raw) {
   return s;
 }
 
+const isValidRun = (r) => !!r && typeof r === 'object' && (r.done === undefined || typeof r.done === 'boolean') &&
+  ((typeof r.challenge === 'string' && Number.isInteger(r.tier) && r.tier >= 1 && r.tier <= 5) ||
+    (typeof r.daily === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.daily)));
+
 // Um NaN/Infinity gravado "envenenaria" o save para sempre, então estados inválidos
 // não são gravados nem aceitos ao carregar.
 const finite = (x) => typeof x === 'number' && Number.isFinite(x);
@@ -129,5 +138,6 @@ export function isValidState(s) {
   if (!ev || !Number.isInteger(ev.rng) || ev.rng < 0 || ev.rng > 0xffffffff || !finite(ev.next) || !count(ev.seen)) return false;
   if (!Array.isArray(ev.effects) || !ev.effects.every((a) => a && typeof a.id === 'string' && (a.until === null || finite(a.until)))) return false;
   if (ev.crisis !== null && !(ev.crisis && typeof ev.crisis.id === 'string' && finite(ev.crisis.deadline))) return false;
+  if (s.run !== null && !isValidRun(s.run)) return false;
   return !!s.techs && typeof s.techs === 'object';
 }

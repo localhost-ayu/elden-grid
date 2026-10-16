@@ -10,6 +10,47 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [1.2.0] - 2026-10-16
+
+Desafios: partidas com regras próprias, recompensas que se acumulam e a semente do dia.
+
+### Adicionado
+- Versão do jogo na tela de título e em Opções.
+- Aviso de atualização: uma vez por dia, em segundo plano, o jogo procura a última tag no
+  GitHub e avisa no título quando há versão nova. Sem internet ou com timeout (3 s),
+  nada trava nem muda. Desliga em Opções → Checar atualizações ou com
+  `ELDEN_GRID_NO_UPDATE_CHECK=1`.
+- Item **Atualizar** no título (só com versão nova): num clone git limpo na `main`, roda
+  `git pull --ff-only` depois de confirmar; em qualquer outro caso, mostra como
+  atualizar à mão. Os saves nunca são tocados.
+- Desafios (menu → Desafios): cinco partidas com regras próprias, jogadas num slot
+  separado (D), do zero e sem legado, sem tocar nos slots 1–3. Apagão Eterno (eventos e
+  crises sem parar, sem bônus por vitória), Sem Vento (sem eólica, hidrelétrica nem
+  manivela, e os reatores esquentam mais), Rede Velha (capacidade pesquisada rende
+  menos), Mercado em Queda (o kWh perde valor com o tempo) e Combustível Caro (usinas a
+  combustível rendem bem menos). Cada um tem 5 níveis, com
+  metas de $25B a $10T ganhos na partida e regras mais duras; o melhor tempo de cada
+  nível fica registrado. Desafios não têm ascensão nem progresso offline.
+- Recompensas dos desafios, nos slots 1–3: cada nível completo multiplica a produção por
+  1.1 (os 25 níveis dão x10.8) e soma a vantagem do desafio: mais prazo nas crises
+  (Equipe de Plantão), solar mais forte e já pesquisada (Brisa Solar), mais capacidade
+  na rede (Rede Robusta), kWh mais caro (Contratos Futuros) e operação mais barata
+  (Eficiência Térmica).
+- Semente do dia (menu → Desafios, última linha): a data define a seed da partida e
+  sorteia 1 ou 2 regras de desafio; todo mundo que joga no mesmo dia recebe a mesma
+  partida. Meta de $25B, contando só o tempo com o jogo aberto. Ao terminar, o jogo
+  guarda o recorde do dia e mostra um código (ex.: `EG-1016-38:12-K7Q`) para comparar
+  com os amigos.
+- 15 conquistas de desafio numa categoria nova (97 no total): níveis completos, todos os
+  desafios, nível V de cada um e sequências e tempos da semente do dia.
+
+### Alterado
+- `scripts/simulate.js --challenge=<id> --tier=N` e `--daily=AAAA-MM-DD` jogam a partida
+  especial e mostram o tempo até a meta; os desafios foram calibrados com eles.
+- Perfil compartilhado entre os slots em `~/.elden-grid/profile.json` (níveis de desafio
+  e recordes), com escrita atômica e backup como os saves.
+- Save v10 (`state.run`: marca a partida como desafio ou semente do dia).
+
 ## [1.1.0] - 2026-10-16
 
 Herança: o legado ganha teto infinito e a partida longa ganha metas.
@@ -75,7 +116,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/localhost-ayu/elden-grid/releases/tag/v1.0.0

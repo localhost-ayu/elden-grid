@@ -21,6 +21,11 @@
 //   fastWin game, at  melhor vitória num minijogo <= at segundos
 //   without key, at   ganhar $at nesta partida com a ficha `key` da partida ainda em 0
 //   count   at        outras conquistas
+//   challenge id, at  nível completo de um desafio (perfil compartilhado)
+//   tiers   at        níveis completos somando todos os desafios
+//   allTiers at       todos os desafios com pelo menos `at` níveis
+//   dailies at        dias com a semente do dia completa
+//   dailyFast at      semente do dia completa em até `at` segundos
 // `secret`: nome e descrição ficam ocultos até conquistar.
 import { GENERATORS } from './generators.js';
 import { TECHS } from './research.js';
@@ -36,6 +41,7 @@ export const CATEGORIES = [
   { id: 'crises', name: 'Crises' },
   { id: 'legacy', name: 'Legado' },
   { id: 'crank', name: 'Manivela e tempo' },
+  { id: 'challenges', name: 'Desafios' },
   { id: 'secret', name: 'Segredos' },
 ];
 
@@ -127,6 +133,23 @@ export const ACHIEVEMENTS = [
   { id: 'a_crankm', cat: 'crank', name: 'Manivela Milionária', desc: 'ganhe $1M só com a manivela', type: 'career', key: 'crankMoney', at: 1e6 },
   { id: 'a_offline', cat: 'crank', name: 'Dorminhoco', desc: '8 h de progresso offline no total', type: 'career', key: 'offlineTime', at: 8 * 3600 },
   { id: 'a_play10', cat: 'crank', name: 'Maratona', desc: '10 h de jogo no total', type: 'career', key: 'playTime', at: 10 * 3600 },
+
+  // ---- desafios ----
+  { id: 'c_tiers1', cat: 'challenges', name: 'Desafiante', desc: 'complete um nível de desafio', type: 'tiers', at: 1 },
+  { id: 'c_tiers10', cat: 'challenges', name: 'Calejado', desc: '10 níveis de desafio', type: 'tiers', at: 10 },
+  { id: 'c_tiers25', cat: 'challenges', name: 'Mestre dos Desafios', desc: 'todos os 25 níveis de desafio', type: 'tiers', at: 25 },
+  { id: 'c_all1', cat: 'challenges', name: 'Polivalente', desc: 'nível I em todos os desafios', type: 'allTiers', at: 1 },
+  { id: 'c_all3', cat: 'challenges', name: 'Versátil', desc: 'nível III em todos os desafios', type: 'allTiers', at: 3 },
+  { id: 'c_blackout', cat: 'challenges', name: 'Apagão Domado', desc: 'Apagão Eterno no nível V', type: 'challenge', challenge: 'blackout', at: 5 },
+  { id: 'c_calm', cat: 'challenges', name: 'Senhor do Sol', desc: 'Sem Vento no nível V', type: 'challenge', challenge: 'calm', at: 5 },
+  { id: 'c_oldgrid', cat: 'challenges', name: 'Rede de Aço', desc: 'Rede Velha no nível V', type: 'challenge', challenge: 'oldgrid', at: 5 },
+  { id: 'c_crash', cat: 'challenges', name: 'Especulador', desc: 'Mercado em Queda no nível V', type: 'challenge', challenge: 'crash', at: 5 },
+  { id: 'c_fuel', cat: 'challenges', name: 'Mão de Vaca', desc: 'Combustível Caro no nível V', type: 'challenge', challenge: 'fuel', at: 5 },
+  { id: 'c_daily1', cat: 'challenges', name: 'Bom Dia', desc: 'complete uma semente do dia', type: 'dailies', at: 1 },
+  { id: 'c_daily7', cat: 'challenges', name: 'Hábito', desc: '7 sementes do dia completas', type: 'dailies', at: 7 },
+  { id: 'c_daily30', cat: 'challenges', name: 'Ritual', desc: '30 sementes do dia completas', type: 'dailies', at: 30 },
+  { id: 'c_dfast30', cat: 'challenges', name: 'Madrugador', desc: 'semente do dia em até 30 min', type: 'dailyFast', at: 1800 },
+  { id: 'c_dfast20', cat: 'challenges', name: 'Velocista', desc: 'semente do dia em até 20 min', type: 'dailyFast', at: 1200 },
 
   // ---- segredos ----
   { id: 'a_delorean', cat: 'secret', secret: true, name: '1,21 Gigawatts!', desc: 'produza 1,21 GW de uma vez', type: 'power', at: 1.21e6 },
