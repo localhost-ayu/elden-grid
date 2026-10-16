@@ -114,3 +114,11 @@ export function crisisInput(s, key) {
 }
 
 export const callCrew = (s) => (s.events.crisis ? resolve(s, 'crew') : null);
+
+// Jogo disfarçado (modo stealth da UI): o relógio dos eventos para. Nada novo começa e o
+// prazo da crise aberta não corre, para ninguém pagar a equipe por estar numa reunião.
+// Efeitos já em andamento expiram no tempo normal: esconder não estica um bônus.
+export function holdEvents(s, dt) {
+  s.events.next += dt;
+  if (s.events.crisis) s.events.crisis.deadline += dt;
+}

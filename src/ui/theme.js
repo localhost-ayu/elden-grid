@@ -1,7 +1,7 @@
 // Único lugar com códigos de cor ANSI. `C` e `GEN_COLOR` são mutados por setColorMode,
 // então são lidos na hora de pintar, nunca copiados para constantes de módulo.
 const COLORS = {
-  red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m', cyan: '\x1b[36m', mag: '\x1b[35m',
+  red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m', blue: '\x1b[34m', cyan: '\x1b[36m', mag: '\x1b[35m',
 };
 export const C = {
   reset: '\x1b[0m', dim: '\x1b[2m', bold: '\x1b[1m',

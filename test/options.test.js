@@ -158,7 +158,7 @@ test('exportar e importar pela tela: exporta o jogo aberto; importar no slot abe
   app.state.money = 55;
   app.update(0.1, 100);
   press('o');
-  for (let i = 0; i < 6; i++) press('down');
+  for (let i = 0; i < 7; i++) press('down');
   press('enter');
   assert.equal(store.data[1].state.money, 55); // salvou antes de exportar
   assert.match(text(), /Save exportado .* e copiado/);

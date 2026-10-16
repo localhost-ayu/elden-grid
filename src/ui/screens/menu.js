@@ -3,7 +3,7 @@ import { visibleLength } from '../format.js';
 import { titleArt, ringOrder, TAGLINE, MOTTO } from '../art/logo.js';
 import { frame } from '../anim.js';
 
-export const help = '↑↓ escolher  Enter confirmar  1-5 atalho  Q sair';
+export const help = '↑↓ escolher  Enter confirmar  1-5 atalho  \\ disfarce  Q sair';
 
 // `enabled(ctx)` desliga itens sem sentido no momento (ex.: Continuar sem jogo).
 const ITEMS = [
