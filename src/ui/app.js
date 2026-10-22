@@ -1,7 +1,7 @@
 // Roteador de telas. Não toca o terminal: recebe nomes de tecla (input.js) e devolve
 // linhas (para o screen.js), por isso dá para testar sem TTY.
 import { newState } from '../core/state.js';
-import { tick, power, genPower, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
+import { tick, power, genPower, kardashev, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
 import { autoStep, autoCrankStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
@@ -609,13 +609,13 @@ export function createApp({
     const badge = challengeBadge(s);
     let line = base + badges.join('') + badge;
     for (let drop = badges.length; visibleLength(line) > cols && drop > 0; drop--) line = base + badges.slice(0, drop - 1).join('') + badge;
-    return [
-      ` Dinheiro ${paint(C.green, '$' + fmt(app.shown.money))}  ` +
-      `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}  ` +
-      `Total ${paint(C.cyan, fmt(app.shown.energy) + ' kWh')}  ` +
-      priceText(s),
-      line,
-    ];
+    // 1ª linha: o total de energia sai primeiro quando falta largura.
+    const k = kardashev(power(s));
+    const scale = k >= 0 ? paint(C.mag, ` K${k.toFixed(2)}`) : '';
+    const head = ` Dinheiro ${paint(C.green, '$' + fmt(app.shown.money))}  ` + `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}${scale}  `;
+    const total = `Total ${paint(C.cyan, fmt(app.shown.energy) + ' kWh')}  `;
+    const first = visibleLength(head + total + priceText(s)) <= cols ? head + total + priceText(s) : head + priceText(s);
+    return [first, line];
   }
 
   function finishDaily(s) {

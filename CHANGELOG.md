@@ -10,6 +10,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+### Adicionado
+- **Escala de Kardashev** (fórmula de Sagan, com os watts reais): o cabeçalho mostra o K da
+  produção a partir de 1 MW (K 0), e as estatísticas guardam o recorde com o marco
+  passado (bairro, cidade, país, humanidade, Tipo I, II e III).
+
 ## [1.5.0] - 2026-10-22
 
 Operação: mercado vivo, baterias, contratos, previsão, manutenção e reputação.

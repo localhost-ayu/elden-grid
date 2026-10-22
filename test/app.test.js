@@ -376,3 +376,27 @@ test('cabeçalho lotado (legado enorme, auto, usinas gastas, surto) cabe em 80 c
   assert.match(stripAnsi(lines[2]), /Usinas \d+%/, 'o aviso das usinas fica');
   assert.match(stripAnsi(app.lines(140, 24)[2]), /✦ \+1\.23M%.*⟳ auto/, 'com espaço, tudo aparece');
 });
+
+test('Kardashev: fórmula de Sagan, no cabeçalho a partir de K 0 e o recorde nas estatísticas', async () => {
+  const { kardashev } = await import('../src/core/engine.js');
+  assert.equal(kardashev(1e3), 0, '1 MW = K 0');
+  assert.ok(Math.abs(kardashev(1e13) - 1) < 1e-12, 'Tipo I');
+  assert.ok(Math.abs(kardashev(1e23) - 2) < 1e-12);
+  assert.equal(kardashev(0), -Infinity);
+  const s = newState();
+  s.owned.wind = 5;
+  s.events.next = 1e9;
+  const slots = { 1: { status: 'ok', savedAt: null, state: s } };
+  const store = { list: () => [1, 2, 3].map((n) => ({ slot: n, ...(slots[n] ?? { status: 'empty' }) })), load: (n) => slots[n], save: () => true, remove() {} };
+  const app = createApp({ store, now: 0 });
+  app.key('1');
+  assert.doesNotMatch(stripAnsi(app.lines(80, 24)[1]), / K-?\d/, 'abaixo de 1 MW não aparece');
+  s.techs.t_nuclear = true;
+  s.owned.nuclear = 100;
+  assert.match(stripAnsi(app.lines(80, 24)[1]), /kW K0\.\d\d/);
+  assert.ok(visibleLength(app.lines(80, 24)[1]) <= 80);
+  s.career.peakKw = 2e10;
+  app.key('e');
+  for (let i = 0; i < 30 && !/Maior Kardashev/.test(stripAnsi(app.lines(80, 24).join('\n'))); i++) app.key('down');
+  assert.match(stripAnsi(app.lines(80, 24).join('\n')), /Maior Kardashev .*K 0\.73 \(humanidade\)/);
+});

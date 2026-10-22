@@ -5,6 +5,16 @@ import { ACHIEVEMENTS, ACHIEVEMENT_BONUS, CATEGORIES } from '../../data/achievem
 import { achievementCount, achievementProgress, hasAchievement } from '../../core/achievements.js';
 import { EVENTS } from '../../data/events.js';
 import { HOT_GENERATORS } from '../../core/heat.js';
+import { kardashev } from '../../core/engine.js';
+import { KARDASHEV } from '../../data/kardashev.js';
+
+// "K 0.84 (um país)": o marco mais alto já passado.
+function kscale(kw) {
+  const k = kardashev(kw);
+  if (!(k >= 0)) return 'abaixo de K 0';
+  const ref = KARDASHEV.refs.filter((r) => k >= r.k).at(-1);
+  return `K ${k.toFixed(2)} (${ref.name})`;
+}
 import { C, paint, glyphs } from '../theme.js';
 import { fmt, fmtDuration, bar } from '../format.js';
 
@@ -54,6 +64,7 @@ function rows(s) {
 
     { section: 'Recordes' },
     both('Maior produção', (x) => `${fmt(x)} kW`, 'peakKw'),
+    both('Maior Kardashev', kscale, 'peakKw'),
     both('Maior renda', (x) => `${money(x)}/s`, 'peakIncome'),
     both('Maior preço do kWh', (x) => `$${x.toFixed(2)}`, 'peakPrice'),
     both('Maior saldo', money, 'peakMoney'),

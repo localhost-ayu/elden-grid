@@ -137,6 +137,10 @@ export function sales(s, kw, average = false) {
   const excess = kw - full;
   return { full, excess, perSecond: (full + excess * excessRate(s)) * price(s, average) };
 }
+// Escala de Kardashev (Sagan) da produção em kW: K = (log10(watts) - 6) / 10. Abaixo de
+// 1 MW o número fica negativo; a UI só mostra a partir de K 0.
+export const kardashev = (kw) => (kw > 0 ? (Math.log10(kw * 1000) - 6) / 10 : -Infinity);
+
 // Fração da capacidade em uso (1 = no limite; > 1 = saturada).
 export const gridLoad = (s) => power(s) / capacity(s);
 
