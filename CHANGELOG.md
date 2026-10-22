@@ -52,6 +52,16 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   de Quasar** (calor) e **Energia Escura** (rende mais quanto mais longa a partida, até
   x5) —, com arte, upgrades e 15 pesquisas. Regiões: Estrelas Vizinhas, Bolha Local, Braço
   de Órion, Disco e Núcleo Galáctico (Tipo III).
+- **Colonização** (2ª camada de prestígio), na visão **Império** da aba Legado (tecla `I`):
+  ao atender a última região do capítulo com pontos de legado suficientes nele, `C`
+  coloniza o próximo. O legado (pontos, loja, Monumento, ascensões) e a partida
+  recomeçam; conquistas, desafios e a carreira ficam. Rende **Patentes**, e o capítulo
+  deixado vira **colônia**: x2 na produção para sempre e 1 Patente por hora de jogo.
+- **Árvore de Patentes**: Capital Inicial, Legado Fundador, Arquivo de Pesquisa (pesquisas
+  mais baratas), Concessões Imediatas e Produção Imperial.
+- Pontos de legado e o mínimo da partida acompanham a escala de dinheiro do capítulo.
+- Veteranos da 1.x (estoque da Fronteira ou a conquista Ponto Zero) podem colonizar o
+  Sistema Solar direto, e a Herança da Fronteira devolve unidades, upgrades e pesquisas.
 
 ## [1.5.0] - 2026-10-22
 

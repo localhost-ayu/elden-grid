@@ -4,7 +4,7 @@ import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import {
   power, price, genUnlocked, genBuyable, labUnlocked, techVisible, genBulk, labBulk, nextUpgrade, transformerCost, milestones,
-  genRevenue, capacity, priceBase, gridLoad,
+  genRevenue, capacity, priceBase, gridLoad, techCost,
 } from './engine.js';
 import { isHot, nextCooling } from './heat.js';
 import { shopValue } from './prestige.js';
@@ -80,11 +80,12 @@ export function buyUpgrade(s, id) {
 
 export function buyTech(s, id) {
   const t = TECHS.find((x) => x.id === id);
-  if (!t || !techVisible(t, s) || s.rp < t.cost) return false;
-  s.rp -= t.cost;
+  const cost = t && techCost(s, t);
+  if (!t || !techVisible(t, s) || s.rp < cost) return false;
+  s.rp -= cost;
   s.techs[id] = true;
   add(s, 'techs');
-  add(s, 'rpSpent', t.cost);
+  add(s, 'rpSpent', cost);
   // Quem pesquisa automação quer usá-la: já começa ligada (A desliga na aba Geradores).
   if (t.type === 'auto') s.auto.buy = true;
   return true;

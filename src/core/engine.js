@@ -16,6 +16,8 @@ import { BATTERY, MARKET } from '../data/market.js';
 import { wearFactor, wearStep } from './wear.js';
 import { regionBase, regionPrice } from './regions.js';
 import { chapterScale } from '../data/chapters.js';
+import { patentValue } from './patents.js';
+import { COLONY } from '../data/empire.js';
 import { WEAR } from '../data/wear.js';
 
 export const bought = (s, id) => !!s.techs[id];
@@ -120,10 +122,16 @@ export const price = (s, average = false) =>
   (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price') * marketFactor(s, average);
 export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 
+// Império (2.0): x2 por colônia e a Produção Imperial da árvore de Patentes.
+export const empireMult = (s) => COLONY.mult ** s.empire.colonies.length * patentValue(s, 'imperial', 1);
+
+// Custo de uma pesquisa (Arquivo de Pesquisa barateia).
+export const techCost = (s, t) => t.cost * patentValue(s, 'archive', 1);
+
 // Multiplicadores que atravessam partidas (Legado, conquistas e desafios). A rede cresce junto com
 // eles: senão quem tem muito legado começa toda partida com a rede saturada (1000%+),
 // vendendo quase tudo com desconto. O gargalo volta a ser o que se constrói na partida.
-export const permanentMult = (s) => legacyMult(s) * achievementMult(s) * rewardMult(s);
+export const permanentMult = (s) => legacyMult(s) * achievementMult(s) * rewardMult(s) * empireMult(s);
 
 // A base é a demanda da região atendida (regions.js); pesquisas e transformadores somam
 // por cima. Rede Velha (desafio) rende menos nas regiões e nas pesquisas.
@@ -281,6 +289,8 @@ export function tick(s, dt, average = false) {
   s.rp += rpRate(s) * dt;
   record(s, dt, average, { kw, sold, cost, net, shutdowns });
   if (!average) { autoSell(s, dt); marketStep(s, dt); wearStep(s, dt); }
+  // Colônias rendem Patentes por hora de jogo (online e offline).
+  if (s.empire.colonies.length) s.empire.patents += (COLONY.perHour * s.empire.colonies.length * dt) / 3600;
   if (crew) add(s, 'crewWages', crew);
   s.t += dt;
   return shutdowns;

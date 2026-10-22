@@ -6,20 +6,24 @@ import { GENERATORS } from '../data/generators.js';
 import { rewardStart } from './rewards.js';
 import { newState } from './state.js';
 import { peak } from './records.js';
+import { chapterScale } from '../data/chapters.js';
+import { patentValue } from './patents.js';
 
 // Pontos = (dinheiro / divisor)^exponent, arredondado para baixo. A conta em ponto
 // flutuante erra perto dos limites (8^(1/3) = 1.999…), então o resultado é conferido pela
-// conta inversa, que é exata para os inteiros.
-const threshold = (points) => points ** (1 / LEGACY.exponent) * LEGACY.divisor;
-export function pointsFor(money) {
-  let p = Math.floor((Math.max(0, money) / LEGACY.divisor) ** LEGACY.exponent);
-  if (threshold(p + 1) <= money) p++;
-  else if (p > 0 && threshold(p) > money) p--;
+// conta inversa, que é exata para os inteiros. `scale` (2.0) é a escala de dinheiro do
+// capítulo: o Sistema Solar ganha 10^13 vezes mais que a Terra, e os pontos acompanham.
+const threshold = (points, scale = 1) => points ** (1 / LEGACY.exponent) * LEGACY.divisor * scale;
+export function pointsFor(money, scale = 1) {
+  let p = Math.floor((Math.max(0, money) / (LEGACY.divisor * scale)) ** LEGACY.exponent);
+  if (threshold(p + 1, scale) <= money) p++;
+  else if (p > 0 && threshold(p, scale) > money) p--;
   return p;
 }
 export const pointsThreshold = threshold;
 export const lifetimeEarned = (s) => s.legacy.lifetime + s.earned;
-export const legacyGain = (s) => Math.max(0, pointsFor(lifetimeEarned(s)) - s.legacy.earned);
+export const legacyGain = (s) => Math.max(0, pointsFor(lifetimeEarned(s), chapterScale(s)) - s.legacy.earned);
+export const minRunEarned = (s) => LEGACY.minRunEarned * chapterScale(s);
 
 // Condições de fim de partida (fase atual de LEGACY.gate): basta uma. Cada uma com o
 // texto e se já foi cumprida, para a aba Legado mostrar o checklist.
@@ -33,12 +37,12 @@ export const gateStatus = (s) => gatePhase(s).any.map((c) => ({ ...c, done: GATE
 export const gateMet = (s) => gateStatus(s).some((c) => c.done);
 
 // Desafios e semente do dia (s.run) não ascendem: começam e terminam sem legado.
-export const canAscend = (s) => !s.run && s.earned >= LEGACY.minRunEarned && gateMet(s) && legacyGain(s) >= 1;
+export const canAscend = (s) => !s.run && s.earned >= minRunEarned(s) && gateMet(s) && legacyGain(s) >= 1;
 
 // Quanto falta ganhar nesta partida para a prévia subir mais 1 ponto.
 export function nextPointIn(s) {
   const total = s.legacy.earned + legacyGain(s);
-  return threshold(total + 1) - lifetimeEarned(s);
+  return threshold(total + 1, chapterScale(s)) - lifetimeEarned(s);
 }
 
 export const monumentMult = (s) => MONUMENT.mult ** s.legacy.monument;
@@ -115,6 +119,8 @@ export function startRun(s) {
   const first = GENERATORS.find((g) => g.chapter === s.chapter);
   s.owned[first.id] = Math.max(shopValue(s, 'start', 0), s.chapter === 'earth' ? 0 : 1);
   if (first.unlock) s.techs[first.unlock] = true;
+  // Capital Inicial (Patentes): a renda de segundos de 1 unidade da 1ª fonte.
+  s.money += patentValue(s, 'capital', 0) * first.output;
   s.labs = shopPerk(s, 'lab').labs ?? 0;
   for (const id of [...shopValue(s, 'techs', []), ...(shopPerk(s, 'start').techs ?? [])]) s.techs[id] = true;
   for (const id of Object.keys(s.cooling)) s.cooling[id] = shopValue(s, 'cooling', 0);

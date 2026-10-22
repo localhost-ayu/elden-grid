@@ -5,15 +5,17 @@ import { TECHS } from '../../data/research.js';
 import { GENERATORS } from '../../data/generators.js';
 import { offlineMax, chapterTechs } from '../../core/engine.js';
 import {
-  ascend, buyMonument, buyShop, canAscend, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
+  ascend, buyMonument, buyShop, canAscend, minRunEarned, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
 } from '../../core/prestige.js';
 import { C, paint, glyphs } from '../theme.js';
+import * as empire from './empire.js';
 import { fmt, bar } from '../format.js';
 
 export const confirmHelp = 'S confirmar  N/Esc cancelar';
-export const help = (ctx) => (ctx.ui.confirm
-  ? confirmHelp
-  : '↑↓ escolher  Enter ascender/comprar  espaço manivela  Tab abas  M menu  Q sair');
+export const help = (ctx) => {
+  if (ctx.ui.confirm) return confirmHelp;
+  return ctx.ui.empire ? empire.help : '↑↓ escolher  Enter ascender/comprar  I império  espaço gira  M menu  Q sair';
+};
 
 const pct = (m) => `${Math.round((m - 1) * 100)}%`;
 
@@ -54,7 +56,7 @@ function ascendBlock(s, selected) {
       paint(C.dim, '     Zera dinheiro, usinas, upgrades, pesquisas e calor; mantém Legado e loja.'),
     ];
   }
-  const need = LEGACY.minRunEarned;
+  const need = minRunEarned(s);
   const gl = glyphs();
   const check = (ok) => (ok ? paint(C.green, gl.dot) : paint(C.dim, gl.dotEmpty));
   const all = chapterTechs(s);
@@ -71,7 +73,7 @@ function ascendBlock(s, selected) {
 // O que falta para ascender, numa frase.
 function missing(s) {
   const parts = [];
-  if (s.earned < LEGACY.minRunEarned) parts.push(`$${fmt(LEGACY.minRunEarned)} nesta partida`);
+  if (s.earned < minRunEarned(s)) parts.push(`$${fmt(minRunEarned(s))} nesta partida`);
   if (!gateMet(s)) parts.push(gateStatus(s).map((c) => c.short).join(' ou '));
   return parts.join(' e ');
 }
@@ -111,6 +113,7 @@ function monumentRow(s, selected) {
 }
 
 export function render(ctx, height = Infinity) {
+  if (ctx.ui.empire) return empire.render(ctx);
   const s = ctx.state;
   const ui = ctx.ui;
   const sel = clampSel(ui);
@@ -175,6 +178,8 @@ export function key(ctx, k) {
     else if (k === 'n' || k === 'N' || k === 'escape') ui.confirm = null;
     return true;
   }
+  if (k === 'i' || k === 'I') { ui.empire = !ui.empire; return true; }
+  if (ui.empire) return empire.key(ctx, k);
   if (k === 'up') { ui.sel = Math.max(0, (ui.sel ?? 0) - 1); return true; }
   if (k === 'down') { ui.sel = Math.min(LAST, (ui.sel ?? 0) + 1); return true; }
   if (k === 'enter') { clampSel(ui); choose(ctx); return true; }

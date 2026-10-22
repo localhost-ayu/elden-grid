@@ -2,7 +2,7 @@
 // só aparecem como "requer".
 import { GENERATORS } from '../../data/generators.js';
 import { TECHS } from '../../data/research.js';
-import { bought, capacity, excessRate, rpRate, chapterTechs } from '../../core/engine.js';
+import { bought, capacity, excessRate, rpRate, chapterTechs, techCost } from '../../core/engine.js';
 import { buyTech } from '../../core/actions.js';
 import { C, paint } from '../theme.js';
 import { fmt, visibleLength } from '../format.js';
@@ -76,7 +76,7 @@ function row(s, node, selected, width) {
   const t = node.tech;
   const st = status(s, t);
   const left = `${selected ? '›' : ' '} ${node.prefix}${ICON[st]} ${t.name}`;
-  const cost = (fmt(t.cost) + ' PP').padStart(9);
+  const cost = (fmt(techCost(s, t)) + ' PP').padStart(9);
   let right = st === 'locked' ? 'requer: ' + missing(s, t).map(techName).join(', ') : describe(t);
   // Ramos fundos (a Fronteira fica 8 níveis abaixo da raiz) empurram a coluna do custo.
   const nameCol = Math.max(NAME_COL, visibleLength(left) + 1);
@@ -85,7 +85,7 @@ function row(s, node, selected, width) {
   const text = `${left.padEnd(nameCol)}${cost}  ${right}`;
   const style = st === 'done' ? C.dim + C.green
     : st === 'locked' ? C.dim
-    : s.rp >= t.cost ? C.mag : '';
+    : s.rp >= techCost(s, t) ? C.mag : '';
   return ' ' + paint(style + (selected ? C.bold : ''), text);
 }
 
@@ -98,11 +98,11 @@ function detail(s, t) {
   let state;
   if (st === 'done') state = paint(C.green, 'pesquisada ✓');
   else if (st === 'locked') state = paint(C.yellow, 'requer: ' + missing(s, t).map(techName).join(', '));
-  else if (s.rp >= t.cost) state = paint(C.mag, 'disponível — Enter pesquisa');
+  else if (s.rp >= techCost(s, t)) state = paint(C.mag, 'disponível — Enter pesquisa');
   else {
     const rate = rpRate(s);
-    const eta = rate > 0 ? ` (~${Math.ceil((t.cost - s.rp) / rate)} s)` : '';
-    state = paint(C.dim, `faltam ${fmt(t.cost - s.rp)} PP${eta}`);
+    const eta = rate > 0 ? ` (~${Math.ceil((techCost(s, t) - s.rp) / rate)} s)` : '';
+    state = paint(C.dim, `faltam ${fmt(techCost(s, t) - s.rp)} PP${eta}`);
   }
   return [
     '   ' + paint(C.bold, t.name) + ' — ' + effect,
@@ -139,6 +139,6 @@ export function key(ctx, k) {
   if (bought(s, t.id)) ctx.say(`${t.name} já foi pesquisada.`, 'info');
   else if (missing(s, t).length) ctx.say(`Requer: ${missing(s, t).map(techName).join(', ')}.`, 'err');
   else if (buyTech(s, t.id)) ctx.say(`Pesquisado: ${t.name}!`, 'ok');
-  else ctx.say(`Faltam ${fmt(t.cost - s.rp)} PP para ${t.name}.`, 'err');
+  else ctx.say(`Faltam ${fmt(techCost(s, t) - s.rp)} PP para ${t.name}.`, 'err');
   return true;
 }

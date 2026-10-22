@@ -129,7 +129,7 @@ function shopping(s) {
 function botStep(s, crises, play, bot) {
   // Com a manivela automática o bot para de girar: um humano também pararia.
   if (s.stats.playTime < 300 && !P.shopPerk(s, 'crank').autoCrank && Math.round(s.t / DT) % 3 === 0) A.crank(s);
-  for (const t of TECHS) if (E.techVisible(t, s) && s.rp >= t.cost) A.buyTech(s, t.id);
+  for (const t of TECHS) if (E.techVisible(t, s) && s.rp >= E.techCost(s, t)) A.buyTech(s, t.id);
   // Região: com a rede cheia, junta dinheiro para a concessão (sem comprar nada) se ela
   // couber em até SAVE_FOR s de renda; senão segue comprando e expande quando der.
   const saving = A.canExpand(s) && A.expandCost(s) <= E.income(s) * SAVE_FOR;

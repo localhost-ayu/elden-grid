@@ -115,8 +115,7 @@ test('capítulos: fontes e pesquisas só existem no seu capítulo; a ascensão m
   const { genUnlocked, techVisible, chapterTechs } = await import('../src/core/engine.js');
   const { GENERATORS } = await import('../src/data/generators.js');
   const { TECHS } = await import('../src/data/research.js');
-  const { ascend } = await import('../src/core/prestige.js');
-  const { LEGACY } = await import('../src/data/legacy.js');
+  const { ascend, minRunEarned } = await import('../src/core/prestige.js');
   const s = newState();
   const swarm = GENERATORS.find((g) => g.id === 'swarm');
   const orbital = TECHS.find((t) => t.id === 't_orbital');
@@ -129,7 +128,8 @@ test('capítulos: fontes e pesquisas só existem no seu capítulo; a ascensão m
   assert.ok(chapterTechs(s).some((t) => t.id === 't_lab'), 'pesquisas gerais valem em todo capítulo');
   assert.ok(!chapterTechs(s).some((t) => t.id === 't_solar'), 'as da Terra não');
   s.region = 5;
-  s.earned = LEGACY.minRunEarned;
+  s.earned = minRunEarned(s);
+  assert.ok(minRunEarned(s) > 1e20, 'o mínimo acompanha a escala do capítulo');
   assert.ok(ascend(s) > 0);
   assert.equal(s.chapter, 'solar');
   assert.equal(s.region, 0);
