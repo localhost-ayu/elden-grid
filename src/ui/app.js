@@ -29,6 +29,8 @@ import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
 import * as market from './screens/market.js';
+import { surging } from '../core/market.js';
+import { MARKET } from '../data/market.js';
 import { ROMAN, rewardText } from './screens/challenges.js';
 import { newProfile, completeChallenge, recordDaily } from '../core/profile.js';
 import { applyRunStart, challengeDef, goalReached, runGoal, localDate, dailySeed, dailyChallenges, dailyCode } from '../core/challenges.js';
@@ -470,6 +472,13 @@ export function createApp({
       autoCrankStep(app.state, dt);
       if (app.stealth) holdEvents(app.state, dt);
       else eventsStep(app.state, dt).forEach(announce);
+      // Surto de demanda: avisa uma vez quando começa (escondido, não interrompe).
+      const surge = surging(app.state);
+      if (surge && !app.surging && !app.stealth) {
+        const left = Math.round(app.state.market.surgeUntil - app.state.t);
+        say(`⚡ Surto de demanda! O kWh vale x${MARKET.surge.mult} por ${left} s. Bom momento para vender (aba Mercado).`, 'ok', 6000);
+      }
+      app.surging = surge;
       if (!app.state.events.crisis) app.crisisOpen = false;
       celebrate(checkAchievements(app.state));
       if (goalReached(app.state)) finishChallenge();
@@ -589,7 +598,8 @@ export function createApp({
   function priceText(s) {
     const p = price(s);
     const color = p >= priceBase(s) ? C.green : C.yellow;
-    return `Preço ${paint(color, '$' + p.toFixed(2) + '/kWh ' + (priceRising(s) ? glyphs().up : glyphs().down))}`;
+    const surge = surging(s) ? paint(C.yellow + C.bold, ' surto') : '';
+    return `Preço ${paint(color, '$' + p.toFixed(2) + '/kWh ' + (priceRising(s) ? glyphs().up : glyphs().down))}${surge}`;
   }
 
   // Uso da rede: verde folgada, amarelo perto do limite, vermelho saturada (vendendo

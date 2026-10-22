@@ -11,6 +11,7 @@ import { add, peak } from './records.js';
 import { ACHIEVEMENT_BONUS } from '../data/achievements.js';
 import { rules, priceDecay, genDisabled } from './challenges.js';
 import { reward, rewardMult } from './rewards.js';
+import { marketFactor, marketStep } from './market.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -106,7 +107,10 @@ export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab') * shopValue(
 // Preço do kWh oscila ±20% numa senoide lenta (dá vida ao contador de dinheiro).
 // priceBase é a média da oscilação; priceRising vem da derivada (a seta de tendência).
 export const priceBase = (s) => mult(s, 'price') * priceDecay(s) * (1 + reward(s, 'price'));
-export const price = (s) => (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price');
+// Por cima disso, o mercado (core/market.js): demanda, surtos e o impacto das vendas.
+// Offline (average) o mercado fica neutro.
+export const price = (s, average = false) =>
+  (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price') * marketFactor(s, average);
 export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 
 // Multiplicadores que atravessam partidas (Legado, conquistas e desafios). A rede cresce junto com
@@ -125,10 +129,10 @@ export const transformerCost = (s) =>
 export const excessRate = (s) => GRID.excessPriceRate + boughtOf(s, 'excess').reduce((sum, t) => sum + t.add, 0);
 
 // { full, excess, perSecond }: kW a preço cheio, kW excedentes (com desconto) e $/s.
-export function sales(s, kw) {
+export function sales(s, kw, average = false) {
   const full = Math.min(kw, capacity(s));
   const excess = kw - full;
-  return { full, excess, perSecond: (full + excess * excessRate(s)) * price(s) };
+  return { full, excess, perSecond: (full + excess * excessRate(s)) * price(s, average) };
 }
 // Fração da capacidade em uso (1 = no limite; > 1 = saturada).
 export const gridLoad = (s) => power(s) / capacity(s);
@@ -195,7 +199,7 @@ export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => boug
 export function tick(s, dt, average = false) {
   const shutdowns = average ? [] : heatStep(s, dt, (g) => genModMult(s, g, 'output'));
   const kw = power(s, average);
-  const sold = sales(s, kw);
+  const sold = sales(s, kw, average);
   const cost = upkeep(s) * dt;
   const net = sold.perSecond * dt - cost;
   s.totalEnergy += kw * dt;
@@ -203,6 +207,7 @@ export function tick(s, dt, average = false) {
   s.earned += Math.max(0, net);
   s.rp += rpRate(s) * dt;
   record(s, dt, average, { kw, sold, cost, net, shutdowns });
+  if (!average) marketStep(s, dt);
   s.t += dt;
   return shutdowns;
 }

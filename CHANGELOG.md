@@ -13,6 +13,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 ### Adicionado
 - Aba **Mercado** (tecla `K`), entre Rede e Legado. Em 80 colunas a barra de abas mostra
   só o raio no lugar do título para caber.
+- **Preço vivo**: além da oscilação de sempre, a demanda passeia entre 85% e 120% e às
+  vezes vem um **surto** (kWh x1.6 por alguns segundos, com aviso). Vender muito de uma
+  vez derruba o preço por um tempo (o impacto cai à metade a cada 20 s). A aba Mercado
+  mostra demanda, surto, impacto e o gráfico do preço. Offline o mercado fica neutro.
+  Save **v12** (`state.market`), migrado sem perda.
 
 ## [1.4.0] - 2026-10-22
 
