@@ -10,7 +10,7 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
-## [1.4.0] - 2026-10-16
+## [1.4.0] - 2026-10-22
 
 Fronteira: três fontes depois da antimatéria, duas crises novas e partidas que fecham na
 Fronteira.
