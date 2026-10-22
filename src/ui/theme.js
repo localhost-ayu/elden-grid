@@ -17,12 +17,14 @@ const GEN_16 = {
   wind: C.cyan, solar: C.yellow, hydro: '\x1b[34m', biomass: C.green, gas: '\x1b[33m',
   geothermal: C.red, nuclear: C.mag, tidal: '\x1b[34m', fusion: '\x1b[95m', antimatter: '\x1b[91m',
   swarm: '\x1b[93m', kugelblitz: C.mag, vacuum: '\x1b[96m',
+  helium3: '\x1b[37m', mercury: C.red, asteroids: '\x1b[33m', jupiter: '\x1b[33m', starlift: '\x1b[93m',
 };
 const c256 = (n) => `\x1b[38;5;${n}m`;
 const GEN_256 = {
   wind: c256(81), solar: c256(220), hydro: c256(33), biomass: c256(70), gas: c256(208),
   geothermal: c256(167), nuclear: c256(141), tidal: c256(37), fusion: c256(213), antimatter: c256(196),
   swarm: c256(228), kugelblitz: c256(99), vacuum: c256(51),
+  helium3: c256(252), mercury: c256(202), asteroids: c256(137), jupiter: c256(179), starlift: c256(226),
 };
 export const GEN_COLOR = { ...GEN_256 };
 

@@ -19,6 +19,7 @@
 //       'vacuumFloor' (piso da flutuação do vácuo: `floor`, o maior vale)
 //       'excess'   (+`add` na fração do preço paga pelo excedente da rede: armazenamento)
 //       'forecast' (x no erro da previsão da aba Rede)
+//       'lunarFloor' (+`add` no piso noturno do Hélio-3)   'haul' (+`add` s na janela das cargas)
 //       'autoRegion' (expande a região sozinho quando dá; ver data/regions.js)
 // Capacidade: desde a 2.0 cada pesquisa de rede vale x1.5; o salto grande vem das regiões.
 export const TECHS = [
@@ -43,12 +44,24 @@ export const TECHS = [
   { id: 't_antimatter',  name: 'Contenção de Antimatéria', cost: 60000,  req: ['t_fusion'],      type: 'unlock', chapter: 'earth' },
 
   // ---- Fronteira (1.4): depois da antimatéria ----
-  { id: 't_orbital',     name: 'Espelhos em Órbita',       cost: 120000, req: [],               type: 'unlock', chapter: 'solar' },
-  { id: 't_swarm2',      name: 'Enxame de Dyson',          cost: 200000, req: ['t_orbital'],     type: 'genMult', gen: 'swarm', mult: 2, chapter: 'solar' },
-  { id: 't_launch',      name: 'Foguetes Reutilizáveis',   cost: 150000, req: ['t_orbital'],     type: 'launch', add: 8, chapter: 'solar' },
-  { id: 't_kugel',       name: 'Colapso Gravitacional',    cost: 300000, req: ['t_orbital'],     type: 'unlock', chapter: 'solar' },
-  { id: 't_kugel2',      name: 'Kugelblitz em Cascata',    cost: 500000, req: ['t_kugel'],       type: 'genMult', gen: 'kugelblitz', mult: 2, chapter: 'solar' },
-  { id: 't_feed',        name: 'Acreção Controlada',       cost: 400000, req: ['t_kugel'],       type: 'feed', mult: 0.5, chapter: 'solar' },
+  // ---- Sistema Solar (2.0): custos no ritmo da Terra (o laboratório escala com o capítulo) ----
+  { id: 't_orbital',     name: 'Espelhos em Órbita',       cost: 3,      req: [],                type: 'unlock', chapter: 'solar' },
+  { id: 't_swarm2',      name: 'Enxame de Dyson',          cost: 90,     req: ['t_orbital'],     type: 'genMult', gen: 'swarm', mult: 2, chapter: 'solar' },
+  { id: 't_launch',      name: 'Foguetes Reutilizáveis',   cost: 60,     req: ['t_orbital'],     type: 'launch', add: 8, chapter: 'solar' },
+  { id: 't_helium3',     name: 'Mineração Lunar',          cost: 40,     req: ['t_orbital'],     type: 'unlock', chapter: 'solar' },
+  { id: 't_helium3b',    name: 'Fusão de Hélio-3',         cost: 450,    req: ['t_helium3'],     type: 'genMult', gen: 'helium3', mult: 2, chapter: 'solar' },
+  { id: 't_lunarnight',  name: 'Reservas Noturnas',        cost: 300,    req: ['t_helium3'],     type: 'lunarFloor', add: 0.4, chapter: 'solar' },
+  { id: 't_mercury',     name: 'Coletores de Mercúrio',    cost: 300,    req: ['t_helium3'],     type: 'unlock', chapter: 'solar' },
+  { id: 't_mercury2',    name: 'Espelhos Refratários',     cost: 3000,   req: ['t_mercury'],     type: 'genMult', gen: 'mercury', mult: 2, chapter: 'solar' },
+  { id: 't_asteroids',   name: 'Mineração de Asteroides',  cost: 1500,   req: ['t_mercury'],     type: 'unlock', chapter: 'solar' },
+  { id: 't_haul',        name: 'Rebocadores Autônomos',    cost: 4000,   req: ['t_asteroids'],   type: 'haul', add: 6, chapter: 'solar' },
+  { id: 't_kugel',       name: 'Colapso Gravitacional',    cost: 3000,   req: ['t_asteroids'],   type: 'unlock', chapter: 'solar' },
+  { id: 't_kugel2',      name: 'Kugelblitz em Cascata',    cost: 12000,  req: ['t_kugel'],       type: 'genMult', gen: 'kugelblitz', mult: 2, chapter: 'solar' },
+  { id: 't_feed',        name: 'Acreção Controlada',       cost: 8000,   req: ['t_kugel'],       type: 'feed', mult: 0.5, chapter: 'solar' },
+  { id: 't_jupiter',     name: 'Dínamo de Júpiter',        cost: 15000,  req: ['t_kugel'],       type: 'unlock', chapter: 'solar' },
+  { id: 't_jupiter2',    name: 'Magnetosfera Domada',      cost: 40000,  req: ['t_jupiter'],     type: 'genMult', gen: 'jupiter', mult: 2, chapter: 'solar' },
+  { id: 't_starlift',    name: 'Star Lifting',             cost: 60000,  req: ['t_jupiter'],     type: 'unlock', chapter: 'solar' },
+  { id: 't_starlift2',   name: 'Coroa Estelar',            cost: 150000, req: ['t_starlift'],    type: 'genMult', gen: 'starlift', mult: 2, chapter: 'solar' },
   { id: 't_vacuum',      name: 'Flutuação do Vácuo',       cost: 800000, req: [],               type: 'unlock', chapter: 'galaxy' },
   { id: 't_vacuum2',     name: 'Efeito Casimir Dinâmico',  cost: 1.5e6,  req: ['t_vacuum'],      type: 'genMult', gen: 'vacuum', mult: 2, chapter: 'galaxy' },
   { id: 't_flywheel',    name: 'Volantes de Inércia',      cost: 1e6,    req: ['t_vacuum'],      type: 'vacuumFloor', floor: 1, chapter: 'galaxy' },
@@ -68,7 +81,7 @@ export const TECHS = [
   { id: 't_storage2',    name: 'Baterias de Estado Sólido', cost: 600000, req: ['t_storage'],     type: 'excess', add: 0.2 },
   { id: 't_grid2',       name: 'Supercondutores',          cost: 1200,   req: ['t_grid'],        type: 'global',   mult: 1.5 },
   { id: 't_global2',     name: 'Era da Eletrificação',     cost: 15000,  req: ['t_grid2'],       type: 'global',   mult: 2 },
-  { id: 't_global3',     name: 'Economia Pós-Escassez',    cost: 1.5e6,  req: ['t_global2', 't_orbital'], type: 'global', mult: 3, chapter: 'solar' },
+  { id: 't_global3',     name: 'Economia Pós-Escassez',    cost: 20000,  req: ['t_global2', 't_orbital'], type: 'global', mult: 3, chapter: 'solar' },
   { id: 't_market',      name: 'Mercado Livre de Energia', cost: 9000,   req: ['t_grid', 't_hvdc'], type: 'price',  mult: 1.5 },
 
   // ---- laboratório e automação ----

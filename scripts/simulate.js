@@ -2,7 +2,8 @@
 // chega a cada marco. Serve para ajustar as curvas em src/data/ com números, não no olho.
 //
 //   bun scripts/simulate.js [minutos=90] [--seeds=5] [--crises=play|idle|off] [--runs=1]
-//                           [--play=active|idle] [--challenge=<id> --tier=1..5 | --daily=AAAA-MM-DD]
+//                           [--play=active|idle] [--chapter=earth|solar|galaxy]
+//                           [--challenge=<id> --tier=1..5 | --daily=AAAA-MM-DD]
 // Com desafio ou semente do dia, o bot joga a partida especial (sem legado) e mostra
 // quanto tempo levou até a meta.
 //
@@ -150,13 +151,15 @@ function botStep(s, crises, play, bot) {
   }
 }
 
-export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active', onStep = null } = {}) {
+export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active', onStep = null, chapter = 'earth' } = {}) {
   const bot = { hand: 0 };
   botSeed = seed;
   const s = newState(daily ? dailySeed(daily) : seed);
   if (challenge) s.run = { challenge, tier };
   if (daily) s.run = { daily };
   if (s.run) applyRunStart(s);
+  // Capítulo direto (calibragem): a partida começa como depois da colonização.
+  if (chapter !== 'earth') { s.chapter = chapter; P.startRun(s); }
   if (crises === 'off') s.events.next = Infinity;
   const marks = {};
   const ascensions = [];
@@ -203,7 +206,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const seeds = Number(args.seeds ?? 5);
   const crises = args.crises ?? 'play';
   const runs = Number(args.runs ?? 1);
-  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null, play: args.play ?? 'active' };
+  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null, play: args.play ?? 'active', chapter: args.chapter ?? 'earth' };
   const what = special.challenge ? ` · desafio ${special.challenge} ${special.tier}` : special.daily ? ` · semente ${special.daily}` : '';
   console.log(`Simulação: ${minutes} min, ${seeds} seeds, crises=${crises}, jogo ${special.play}, até ${runs} ascensão(ões)${what}\n`);
   for (let seed = 1; seed <= seeds; seed++) {

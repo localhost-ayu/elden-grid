@@ -2,6 +2,7 @@
 // depois de uma prévia do que se ganha e do que se perde, com confirmação S/N.
 import { LEGACY, SHOP, MONUMENT } from '../../data/legacy.js';
 import { TECHS } from '../../data/research.js';
+import { GENERATORS } from '../../data/generators.js';
 import { offlineMax, chapterTechs } from '../../core/engine.js';
 import {
   ascend, buyMonument, buyShop, canAscend, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
@@ -17,7 +18,7 @@ export const help = (ctx) => (ctx.ui.confirm
 const pct = (m) => `${Math.round((m - 1) * 100)}%`;
 
 const EFFECT = {
-  start: (v) => `começa com ${v} turbinas eólicas`,
+  start: (v, s) => `começa com ${v} ${s.chapter === 'earth' ? 'turbinas eólicas' : `da 1ª fonte (${GENERATORS.find((g) => g.chapter === s.chapter).short})`}`,
   cost: (v) => `geradores ${pct(v)} no preço`,
   lab: (v) => `pesquisa x${v}`,
   offline: (v) => `offline até ${v.hours} h a ${Math.round(v.rate * 100)}%`,
@@ -80,7 +81,7 @@ function shopRow(s, item, selected) {
   const cost = nextShopCost(s, item);
   const max = item.costs.length;
   const i = cost == null ? max - 1 : lvl;
-  const effect = item.perks?.[i]?.desc ?? EFFECT[item.type](item.values[i]);
+  const effect = item.perks?.[i]?.desc ?? EFFECT[item.type](item.values[i], s);
   const price = cost == null ? 'completo ✓' : `${cost} ${glyphs().legacy}`;
   const text = `${selected ? '›' : ' '} ${item.name.padEnd(19)} ${`${lvl}/${max}`.padStart(3)}  ${effect.padEnd(40)} ${price.padStart(10)}`;
   const style = cost == null ? C.dim + C.green : s.legacy.points >= cost ? C.yellow : C.dim;

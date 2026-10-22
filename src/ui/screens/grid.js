@@ -234,7 +234,7 @@ function chartView(s, height, history) {
 }
 
 // ---------- 5. previsão ----------
-const FORECAST_COLOR = { wind: C.cyan, sun: C.yellow, tide: C.blue, vacuum: C.mag, price: C.green };
+const FORECAST_COLOR = { wind: C.cyan, sun: C.yellow, tide: C.blue, lunar: C.yellow, jupiter: C.yellow, vacuum: C.mag, price: C.green };
 function forecastView(s, height) {
   const { err, series } = forecast(s);
   const out = [

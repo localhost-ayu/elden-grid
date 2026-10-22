@@ -20,13 +20,13 @@ export const REGIONS = {
     { name: 'Continente', base: 1e11, need: 1e10 },
     { name: 'Planeta', base: 1e12, need: 1e13 },
   ],
-  // Do Tipo I (10^13 kW) ao Tipo II (4×10^23 kW). A calibrar com o capítulo (2.0, etapa 4).
+  // Do Tipo I (10^13 kW, o 1º Enxame) ao Tipo II (4×10^23 kW, o Sol inteiro).
   solar: [
-    { name: 'Órbita Baixa', base: 1e13, need: 0 },
-    { name: 'Lua', base: 1e14, need: 1e14 },
-    { name: 'Marte', base: 1e16, need: 1e16 },
-    { name: 'Cinturão de Asteroides', short: 'Cinturão', base: 1e18, need: 1e18 },
-    { name: 'Júpiter', base: 4e21, need: 1e20 },
+    { name: 'Órbita Baixa', base: 1e14, need: 0 },
+    { name: 'Lua', base: 1e16, need: 1e16 },
+    { name: 'Marte', base: 1e17, need: 1e18 },
+    { name: 'Cinturão de Asteroides', short: 'Cinturão', base: 1e19, need: 1e19 },
+    { name: 'Júpiter', base: 4e21, need: 1e21 },
     { name: 'Sol', base: 4e24, need: 4e23 },
   ],
   // Do Tipo II ao Tipo III (4×10^34 kW). A calibrar (2.0, etapa 5).

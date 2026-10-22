@@ -7,6 +7,10 @@ import { chapterIndex } from './chapters.js';
 //   reservoir nível do reservatório (ciclo de ~30 dias de jogo) entre min e max
 //   tide      maré: 1 ± amp, período em horas de jogo
 //   upkeep    custo de operação em $/s por unidade (combustível)
+//   lunarDay  dia lunar: `peak` de dia e `floor` à noite, num ciclo de `period` h de jogo
+//             (um mês lunar); pesquisas 'lunarFloor' sobem o piso noturno
+//   haul      cargas: nos últimos `window` s de cada `period` s chega a carga, x`boost`
+//             (pesquisas 'haul' alargam a janela)
 //   launch    só se compra na janela de lançamento: aberta `window` s a cada `period` s
 //             (pesquisas 'launch' alargam a janela). Em órbita não há noite: produção fixa.
 //   feed      precisa ser alimentado: rende a fração de alimentação, que é a produção das
@@ -30,9 +34,16 @@ export const GENERATORS = [
   { id: 'tidal',      key: '8', name: 'Maremotriz', short: 'Maremotriz',         baseCost: 900000, growth: 1.15, output: 18000,   icon: '≈≈≈', art: 'tidal',      unlock: 't_tidal',     traits: [{ type: 'tide', amp: 0.5, period: 12.42 }] },
   { id: 'fusion',     key: '9', name: 'Reator de Fusão', short: 'Fusão',    baseCost: 4e6,    growth: 1.15, output: 60000,   icon: '(*)', art: 'fusion',     unlock: 't_fusion',    traits: [{ type: 'upkeep', money: 11000 }, { type: 'heat', base: 0.85 }] },
   { id: 'antimatter', key: '0', name: 'Antimatéria', short: 'Antimatéria',        baseCost: 8e7,    growth: 1.16, output: 1.2e6,   icon: '<@>', art: 'antimatter', unlock: 't_antimatter', traits: [{ type: 'heat', base: 1.05 }] },
-  // ---- Sistema Solar (2.0; eram a Fronteira da 1.4) ----
-  { id: 'swarm',      key: '1', name: 'Enxame Orbital', short: 'Enxame',         baseCost: 3e9,    growth: 1.16, output: 3e7,     icon: '-O-', art: 'swarm',      unlock: 't_orbital',   chapter: 'solar', traits: [{ type: 'launch', period: 40, window: 8 }] },
-  { id: 'kugelblitz', key: '2', name: 'Kugelblitz', short: 'Kugelblitz',          baseCost: 1.2e11, growth: 1.17, output: 8e8,     icon: '(@)', art: 'kugelblitz', unlock: 't_kugel',     chapter: 'solar', traits: [{ type: 'feed', share: 0.6 }] },
+  // ---- Sistema Solar (2.0): do Tipo I ao Tipo II. Escala do capítulo: x1e13 (1 Enxame = 10^13 kW = Tipo I) ----
+  // Enxame e Kugelblitz eram a Fronteira da 1.4. A 1ª fonte vem de graça no começo de
+  // cada partida do capítulo (ver core/prestige.js).
+  { id: 'swarm',      key: '1', name: 'Enxame Orbital', short: 'Enxame',         baseCost: 1.5e14, growth: 1.15, output: 1e13,    icon: '-O-', art: 'swarm',      unlock: 't_orbital',   chapter: 'solar', traits: [{ type: 'launch', period: 40, window: 8 }] },
+  { id: 'helium3',    key: '2', name: 'Hélio-3 Lunar', short: 'Hélio-3',         baseCost: 2.5e15, growth: 1.15, output: 1.2e14,  icon: '(He', art: 'helium3',    unlock: 't_helium3',   chapter: 'solar', traits: [{ type: 'lunarDay', period: 708, floor: 0.1, peak: 1.8 }] },
+  { id: 'mercury',    key: '3', name: 'Coletor de Mercúrio', short: 'Mercúrio',  baseCost: 4e16,   growth: 1.15, output: 1.5e15,  icon: '*o*', art: 'mercury',    unlock: 't_mercury',   chapter: 'solar', traits: [{ type: 'heat', base: 0.95 }] },
+  { id: 'asteroids',  key: '4', name: 'Mineração de Asteroides', short: 'Asteroides', baseCost: 7e17, growth: 1.15, output: 2e16, icon: '.o.', art: 'asteroids', unlock: 't_asteroids', chapter: 'solar', traits: [{ type: 'haul', period: 30, window: 6, boost: 3 }] },
+  { id: 'kugelblitz', key: '5', name: 'Kugelblitz', short: 'Kugelblitz',          baseCost: 1.2e19, growth: 1.16, output: 3e17,    icon: '(@)', art: 'kugelblitz', unlock: 't_kugel',     chapter: 'solar', traits: [{ type: 'feed', share: 0.6 }] },
+  { id: 'jupiter',    key: '6', name: 'Dínamo de Júpiter', short: 'Júpiter',     baseCost: 2.5e20, growth: 1.16, output: 5e18,    icon: '(J)', art: 'jupiter',    unlock: 't_jupiter',   chapter: 'solar', traits: [{ type: 'tide', amp: 0.4, period: 120 }] },
+  { id: 'starlift',   key: '7', name: 'Star Lifting', short: 'Star Lifting',      baseCost: 6e21,   growth: 1.17, output: 1e20,    icon: '\\O/', art: 'starlift',  unlock: 't_starlift',  chapter: 'solar', traits: [{ type: 'heat', base: 1.1 }] },
   // ---- Galáxia (2.0) ----
   { id: 'vacuum',     key: '1', name: 'Energia do Vácuo', short: 'Vácuo',       baseCost: 5e12,   growth: 1.18, output: 1.5e10,  icon: '<~>', art: 'vacuum',     unlock: 't_vacuum',    chapter: 'galaxy', traits: [{ type: 'vacuum', min: 0.2, max: 5 }] },
 ];

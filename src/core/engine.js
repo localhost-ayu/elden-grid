@@ -15,6 +15,7 @@ import { marketFactor, marketStep, batteryCap, addImpact } from './market.js';
 import { BATTERY, MARKET } from '../data/market.js';
 import { wearFactor, wearStep } from './wear.js';
 import { regionBase, regionPrice } from './regions.js';
+import { chapterScale } from '../data/chapters.js';
 import { WEAR } from '../data/wear.js';
 
 export const bought = (s, id) => !!s.techs[id];
@@ -29,7 +30,9 @@ function mult(s, type, gen) {
 
 const boughtOf = (s, type) => TECHS.filter((t) => t.type === type && bought(s, t.id));
 // traits.js recebe as pesquisas já filtradas para não depender da árvore.
-const traitCtx = (s) => ({ battery: boughtOf(s, 'battery'), vacuumFloor: boughtOf(s, 'vacuumFloor') });
+const traitCtx = (s) => ({
+  battery: boughtOf(s, 'battery'), vacuumFloor: boughtOf(s, 'vacuumFloor'), lunarFloor: boughtOf(s, 'lunarFloor'), haul: boughtOf(s, 'haul'),
+});
 
 // `average` = média de longo prazo do ambiente, usada offline.
 export const genEnv = (s, g, average = false) => envFactor(s, g, traitCtx(s), average);
@@ -128,7 +131,7 @@ export const capacity = (s) =>
   GRID.baseCapacity * (regionBase(s) / GRID.baseCapacity * mult(s, 'capacity')) ** rules(s).capacityExp *
   GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity') * permanentMult(s) * (1 + reward(s, 'capacity'));
 export const transformerCost = (s) =>
-  Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
+  Math.ceil(GRID.transformer.baseCost * chapterScale(s) * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
 
 // Fração do preço paga pelo excedente: armazenamento (pesquisas 'excess') guarda parte
 // dele para vender depois.
@@ -197,9 +200,9 @@ function bulk(base, growth, owned, money, m, amount) {
 }
 
 export const genCost = (s, g) => unitCost(g.baseCost, g.growth, s.owned[g.id], genModMult(s, g, 'cost'));
-export const labCost = (s) => unitCost(LAB.baseCost, LAB.growth, s.labs, shopValue(s, 'cost', 1));
+export const labCost = (s) => unitCost(LAB.baseCost * chapterScale(s), LAB.growth, s.labs, shopValue(s, 'cost', 1));
 export const genBulk = (s, g, amount) => bulk(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost'), amount);
-export const labBulk = (s, amount) => bulk(LAB.baseCost, LAB.growth, s.labs, s.money, shopValue(s, 'cost', 1), amount);
+export const labBulk = (s, amount) => bulk(LAB.baseCost * chapterScale(s), LAB.growth, s.labs, s.money, shopValue(s, 'cost', 1), amount);
 export const genAffordable = (s, g) => maxAffordable(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost')).n;
 // Janela de lançamento (trait `launch`): null se a fonte não tem. Pesquisas 'launch'
 // alargam a janela.

@@ -5,7 +5,7 @@
 // conforme se aproxima. Pesquisas 'forecast' reduzem o erro.
 import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
-import { windLevel, sunLevel, tideLevel, vacuumLevel } from './traits.js';
+import { windLevel, sunLevel, tideLevel, vacuumLevel, lunarSun } from './traits.js';
 import { hashString } from './challenges.js';
 import { priceBase } from './engine.js';
 
@@ -39,6 +39,8 @@ export function forecast(s, steps = HORIZON / STEP) {
   if (s.owned.wind > 0) add('wind', 'Vento', windLevel);
   if (s.owned.solar > 0) add('sun', 'Sol', sunLevel);
   if (s.owned.tidal > 0) add('tide', 'Maré', (x) => tideLevel(x, trait('tidal', 'tide')));
+  if (s.owned.helium3 > 0) add('lunar', 'Lua', (x) => lunarSun(x, trait('helium3', 'lunarDay')));
+  if (s.owned.jupiter > 0) add('jupiter', 'Júpit.', (x) => tideLevel(x, trait('jupiter', 'tide')));
   if (s.owned.vacuum > 0) add('vacuum', 'Vácuo', (x) => vacuumLevel(x, trait('vacuum', 'vacuum')));
   // Preço: a oscilação de sempre na demanda para onde o mercado está indo. Surtos não
   // entram (ninguém prevê).

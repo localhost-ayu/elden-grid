@@ -101,7 +101,7 @@ test('Kugelblitz: rende a fração de alimentação que as outras fontes dão; A
   assert.ok(Math.abs(genPower(s, k) - k.output * expected) < 1e-3, 'rende só a parte alimentada');
   s.techs.t_feed = true; // precisa de metade: rende o dobro
   assert.ok(Math.abs(feedFactor(s, k) - 2 * expected) < 1e-9);
-  s.owned.swarm = 1e3;
+  s.owned.swarm = 1e6;
   assert.equal(feedFactor(s, k), 1, 'nunca passa de 100%');
   s.owned.kugelblitz = 0;
   assert.equal(feedFactor(s, k), 1);

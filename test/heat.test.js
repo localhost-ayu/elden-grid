@@ -26,8 +26,8 @@ function run(s, seconds) {
   return shut;
 }
 
-test('reatores quentes: nuclear, fusão e antimatéria', () => {
-  assert.deepEqual(HOT_GENERATORS.map((g) => g.id), ['nuclear', 'fusion', 'antimatter']);
+test('reatores quentes: nuclear, fusão e antimatéria na Terra; Mercúrio e Star Lifting no Sistema Solar', () => {
+  assert.deepEqual(HOT_GENERATORS.map((g) => g.id), ['nuclear', 'fusion', 'antimatter', 'mercury', 'starlift']);
 });
 
 test('alvo de calor: 0 sem unidades; base sem upgrades; sobe com produção; resfriamento divide', () => {

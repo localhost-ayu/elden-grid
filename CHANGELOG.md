@@ -37,6 +37,16 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   colonizar o Sistema Solar. Conquistas de "todas as fontes/upgrades/pesquisas" contam as
   do capítulo.
 
+### Adicionado
+- **Sistema Solar** (do Tipo I ao Tipo II): sete fontes — Enxame Orbital (janelas de
+  lançamento), **Hélio-3 Lunar** (só minera no dia lunar, um mês de 708 h de jogo),
+  **Coletor de Mercúrio** (calor alto), **Mineração de Asteroides** (cargas chegam em
+  ondas, x3), Kugelblitz (alimentação), **Dínamo de Júpiter** (ciclo longo) e **Star
+  Lifting** (calor no limite) —, com arte, upgrades e 17 pesquisas. Regiões: Órbita Baixa,
+  Lua, Marte, Cinturão, Júpiter e Sol. Cada partida do capítulo começa com 1 Enxame;
+  laboratório, transformador e baterias custam na escala do capítulo. A previsão mostra o
+  dia lunar e Júpiter.
+
 ## [1.5.0] - 2026-10-22
 
 Operação: mercado vivo, baterias, contratos, previsão, manutenção e reputação.

@@ -43,5 +43,10 @@ export const UPGRADE_NAMES = {
   antimatter: ['Armadilhas de Penning', 'Linha de Montagem', 'Aniquilação Dirigida', 'Contenção Magnética', 'Motor de Dirac'],
   kugelblitz: ['Lentes Gravitacionais', 'Colapso em Série', 'Disco de Acreção', 'Radiação Hawking', 'Ergosfera de Penrose'],
   vacuum: ['Placas de Casimir', 'Câmaras em Série', 'Ressonador Quântico', 'Campo de Ponto Zero', 'Falso Vácuo Domado'],
+  helium3: ['Escavadeiras Lunares', 'Bases em Série', 'Refino Criogênico', 'Ímãs de Plasma', 'Reator Aneutrônico'],
+  mercury: ['Espelhos de Safira', 'Coletores Modulares', 'Concentradores', 'Escudo Térmico', 'Anel de Mercúrio'],
+  asteroids: ['Sondas de Prospecção', 'Frota Padronizada', 'Fundição em Órbita', 'Catapulta Eletromagnética', 'Cinturão Industrial'],
+  jupiter: ['Cabos Supercondutores', 'Sondas em Série', 'Tubo de Fluxo de Io', 'Correntes Aurorais', 'Gigante Domado'],
+  starlift: ['Ímãs Coronais', 'Extratores em Série', 'Funis de Plasma', 'Vento Solar Dirigido', 'Estrela Domada'],
   swarm: ['Velas Solares', 'Satélites em Série', 'Espelhos Finos', 'Coletores de Micro-ondas', 'Anel de Dyson'],
 };

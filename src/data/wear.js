@@ -32,6 +32,11 @@ export const WEAR_BY_GEN = {
   fusion: { time: 1500, what: 'divertor gasto' },
   antimatter: { time: 1500, what: 'armadilhas desalinhadas' },
   swarm: { time: 1200, what: 'micrometeoritos' },
+  helium3: { time: 1200, what: 'poeira lunar' },
+  mercury: { time: 900, what: 'espelhos queimados' },
+  asteroids: { time: 1200, what: 'brocas gastas' },
+  jupiter: { time: 1500, what: 'cabos corroídos' },
+  starlift: { time: 1500, what: 'ímãs desalinhados' },
   kugelblitz: { time: 1500, what: 'lentes desalinhadas' },
   vacuum: { time: 1200, what: 'ressonância fora de fase' },
 };

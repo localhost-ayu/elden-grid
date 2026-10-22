@@ -5,7 +5,7 @@ import {
   power, genPower, rpRate, genUnlocked, labUnlocked, genEnv, genBulk, labBulk, genAffordable, genLaunch, feedFactor,
   genModMult, milestones, nextMilestone, nextUpgrade, upgradeLevel, upgradeTrack,
 } from '../../core/engine.js';
-import { isDay, reservoirLevel, tideRising } from '../../core/traits.js';
+import { isDay, reservoirLevel, tideRising, lunarIsDay, haulIn } from '../../core/traits.js';
 import { heatLevel, isShutdown, shutdownLeft } from '../../core/heat.js';
 import { buyGenBulk, buyLabBulk, buyUpgrade } from '../../core/actions.js';
 import { autoAvailable, autoInterval, toggleAuto } from '../../core/automation.js';
@@ -38,6 +38,8 @@ const TRAIT_LABEL = {
   upkeep: (s, g, tr) => `-$${fmt(tr.money * genModMult(s, g, 'upkeep'))}/s`,
   heat: (s, g) => `calor ${Math.round(heatLevel(s, g) * 100)}%`,
   vacuum: (s, g) => `flutuação ${x(genEnv(s, g))}`,
+  lunarDay: (s, g, tr) => `${lunarIsDay(s, tr) ? 'dia' : 'noite'} lunar ${x(genEnv(s, g))}`,
+  haul: (s, g, tr) => (genEnv(s, g) > 1 ? `CARGA ${x(genEnv(s, g))}` : `carga em ${Math.ceil(haulIn(s, tr))}s`),
   feed: (s, g) => `alimentação ${Math.round(feedFactor(s, g) * 100)}%`,
   launch: (s, g) => {
     const w = genLaunch(s, g);

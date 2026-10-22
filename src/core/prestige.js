@@ -2,6 +2,7 @@
 // consulta os efeitos daqui (engine -> prestige, sem ciclo de imports).
 import { LEGACY, SHOP, MONUMENT } from '../data/legacy.js';
 import { TECHS } from '../data/research.js';
+import { GENERATORS } from '../data/generators.js';
 import { rewardStart } from './rewards.js';
 import { newState } from './state.js';
 import { peak } from './records.js';
@@ -106,10 +107,14 @@ export function ascend(s) {
   return gain;
 }
 
-// O que a loja entrega pronto no começo de cada partida. A pesquisa vem como se tivesse
+// O que a loja entrega pronto no começo de cada partida (exportada para a colonização). A pesquisa vem como se tivesse
 // sido concluída (sem custo nem ficha); automação herdada ou pesquisada já liga.
-function startRun(s) {
-  s.owned.wind = shopValue(s, 'start', 0);
+export function startRun(s) {
+  // Começo Rápido dá unidades da 1ª fonte do capítulo. Fora da Terra, a partida já começa
+  // com 1 unidade dela e a pesquisa que a libera (sem isso, não haveria renda nenhuma).
+  const first = GENERATORS.find((g) => g.chapter === s.chapter);
+  s.owned[first.id] = Math.max(shopValue(s, 'start', 0), s.chapter === 'earth' ? 0 : 1);
+  if (first.unlock) s.techs[first.unlock] = true;
   s.labs = shopPerk(s, 'lab').labs ?? 0;
   for (const id of [...shopValue(s, 'techs', []), ...(shopPerk(s, 'start').techs ?? [])]) s.techs[id] = true;
   for (const id of Object.keys(s.cooling)) s.cooling[id] = shopValue(s, 'cooling', 0);
