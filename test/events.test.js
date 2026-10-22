@@ -297,3 +297,42 @@ test('todo evento tem dados válidos', () => {
     if (e.crisis) assert.ok(['o', 'a'].includes(e.article), `${e.id} sem artigo`);
   }
 });
+
+test('minijogo de contenção: corrigir a deriva segura a faixa; largar rompe ou estoura o tempo', () => {
+  const M = MINIGAMES.balance;
+  let seed = 3;
+  const r = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (const level of [0, CRISIS.maxLevel]) {
+    const g = M.create(r, level);
+    for (let i = 0; i < 2000 && g.status === 'playing'; i++) {
+      // Jogador atento: freia quando o ponteiro anda para fora.
+      if (g.pos + g.vel * 0.3 > g.zone / 2) M.input(g, 'left');
+      else if (g.pos + g.vel * 0.3 < -g.zone / 2) M.input(g, 'right');
+      M.step(g, 0.05);
+    }
+    assert.equal(g.status, 'won', `nível ${level}`);
+  }
+  const idle = M.create(r, CRISIS.maxLevel);
+  for (let i = 0; i < 2000 && idle.status === 'playing'; i++) M.step(idle, 0.05);
+  assert.equal(idle.status, 'lost');
+  assert.equal(M.input(idle, 'up'), false);
+});
+
+test('minijogo da tempestade: bloquear cada erupção a tempo vence; deixar passar perde', () => {
+  const M = MINIGAMES.shield;
+  const r = () => 0.42;
+  const g = M.create(r, 0);
+  for (let i = 0; i < 2000 && g.status === 'playing'; i++) {
+    M.step(g, 0.05);
+    for (const f of [...g.flares]) if (f.left < g.warn / 2) M.input(g, f.dir);
+  }
+  assert.equal(g.status, 'won');
+  assert.equal(g.hits, 0);
+  const idle = M.create(r, CRISIS.maxLevel);
+  for (let i = 0; i < 2000 && idle.status === 'playing'; i++) M.step(idle, 0.05);
+  assert.equal(idle.status, 'lost');
+  assert.equal(idle.hits, idle.maxHits);
+  const wrong = M.create(r, 0);
+  M.input(wrong, 'up');
+  assert.equal(wrong.last.ok, false, 'seta sem erupção é erro');
+});

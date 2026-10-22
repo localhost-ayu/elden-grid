@@ -18,6 +18,8 @@ const REQUIRES = {
   noReactor: (s) => !hasReactor(s),
   power: (s) => power(s) > 0,
   loaded: (s) => gridLoad(s) > 0.5,
+  containment: (s) => s.owned.antimatter > 0 || s.owned.kugelblitz > 0,
+  orbit: (s) => s.owned.swarm > 0,
 };
 
 export const eligibleEvents = (s) => EVENTS.filter((e) => !e.requires || REQUIRES[e.requires](s));

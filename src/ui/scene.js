@@ -2,7 +2,7 @@
 // nível de upgrade), em vez de uma arte por unidade, que não caberia na tela.
 import { GENERATORS, LAB } from '../data/generators.js';
 import { HEAT } from '../data/heat.js';
-import { genEnv, upgradeLevel, upgradeTrack } from '../core/engine.js';
+import { genEnv, genLaunch, feedFactor, upgradeLevel, upgradeTrack } from '../core/engine.js';
 import { sunLevel, reservoirLevel, tideLevel } from '../core/traits.js';
 import { heatLevel, isHot, isShutdown } from '../core/heat.js';
 import { ART, ART_W, ART_H } from './art/index.js';
@@ -21,6 +21,9 @@ function artInfo(s, g) {
     sun: sunLevel(s),
     level: res ? reservoirLevel(s, res) : 0.5,
     high: tide ? tideLevel(s, tide) >= 1 : true,
+    launch: !!genLaunch(s, g)?.open,
+    fed: feedFactor(s, g),
+    surge: trait(g, 'vacuum') ? genEnv(s, g) : 1,
   };
 }
 
@@ -45,8 +48,10 @@ function artColor(s, g) {
 
 const spread = (left, right) => left + ' '.repeat(Math.max(1, ART_W - left.length - right.length)) + right;
 
-export function sceneCards(s) {
-  const cards = GENERATORS.filter((g) => s.owned[g.id] > 0).map((g) => ({ g }));
+// `page` (opcional) limita às fontes daquela página da aba Geradores; o laboratório
+// aparece em todas.
+export function sceneCards(s, page = null) {
+  const cards = GENERATORS.filter((g) => s.owned[g.id] > 0 && (page === null || g.page === page)).map((g) => ({ g }));
   if (s.labs > 0) cards.push({ lab: true });
   return cards;
 }
@@ -78,8 +83,8 @@ function moreCard(n) {
 
 // Até `maxRows` fileiras de cards na largura dada. Se não couber tudo, o último card
 // vira "+N fontes" para o jogador saber que há mais (V abre a cena inteira).
-export function sceneRows(s, now, width, maxRows) {
-  const cards = sceneCards(s);
+export function sceneRows(s, now, width, maxRows, page = null) {
+  const cards = sceneCards(s, page);
   if (!cards.length || maxRows < 1) return [];
   const perRow = Math.max(1, Math.floor((width - 1) / CARD_W));
   const room = perRow * maxRows;

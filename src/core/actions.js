@@ -3,7 +3,7 @@
 import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import {
-  power, price, genUnlocked, labUnlocked, techVisible, genBulk, labBulk, nextUpgrade, transformerCost, milestones,
+  power, price, genUnlocked, genBuyable, labUnlocked, techVisible, genBulk, labBulk, nextUpgrade, transformerCost, milestones,
 } from './engine.js';
 import { isHot, nextCooling } from './heat.js';
 import { shopValue } from './prestige.js';
@@ -31,7 +31,7 @@ export function crank(s) {
 // amount = 1 | 10 | 100 | 'max'. Retorna quantas unidades comprou (0 = nada).
 export function buyGenBulk(s, id, amount = 1) {
   const g = GENERATORS.find((x) => x.id === id);
-  if (!g || !genUnlocked(g, s)) return 0;
+  if (!g || !genBuyable(s, g)) return 0;
   const b = genBulk(s, g, amount);
   if (!b.ok) return 0;
   const before = s.owned[id];

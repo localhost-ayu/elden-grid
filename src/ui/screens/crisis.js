@@ -11,7 +11,8 @@ export const help = (ctx) => {
   if (ctx.ui.confirm) return 'S chamar a equipe  N/Esc cancelar';
   const game = ctx.state.events.crisis?.game;
   if (!game) return 'Enter começar  P chamar a equipe  Esc voltar ao jogo (a crise continua)';
-  return { timing: 'ESPAÇO na faixa', mash: 'alterne ← → no ritmo', sequence: 'setas na ordem' }[game.kind] + '  P chamar a equipe  Esc voltar';
+  const hint = { timing: 'ESPAÇO na faixa', mash: 'alterne ← → no ritmo', sequence: 'setas na ordem', balance: '← → seguram o ponteiro', shield: 'seta da erupção' };
+  return hint[game.kind] + '  P chamar a equipe  Esc voltar';
 };
 
 const dots = (n, total, on = glyphs().dot, off = glyphs().dotEmpty) => on.repeat(n) + off.repeat(Math.max(0, total - n));
@@ -92,7 +93,49 @@ function sequenceWidget(g) {
   ];
 }
 
-const WIDGET = { timing: timingWidget, mash: mashWidget, sequence: sequenceWidget };
+// Contenção: a faixa central em verde, as bordas em vermelho e o ponteiro por cima.
+function balanceWidget(g) {
+  const gl = glyphs();
+  const cur = Math.max(0, Math.min(TRACK - 1, Math.floor(((g.pos + 1) / 2) * TRACK)));
+  let track = '';
+  for (let i = 0; i < TRACK; i++) {
+    const at = ((i + 0.5) / TRACK) * 2 - 1;
+    const edge = i === 0 || i === TRACK - 1;
+    track += edge ? paint(C.red, gl.barFull) : Math.abs(at) <= g.zone ? paint(C.green, gl.barEmpty) : paint(C.dim, gl.box.h);
+  }
+  const inside = Math.abs(g.pos) <= g.zone;
+  const breach = g.breach != null && g.time - g.breach < 0.8;
+  const push = g.force < -0.05 ? `${gl.arrow.left} empurrando` : g.force > 0.05 ? `empurrando ${gl.arrow.right}` : 'estável';
+  return [
+    '   ' + ' '.repeat(cur + 1) + paint(C.bold + (inside ? C.green : C.yellow), gl.cursor),
+    '   ' + paint(C.dim, gl.box.v) + track + paint(C.dim, gl.box.v) + (breach ? paint(C.red + C.bold, ' RUPTURA') : paint(C.dim, ` ${push}`)),
+    '   ' + `contenção ${paint(inside ? C.bold + C.green : C.green, bar(g.held / g.hold, 20))}` +
+      `   rupturas ${paint(C.red, dots(g.breaches, g.maxBreaches, gl.off, gl.dotEmpty))}` + paint(C.dim, `   tempo ${g.timeLeft.toFixed(1)} s`),
+  ];
+}
+
+// Tempestade: uma rosa dos ventos com a contagem de cada erupção.
+function shieldWidget(g) {
+  const gl = glyphs();
+  const f = flash(g);
+  const slot = (dir) => {
+    const fl = g.flares.find((x) => x.dir === dir);
+    if (!fl) return paint(C.dim, `[${gl.arrow[dir]}  ·  ]`);
+    const urgent = fl.left < g.warn / 3;
+    return paint(C.bold + (urgent ? C.red : C.yellow) + C.inverse, `[${gl.arrow[dir]} ${fl.left.toFixed(1)}s]`);
+  };
+  const hit = g.hit != null && g.time - g.hit < 0.8;
+  return [
+    '              ' + slot('up'),
+    '     ' + slot('left') + paint(hit ? C.red + C.bold : C.yellow, hit ? '  IMPACTO ' : '  -( O )- ') + slot('right'),
+    '              ' + slot('down'),
+    '   ' + `bloqueadas ${paint(C.green, `${g.blocked}/${g.need}`)}` +
+      `   impactos ${paint(C.red, dots(g.hits, g.maxHits, gl.off, gl.dotEmpty))}` + paint(C.dim, `   tempo ${g.timeLeft.toFixed(1)} s`) +
+      (f === false && !hit ? paint(C.red, '   nada vindo daí!') : ''),
+  ];
+}
+
+const WIDGET = { timing: timingWidget, mash: mashWidget, sequence: sequenceWidget, balance: balanceWidget, shield: shieldWidget };
 
 export function render(ctx) {
   const s = ctx.state;

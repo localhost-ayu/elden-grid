@@ -2,7 +2,7 @@
 // cada quadro (como o tick), e fora do engine porque usa as ações de compra.
 import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
-import { bought, genCost, genUnlocked } from './engine.js';
+import { bought, genCost, genBuyable } from './engine.js';
 import { buyGen } from './actions.js';
 import { shopValue, shopPerk } from './prestige.js';
 import { crank } from './actions.js';
@@ -21,7 +21,7 @@ export const autoAvailable = (s) => autoInterval(s) !== null;
 export function cheapestGen(s) {
   let best = null;
   for (const g of GENERATORS) {
-    if (genUnlocked(g, s) && (!best || genCost(s, g) < genCost(s, best))) best = g;
+    if (genBuyable(s, g) && (!best || genCost(s, g) < genCost(s, best))) best = g;
   }
   return best;
 }

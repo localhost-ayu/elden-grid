@@ -1,7 +1,7 @@
-import { GENERATORS, LAB } from '../../data/generators.js';
+import { GENERATORS, LAB, PAGE_SIZE } from '../../data/generators.js';
 import { TECHS } from '../../data/research.js';
 import {
-  power, genPower, rpRate, genUnlocked, labUnlocked, genEnv, genBulk, labBulk, genAffordable,
+  power, genPower, rpRate, genUnlocked, labUnlocked, genEnv, genBulk, labBulk, genAffordable, genLaunch, feedFactor,
   genModMult, milestones, nextMilestone, nextUpgrade, upgradeLevel, upgradeTrack,
 } from '../../core/engine.js';
 import { isDay, reservoirLevel, tideRising } from '../../core/traits.js';
@@ -14,9 +14,21 @@ import { fmt, visibleLength } from '../format.js';
 import { scrollWindow } from '../list.js';
 import { CARD_H, sceneCards, sceneRows } from '../scene.js';
 
-export const help = (ctx) => (ctx.ui.scene
-  ? 'V volta à lista  0-9 comprar  B lote  espaço gira  Tab abas  M menu  Q sair'
-  : '↑↓ Enter comprar  B lote  U upgrade  V cena  0-9 atalho  espaço gira  Q sair');
+export const help = (ctx) => {
+  if (ctx.ui.scene) {
+    return pageCount(ctx.state) > 1
+      ? 'V volta à lista  ←→ página  0-9 comprar  B lote  espaço gira  M menu  Q sair'
+      : 'V volta à lista  0-9 comprar  B lote  espaço gira  Tab abas  M menu  Q sair';
+  }
+  return pageCount(ctx.state) > 1
+    ? '↑↓ Enter comprar  ←→ página  B lote  U upgrade  V cena  0-9 atalho  Q sair'
+    : '↑↓ Enter comprar  B lote  U upgrade  V cena  0-9 atalho  espaço gira  Q sair';
+};
+
+// Páginas: a 1ª sempre; as seguintes quando têm alguma fonte liberada. As teclas 0–9 e a
+// lista valem para a página aberta (`ui.page`).
+export const pageCount = (s) => 1 + Math.max(0, ...GENERATORS.filter((g) => genUnlocked(g, s)).map((g) => g.page));
+const pageOf = (ctx) => (ctx.ui.page = Math.max(0, Math.min(ctx.ui.page ?? 0, pageCount(ctx.state) - 1)));
 
 // Modo de lote é estado de UI por sessão: não vai para o save.
 const BULK = [1, 10, 100, 'max'];
@@ -32,6 +44,12 @@ const TRAIT_LABEL = {
   // Por unidade, já com desconto de upgrades de eficiência.
   upkeep: (s, g, tr) => `-$${fmt(tr.money * genModMult(s, g, 'upkeep'))}/s`,
   heat: (s, g) => `calor ${Math.round(heatLevel(s, g) * 100)}%`,
+  vacuum: (s, g) => `flutuação ${x(genEnv(s, g))}`,
+  feed: (s, g) => `alimentação ${Math.round(feedFactor(s, g) * 100)}%`,
+  launch: (s, g) => {
+    const w = genLaunch(s, g);
+    return w.open ? `janela aberta ${Math.ceil(w.left)}s` : `lançamento em ${Math.ceil(w.left)}s`;
+  },
 };
 // Desligado por superaquecimento é a informação mais urgente: aparece sozinha.
 const condition = (s, g) => (isShutdown(s, g)
@@ -55,17 +73,19 @@ function plantRow(s, cols) {
   return ' ' + paint(C.yellow, text);
 }
 
-// Itens compráveis visíveis agora. A seleção é por índice nesta lista, então ela é
-// recalculada a cada quadro (um gerador novo pode ter sido destravado).
-function items(s) {
-  const list = GENERATORS.filter((g) => genUnlocked(g, s)).map((g) => ({ gen: g }));
+// Itens compráveis visíveis agora na página. A seleção é por índice nesta lista, então
+// ela é recalculada a cada quadro (um gerador novo pode ter sido destravado). O
+// laboratório aparece em todas as páginas.
+function items(s, page = 0) {
+  const list = GENERATORS.filter((g) => g.page === page && genUnlocked(g, s)).map((g) => ({ gen: g }));
   if (labUnlocked(s)) list.push({ lab: true });
   return list;
 }
 
 const cols = (mark, key, name, qty, out, cost, cond) =>
   `${mark} ${key} ${name.padEnd(18)} ${qty.padEnd(5)} ${out.padStart(11)} ${cost.padStart(13)}  ${cond}`;
-const header = (amount) => cols(' ', '   ', 'fonte', 'qtd', 'por unid.', `custo ${bulkLabel(amount)}`, 'condição');
+const header = (amount, page, pages) =>
+  cols(' ', '   ', pages > 1 ? `fonte  pág ${page + 1}/${pages} ←→` : 'fonte', 'qtd', 'por unid.', `custo ${bulkLabel(amount)}`, 'condição');
 
 // Custo exibido: no MAX mostra quantas unidades entram ("x37 $1.2k"); sem saldo para
 // nenhuma, mostra o preço de 1 (apagado), para o jogador saber quanto falta.
@@ -123,11 +143,12 @@ function detail(s, it) {
 
 // Prévia da próxima fonte ainda bloqueada: mostra ao jogador o que perseguir.
 // Fontes desligadas por um desafio não entram: elas nunca vão abrir nesta partida.
-function teaser(s) {
+function teaser(s, page) {
   const g = GENERATORS.find((x) => !genUnlocked(x, s) && !genDisabled(s, x));
   if (!g) return [];
   const tech = TECHS.find((t) => t.id === g.unlock);
-  return [' ' + paint(C.dim, `${cols(' ', `[${g.key}]`, g.name, '', '', '', '').trimEnd()} — requer pesquisa: ${tech.name}`)];
+  const where = g.page === page ? '' : ` (pág. ${g.page + 1})`;
+  return [' ' + paint(C.dim, `${cols(' ', `[${g.key}]`, g.name, '', '', '', '').trimEnd()} — requer pesquisa: ${tech.name}${where}`)];
 }
 
 function autoLine(s) {
@@ -141,13 +162,17 @@ function autoLine(s) {
 
 const clampSel = (ui, n) => (ui.sel = Math.max(0, Math.min(ui.sel ?? 0, n - 1)));
 
+// A cena inteira mostra a página aberta (←→ troca, como na lista).
 function sceneView(ctx, height, width) {
   const s = ctx.state;
-  const types = sceneCards(s).length;
-  const top = ' ' + paint(C.bold, 'Usinas') + paint(C.dim, `  ${fmt(power(s))} kW · ${types} ${types === 1 ? 'tipo' : 'tipos'}  ·  V volta à lista`);
+  const page = pageOf(ctx);
+  const pages = pageCount(s);
+  const types = sceneCards(s, page).length;
+  const where = pages > 1 ? ` · pág. ${page + 1}/${pages} ←→` : '';
+  const top = ' ' + paint(C.bold, 'Usinas') + paint(C.dim, `  ${fmt(power(s))} kW · ${types} ${types === 1 ? 'tipo' : 'tipos'}${where}  ·  V volta à lista`);
   ctx.ui.particleZone = null;
   if (!types) return [top, '', paint(C.dim, '   Nenhuma usina ainda — compre a primeira turbina na lista (V).')];
-  const rows = sceneRows(s, ctx.anim, width, Math.floor((height - 1) / CARD_H));
+  const rows = sceneRows(s, ctx.anim, width, Math.floor((height - 1) / CARD_H), page);
   ctx.ui.particleZone = { top: 1, height: rows.length };
   return [top, ...rows];
 }
@@ -156,19 +181,22 @@ export function render(ctx, height, width) {
   if (ctx.ui.scene) return sceneView(ctx, height, width);
   const s = ctx.state;
   const amount = bulkOf(ctx.ui);
-  const list = items(s);
+  const page = pageOf(ctx);
+  const list = items(s, page);
   const sel = clampSel(ctx.ui, list.length);
   const rows = list.map((it, i) => row(s, it, i === sel, amount));
   const panel = detail(s, list[sel]);
   // Prioridade de altura: cabeçalho + lista + painel são essenciais; depois entram,
   // se couber, a prévia/aviso do lab e a cena (cards inteiros, ou a linha de ícones).
-  const extra = [...autoLine(s), ...teaser(s)];
+  const extra = [...autoLine(s), ...teaser(s, page)];
   if (!labUnlocked(s)) extra.push(paint(C.dim, `   Laboratório aparece após ${LAB.unlockAt} kWh produzidos.`));
   let room = height - 1 - panel.length - rows.length;
   const shownExtra = room >= extra.length ? extra : [];
   room -= shownExtra.length;
-  const cardRows = sceneCards(s).length ? Math.floor(room / CARD_H) : 0;
-  const scene = cardRows ? sceneRows(s, ctx.anim, width, cardRows) : [];
+  // Com mais de uma página, os cards acima da lista são os da página aberta.
+  const cardPage = pageCount(s) > 1 ? page : null;
+  const cardRows = sceneCards(s, cardPage).length ? Math.floor(room / CARD_H) : 0;
+  const scene = cardRows ? sceneRows(s, ctx.anim, width, cardRows, cardPage) : [];
   const plant = !scene.length && room >= 1 ? [plantRow(s, width)] : [];
   const listRoom = height - 1 - panel.length - shownExtra.length - plant.length - scene.length;
   // As partículas de venda/manivela saem das usinas, nunca do meio da lista.
@@ -176,7 +204,7 @@ export function render(ctx, height, width) {
   ctx.ui.particleZone = zone ? { top: 0, height: zone } : null;
   return [
     ...scene, ...plant,
-    ' ' + paint(C.dim, header(amount)),
+    ' ' + paint(C.dim, header(amount, page, pageCount(s))),
     ...scrollWindow(rows, sel, listRoom),
     ...panel,
     ...shownExtra,
@@ -196,6 +224,8 @@ function buy(ctx, it) {
   const g = it.gen;
   if (genDisabled(s, g)) return ctx.say(`${g.name} está desligada neste desafio.`, 'err');
   if (!genUnlocked(g, s)) return ctx.say(`${g.name} ainda está bloqueado (pesquisa).`, 'err');
+  const w = genLaunch(s, g);
+  if (w && !w.open) return ctx.say(`${g.name}: a próxima janela de lançamento abre em ${Math.ceil(w.left)} s.`, 'err');
   const before = s.owned[g.id];
   const n = buyGenBulk(s, g.id, amount);
   if (!n) return ctx.say(`Sem dinheiro para ${bulkLabel(amount)} ${g.name} ($${fmt(genBulk(s, g, amount).cost)}).`, 'err');
@@ -218,8 +248,16 @@ function upgrade(ctx, it) {
 }
 
 export function key(ctx, k) {
-  const list = items(ctx.state);
   const ui = ctx.ui;
+  const page = pageOf(ctx);
+  const list = items(ctx.state, page);
+  if (k === 'left' || k === 'right' || k === 'pageup' || k === 'pagedown') {
+    const pages = pageCount(ctx.state);
+    if (pages < 2) return false;
+    ui.page = (page + (k === 'left' || k === 'pageup' ? pages - 1 : 1)) % pages;
+    ui.sel = 0;
+    return true;
+  }
   if (k === 'up') { ui.sel = Math.max(0, (ui.sel ?? 0) - 1); return true; }
   if (k === 'down') { ui.sel = Math.min(list.length - 1, (ui.sel ?? 0) + 1); return true; }
   if (k === 'enter') { clampSel(ui, list.length); buy(ctx, list[ui.sel]); return true; }
@@ -235,7 +273,7 @@ export function key(ctx, k) {
     else ctx.say(`Auto-compra ${ctx.state.auto.buy ? 'ligada' : 'desligada'}.`, 'info', 2000);
     return true;
   }
-  const g = GENERATORS.find((x) => x.key === k);
+  const g = GENERATORS.find((x) => x.page === page && x.key === k);
   if (g) { buy(ctx, { gen: g }); return true; }
   return false;
 }

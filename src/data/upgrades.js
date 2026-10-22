@@ -41,4 +41,7 @@ export const UPGRADE_NAMES = {
   tidal: ['Lâminas Bidirecionais', 'Comportas Pré-Fabricadas', 'Lagoa de Maré', 'Turbinas de Fluxo', 'Barragem Oceânica'],
   fusion: ['Ímãs Supercondutores', 'Tokamaks em Série', 'Divertor de Tungstênio', 'Reciclagem de Trítio', 'Stellarator Otimizado'],
   antimatter: ['Armadilhas de Penning', 'Linha de Montagem', 'Aniquilação Dirigida', 'Contenção Magnética', 'Motor de Dirac'],
+  kugelblitz: ['Lentes Gravitacionais', 'Colapso em Série', 'Disco de Acreção', 'Radiação Hawking', 'Ergosfera de Penrose'],
+  vacuum: ['Placas de Casimir', 'Câmaras em Série', 'Ressonador Quântico', 'Campo de Ponto Zero', 'Falso Vácuo Domado'],
+  swarm: ['Velas Solares', 'Satélites em Série', 'Espelhos Finos', 'Coletores de Micro-ondas', 'Anel de Dyson'],
 };

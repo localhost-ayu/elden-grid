@@ -1,20 +1,26 @@
-// Pontos totais = floor(sqrt(dinheiro ganho em todas as partidas / divisor)). A raiz faz
-// cada ponto novo custar mais que o anterior, então ascender cedo e sempre rende pouco.
-// Ascender pede minRunEarned na partida E uma das condições de `gate` (o fim da árvore
-// atual): a ascensão fecha uma partida completa, em vez de chegar no meio dela. Ficar mais
-// tempo rende mais pontos pela raiz. Tipos de condição (avaliadas em core/prestige.js):
+// Pontos totais = floor((dinheiro ganho em todas as partidas / divisor)^exponent). A raiz
+// faz cada ponto novo custar mais que o anterior, então ascender cedo e sempre rende pouco.
+// Raiz cúbica desde a 1.4: o dinheiro cresce exponencialmente com a duração da partida, e
+// com a raiz quadrada uma partida longa até a Fronteira dava 100x mais pontos que a
+// anterior (simulado). O divisor mantém a 1ª ascensão em ~20 pontos.
+// Ascender pede minRunEarned na partida E uma das condições da fase atual de `gate` (o
+// fim da árvore que o jogador já alcança): a ascensão fecha uma partida completa, em vez
+// de chegar no meio dela. Ficar mais tempo rende mais pontos pela raiz. A fase é a última
+// com `from` <= ascensões feitas: as primeiras partidas fecham na antimatéria; depois,
+// com o legado ajudando, só a Fronteira inteira fecha a partida.
+// Tipos de condição (avaliadas em core/prestige.js):
 //   owned  ter ao menos 1 unidade de `gen` nesta partida
 //   techs  todas as pesquisas concluídas
 // `label` vai no checklist da aba Legado; `short`, na mensagem do que falta.
-// Bot (1ª partida): $25B em ~36 min, antimatéria em ~57 min, árvore completa em ~85 min.
+const ALL_TECHS = { type: 'techs', label: 'todas as pesquisas', short: 'todas as pesquisas' };
 export const LEGACY = {
-  divisor: 1e9,
+  divisor: 5e7,
+  exponent: 1 / 3,
   minRunEarned: 2.5e10,
   gate: [
-    { type: 'owned', gen: 'antimatter', label: 'uma usina de antimatéria', short: 'antimatéria' },
-    { type: 'techs', label: 'todas as pesquisas', short: 'todas as pesquisas' },
+    { from: 0, any: [{ type: 'owned', gen: 'antimatter', label: 'uma usina de antimatéria', short: 'antimatéria' }, ALL_TECHS] },
+    { from: 3, any: [{ type: 'owned', gen: 'vacuum', label: 'Energia do Vácuo', short: 'Energia do Vácuo' }, ALL_TECHS] },
   ],
-  // Por ponto NÃO gasto: gastar na loja troca bônus por vantagens, uma escolha de verdade.
   bonusPerPoint: 0.1,
 };
 

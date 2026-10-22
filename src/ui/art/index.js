@@ -9,8 +9,11 @@ import * as nuclear from './nuclear.js';
 import * as tidal from './tidal.js';
 import * as fusion from './fusion.js';
 import * as antimatter from './antimatter.js';
+import * as swarm from './swarm.js';
+import * as kugelblitz from './kugelblitz.js';
+import * as vacuum from './vacuum.js';
 import * as lab from './lab.js';
 
 export const ART_W = 11;
 export const ART_H = 5;
-export const ART = { wind, solar, hydro, biomass, gas, geothermal, nuclear, tidal, fusion, antimatter, lab };
+export const ART = { wind, solar, hydro, biomass, gas, geothermal, nuclear, tidal, fusion, antimatter, swarm, kugelblitz, vacuum, lab };

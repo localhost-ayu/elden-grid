@@ -2,7 +2,8 @@
 
 Idle game de geração de energia que roda inteiro no terminal. Você começa girando uma
 manivela e comprando uma turbina eólica, e termina administrando uma rede com reatores de
-fusão, antimatéria, crises para apagar e um legado que atravessa partidas.
+fusão, antimatéria, espelhos em órbita e um buraco negro artificial, crises para apagar e
+um legado que atravessa partidas.
 
 ```
  ⚡ ELDEN GRID    Geradores │ Pesquisa │ Rede │ Legado │ Estatísticas │ Opções
@@ -26,24 +27,31 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 
 - **Energia vira dinheiro sozinha.** Cada usina produz kW; a energia é vendida a um preço
   que oscila (▲/▼ mostram a tendência). Convenção: 1 s real = 1 h de jogo.
-- **Dez fontes, cada uma com personalidade.** A eólica segue o vento, a solar o dia e a
+- **Treze fontes, cada uma com personalidade.** A eólica segue o vento, a solar o dia e a
   noite, a maremotriz a maré, a hidrelétrica o reservatório; gás e fusão têm custo de
   operação; nuclear, fusão e antimatéria esquentam e podem desligar se ninguém resfriar.
+  Depois da antimatéria vem a **Fronteira** (página 2 da aba Geradores): o Enxame Orbital
+  só se compra nas janelas de lançamento, o Kugelblitz rende o quanto as outras
+  fontes conseguem alimentá-lo e a Energia do Vácuo oscila entre x0.2 e x5.
 - **Pesquisa destrava o resto.** Laboratórios geram Pontos de Pesquisa (PP) para uma árvore
-  de 30 techs: novas fontes, multiplicadores, capacidade da rede e auto-compra.
+  de 45 techs: novas fontes, multiplicadores, capacidade da rede, armazenamento e
+  auto-compra.
 - **A rede é o gargalo.** Acima da capacidade de transmissão, o excedente vale só 25% do
-  preço. A aba Rede mostra a rede em quatro visões (mapa, fluxo, gráfico e calor).
+  preço (mais com as pesquisas de armazenamento). A aba Rede mostra a rede em quatro
+  visões (mapa, fluxo, gráfico e calor).
 - **Upgrades e marcos.** Cada fonte tem 5 upgrades e dobra a produção ao chegar a 25, 50
   e 100 unidades. Compras em lote x1, x10, x100 ou MAX.
 - **Eventos e crises.** Tempestades, picos de demanda e descobertas mudam o jogo por um
-  tempo. Crises (blecaute, onda de calor, sobrecarga) ficam ativas até alguém agir: o
+  tempo. Crises (blecaute, onda de calor, sobrecarga e, na Fronteira, ruptura de contenção
+  e tempestade solar) ficam ativas até alguém agir: o
   manual de crise explica o minijogo de cada uma. Resolver sai de graça e dá um bônus;
   falhar, chamar a equipe ou ignorar custa o menor entre uma fração do caixa e alguns
   segundos de renda. As crises têm nível (0 a 10) que sobe a cada ascensão: começam
   fáceis e baratas e terminam pedindo atenção (até 25% do caixa ou 5 min de renda).
 - **Legado.** A ascensão fecha uma partida completa: pede $25B ganhos nela **e** uma usina
-  de antimatéria ou todas as pesquisas concluídas. Quanto mais a partida rende, mais
-  pontos ela dá. Ao ascender, a partida recomeça e você recebe pontos (+10% de produção
+  de antimatéria (nas três primeiras) ou a Energia do Vácuo (da 4ª em diante), ou então
+  todas as pesquisas concluídas. Quanto mais a partida rende, mais pontos ela dá (raiz
+  cúbica do total ganho). Ao ascender, a partida recomeça e você recebe pontos (+10% de produção
   cada ponto guardado) que podem ser trocados por vantagens permanentes na loja do
   legado: começar com usinas, pesquisas, laboratórios, resfriamento e transformadores,
   construir mais barato, marcos antecipados, seguro contra crises, mais tempo offline e
@@ -62,7 +70,7 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Semente do dia.** Uma partida por dia igual para todo mundo (mesma seed, mesmas
   regras sorteadas): quem chega a $25B mais rápido? Ao terminar, o jogo mostra um código
   com o tempo para mandar aos amigos.
-- **Conquistas.** 97 metas em nove categorias (algumas secretas), da primeira faísca a
+- **Conquistas.** 102 metas em nove categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%
@@ -95,7 +103,7 @@ até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
 |---|---|
 | Em qualquer tela | `\` disfarça o jogo (e volta) |
 | Em qualquer aba | `G` `P` `R` `L` `E` `O` (ou `Tab`/`Shift+Tab`) trocam de aba · `espaço` gira a manivela · `X` abre o manual de crise · `M`/`Esc` menu (salva) · `Q` sai (salva) |
-| Geradores | `↑↓` + `Enter` ou `0`–`9` compram · `B` lote · `U` upgrade · `A` auto-compra · `V` cena das usinas |
+| Geradores | `↑↓` + `Enter` ou `0`–`9` compram · `←→` troca de página (10 fontes por página) · `B` lote · `U` upgrade · `A` auto-compra · `V` cena das usinas |
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
 | Desafios | `↑↓` desafio · `←→` nível · `Enter` joga · `C` continua a partida do slot D |
 | Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento |

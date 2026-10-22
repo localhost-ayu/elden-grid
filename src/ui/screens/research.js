@@ -2,8 +2,7 @@
 // só aparecem como "requer".
 import { GENERATORS } from '../../data/generators.js';
 import { TECHS } from '../../data/research.js';
-import { GRID } from '../../data/grid.js';
-import { bought, capacity, rpRate } from '../../core/engine.js';
+import { bought, capacity, excessRate, rpRate } from '../../core/engine.js';
 import { buyTech } from '../../core/actions.js';
 import { C, paint } from '../theme.js';
 import { fmt, visibleLength } from '../format.js';
@@ -24,6 +23,10 @@ export function describe(t) {
     case 'unlock': return `destrava ${GENERATORS.find((g) => g.unlock === t.id)?.name ?? 'novo gerador'}`;
     case 'battery': return `solar à noite +${Math.round(t.add * 100)}% da capacidade`;
     case 'capacity': return `capacidade da rede x${t.mult}`;
+    case 'launch': return `janela de lançamento +${t.add} s`;
+    case 'feed': return `Kugelblitz precisa de ${Math.round((1 - t.mult) * 100)}% menos alimentação`;
+    case 'vacuumFloor': return `vácuo nunca abaixo de x${t.floor}`;
+    case 'excess': return `excedente da rede vale +${Math.round(t.add * 100)}% do preço`;
     case 'auto': return `auto-compra do gerador mais barato (${t.interval < 1 ? `${Math.round(1 / t.interval)}/s` : `1 a cada ${t.interval} s`})`;
     default: return '';
   }
@@ -66,9 +69,11 @@ function row(s, node, selected, width) {
   const left = `${selected ? '›' : ' '} ${node.prefix}${ICON[st]} ${t.name}`;
   const cost = (fmt(t.cost) + ' PP').padStart(9);
   let right = st === 'locked' ? 'requer: ' + missing(s, t).map(techName).join(', ') : describe(t);
-  const room = width - 2 - NAME_COL - cost.length - 2;
+  // Ramos fundos (a Fronteira fica 8 níveis abaixo da raiz) empurram a coluna do custo.
+  const nameCol = Math.max(NAME_COL, visibleLength(left) + 1);
+  const room = width - 2 - nameCol - cost.length - 2;
   if (visibleLength(right) > room) right = [...right].slice(0, Math.max(0, room - 1)).join('') + '…';
-  const text = `${left.padEnd(NAME_COL)}${cost}  ${right}`;
+  const text = `${left.padEnd(nameCol)}${cost}  ${right}`;
   const style = st === 'done' ? C.dim + C.green
     : st === 'locked' ? C.dim
     : s.rp >= t.cost ? C.mag : '';
@@ -102,7 +107,7 @@ export function render(ctx, height, width) {
   const done = TECHS.filter((t) => bought(s, t.id)).length;
   const top = [
     '   ' + paint(C.bold, 'Árvore de pesquisa') + paint(C.dim, `  ${done}/${TECHS.length} concluídas`) +
-      paint(C.dim, `  ·  rede ${fmt(capacity(s))} kW (excedente a ${Math.round(GRID.excessPriceRate * 100)}%)`),
+      paint(C.dim, `  ·  rede ${fmt(capacity(s))} kW (excedente a ${Math.round(excessRate(s) * 100)}%)`),
   ];
   if (s.labs === 0) top.push(paint(C.dim, '   Construa um Laboratório (aba Geradores) para gerar Pontos de Pesquisa.'));
   const panel = detail(s, TREE[ctx.ui.sel].tech);

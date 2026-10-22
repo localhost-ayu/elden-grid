@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GENERATORS } from '../src/data/generators.js';
+import { PAGE_SIZE, GENERATORS } from '../src/data/generators.js';
 import { TECHS } from '../src/data/research.js';
 import { GRID } from '../src/data/grid.js';
 import { newState } from '../src/core/state.js';
@@ -24,10 +24,13 @@ function sample(fn, hours = 20000, step = 0.25) {
   return [min, max, sum / n];
 }
 
-test('dados: 10 fontes, ids/teclas únicas, desbloqueios e pré-requisitos existem', () => {
-  assert.equal(GENERATORS.length, 10);
-  assert.equal(new Set(GENERATORS.map((g) => g.id)).size, 10);
-  assert.equal(new Set(GENERATORS.map((g) => g.key)).size, 10);
+test('dados: ids únicos, tecla pela posição na página, desbloqueios e pré-requisitos existem', () => {
+  assert.equal(new Set(GENERATORS.map((g) => g.id)).size, GENERATORS.length);
+  // Página de PAGE_SIZE fontes; teclas 1..9 e 0 na ordem, sem repetir dentro da página.
+  for (const [i, g] of GENERATORS.entries()) {
+    assert.equal(g.page, Math.floor(i / PAGE_SIZE), g.id);
+    assert.equal(g.key, String(((i % PAGE_SIZE) + 1) % 10), `${g.id}: tecla fora de ordem`);
+  }
   const techIds = new Set(TECHS.map((t) => t.id));
   for (const g of GENERATORS) {
     assert.ok(g.unlock === null || techIds.has(g.unlock), `${g.id}: unlock inexistente`);

@@ -80,7 +80,9 @@ function botStep(s, crises) {
   let best = null;
   let bestV = 0;
   for (const g of GENERATORS) {
-    if (!E.genUnlocked(g, s)) continue;
+    if (!E.genBuyable(s, g)) continue;
+    // Kugelblitz mal alimentado rende menos: o bot só amplia com folga de alimentação.
+    if (E.feedFactor(s, g) < 0.95) continue;
     const v = (g.output * E.genModMult(s, g, 'output') * E.genEnv(s, g, true)) / E.genCost(s, g);
     if (v > bestV) { bestV = v; best = g; }
   }
@@ -111,9 +113,12 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, ch
   const ascensions = [];
   let runStart = 0;
   let saturated = 0;
+  let runSat = 0;
+  let runSteps = 0;
   for (let step = 0; step < minutes * 60 / DT; step++) {
     botStep(s, crises);
-    if (E.gridLoad(s) > 1) saturated++;
+    if (E.gridLoad(s) > 1) { saturated++; runSat++; }
+    runSteps++;
     const min = (step * DT) / 60;
     for (const g of GENERATORS) if (s.owned[g.id] > 0 && !(g.id in marks)) marks[g.id] = min;
     if (s.labs > 0 && !('lab' in marks)) marks.lab = min;
@@ -122,7 +127,9 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, ch
     if (goalReached(s)) { s.run.done = true; marks.goal = min; break; }
     if (P.canAscend(s) && P.legacyGain(s) >= Math.max(1, s.legacy.earned / 2) && ascensions.length < runs) {
       const gain = P.ascend(s);
-      ascensions.push({ at: min, took: min - runStart, gain, n: s.legacy.ascensions });
+      ascensions.push({ at: min, took: min - runStart, gain, n: s.legacy.ascensions, sat: runSat / runSteps });
+      runSat = 0;
+      runSteps = 0;
       runStart = min;
       if (crises === 'off') s.events.next = Infinity;
       shop(s);
@@ -156,7 +163,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       console.log(`seed ${seed}: meta ${goal} ${'goal' in marks ? `em ${clock(marks.goal)}` : `não alcançada em ${minutes} min ($${s.earned.toExponential(2)})`}`);
       continue;
     }
-    const order = ['solar', 'lab', 'hydro', 'gas', 'nuclear', 'tidal', 'fusion', 'antimatter'];
+    const order = ['solar', 'lab', 'hydro', 'gas', 'nuclear', 'tidal', 'fusion', 'antimatter', 'swarm', 'kugelblitz', 'vacuum'];
     const m = order.filter((k) => k in marks).map((k) => `${k} ${clock(marks[k])}`).join('  ');
     // Muitas ascensões: mostra as 8 primeiras e as 4 últimas.
     const list = ascensions.length > 12 ? [...ascensions.slice(0, 8), null, ...ascensions.slice(-4)] : ascensions;

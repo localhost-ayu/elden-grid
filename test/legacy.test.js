@@ -22,19 +22,24 @@ function ready() {
   return s;
 }
 
-test('fórmula: raiz do dinheiro ganho em todas as partidas, menos o já recebido', () => {
+test('fórmula: raiz cúbica do dinheiro ganho em todas as partidas, menos o já recebido', () => {
   assert.equal(pointsFor(0), 0);
   assert.equal(pointsFor(D), 1);
-  assert.equal(pointsFor(4 * D - 1), 1);
-  assert.equal(pointsFor(4 * D), 2);
+  assert.equal(pointsFor(8 * D - 1), 1);
+  assert.equal(pointsFor(8 * D), 2);
+  // Exata nos limites mesmo com números grandes (a raiz em ponto flutuante erra).
+  for (const p of [3, 10, 999, 123456, 1e6]) {
+    assert.equal(pointsFor(p ** 3 * D), p, `${p}`);
+    assert.equal(pointsFor(p ** 3 * D * (1 - 1e-12)), p - 1, `${p} - ε`);
+  }
   const s = newState();
-  s.earned = 9 * D;
+  s.earned = 27 * D;
   assert.equal(legacyGain(s), 3);
   s.legacy.earned = 2;
   assert.equal(legacyGain(s), 1);
-  s.legacy.lifetime = 7 * D; // 16 D no total -> 4 pontos
+  s.legacy.lifetime = 37 * D; // 64 D no total -> 4 pontos
   assert.equal(legacyGain(s), 2);
-  assert.equal(nextPointIn(s), 25 * D - 16 * D);
+  assert.equal(nextPointIn(s), 125 * D - 64 * D);
 });
 
 test('ascensão exige o mínimo ganho, antimatéria ou a árvore completa, e ao menos 1 ponto', () => {
@@ -51,6 +56,13 @@ test('ascensão exige o mínimo ganho, antimatéria ou a árvore completa, e ao 
   for (const t of TECHS) s.techs[t.id] = true;
   assert.equal(canAscend(s), true, 'a árvore completa também fecha a partida');
   assert.deepEqual(gateStatus(s).map((c) => c.done), [false, true]);
+  // Da 3ª ascensão em diante, a partida só fecha na Fronteira inteira.
+  for (const t of TECHS) s.techs[t.id] = false;
+  s.legacy.ascensions = LEGACY.gate[1].from;
+  s.owned.antimatter = 1;
+  assert.equal(canAscend(s), false, 'antimatéria já não basta');
+  s.owned.vacuum = 1;
+  assert.equal(canAscend(s), true);
   s.legacy.earned = legacyGain(s) + s.legacy.earned; // já recebeu tudo
   assert.equal(canAscend(s), false);
 });
@@ -173,11 +185,12 @@ function make(state) {
 
 test('aba Legado: prévia, confirmação S/N que segura as teclas, e ascensão salva', () => {
   const { app, text, saves, calls } = make(ready());
+  const gain = pointsFor(LEGACY.minRunEarned);
   assert.match(text(), /Legado✦/); // aviso na barra de abas
   app.key('l');
-  assert.match(text(), /Ascender agora: \+5 pontos/);
+  assert.match(text(), new RegExp(`Ascender agora: \\+${gain} pontos`));
   app.key('enter');
-  assert.match(text(), /Ascender por \+5 pontos\?.*\(S\/N\)/);
+  assert.match(text(), new RegExp(`Ascender por \\+${gain} pontos\\?.*\\(S/N\\)`));
   assert.match(text(), /S confirmar/);
   app.key('m');
   app.key('q');
@@ -188,10 +201,10 @@ test('aba Legado: prévia, confirmação S/N que segura as teclas, e ascensão s
   app.key('enter');
   app.key('S');
   assert.equal(app.state.legacy.ascensions, 1);
-  assert.equal(app.state.legacy.points, 5);
+  assert.equal(app.state.legacy.points, gain);
   assert.equal(saves.at(-1).legacy.ascensions, 1);
-  assert.match(text(), /Ascensão 1! \+5 pontos/);
-  assert.match(text(), /✦ \+50%/); // bônus no cabeçalho
+  assert.match(text(), new RegExp(`Ascensão 1! \\+${gain} pontos`));
+  assert.match(text(), new RegExp(`✦ \\+${gain * 10}%`)); // bônus no cabeçalho
 });
 
 test('aba Legado: compra na loja e mensagens; cabe em 80×24', () => {
@@ -388,4 +401,21 @@ test('textos da loja cabem na coluna de efeito (40)', async () => {
       assert.ok(visibleLength(row) <= 80, `${it.id} nível ${lvl}: ${row}`);
     }
   }
+});
+
+test('save v10 migra para v11: pontos recebidos mantidos, total reajustado à raiz cúbica', () => {
+  const s = newState();
+  s.legacy = { ...s.legacy, earned: 400, points: 120, lifetime: 400 ** 2 * 1e9 + 5e9, ascensions: 12 };
+  const env = migrate({ saveVersion: 10, savedAt: 1, state: JSON.parse(JSON.stringify(s)) });
+  assert.equal(env.saveVersion, SAVE_VERSION);
+  const back = fromSave(env.state);
+  assert.ok(isValidState(back));
+  assert.equal(back.legacy.points, 120);
+  assert.equal(back.legacy.earned, 400);
+  assert.equal(pointsFor(back.legacy.lifetime), 400, 'a curva nova dá os mesmos pontos');
+  assert.equal(legacyGain(back), 0);
+  back.earned = nextPointIn(back);
+  assert.equal(legacyGain(back), 1, 'o próximo ponto está logo ali, não centenas de vezes longe');
+  const fresh = migrate({ saveVersion: 10, savedAt: 1, state: JSON.parse(JSON.stringify(newState())) });
+  assert.equal(fresh.state.legacy.lifetime, 0);
 });

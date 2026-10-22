@@ -126,4 +126,99 @@ const sequence = {
   },
 };
 
-export const MINIGAMES = { timing, mash, sequence };
+// Sorte própria do minijogo (o step não recebe `rand`): mulberry32 com o estado no jogo,
+// semeado pela sorte do save no create. Mesma partida, mesmas forças e erupções.
+function own(g) {
+  let t = (g.seed = (g.seed + 0x6d2b79f5) >>> 0);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const seedFrom = (rand) => Math.floor(rand() * 4294967296) >>> 0;
+
+// Contenção: o ponteiro deriva com uma força que muda a cada 0.5 s; ← → corrigem a
+// velocidade. Resolve quem soma `hold` s na faixa central; tocar a borda é ruptura (o
+// ponteiro volta ao centro, parado).
+const FORCE_EVERY = 0.5;
+const balance = {
+  create(rand, level = 0) {
+    const D = DIFFICULTY.balance;
+    return {
+      kind: 'balance', status: 'playing', time: 0, last: null, seed: seedFrom(rand),
+      pos: 0, vel: 0, force: 0, nextForce: 0,
+      maxForce: lerp(D.force, level), push: lerp(D.push, level), zone: lerp(D.zone, level),
+      held: 0, hold: lerp(D.hold, level), breaches: 0, maxBreaches: int(D.maxBreaches, level), timeLeft: lerp(D.timeLeft, level),
+    };
+  },
+  step(g, dt) {
+    g.time += dt;
+    if (g.time >= g.nextForce) {
+      g.force = (own(g) * 2 - 1) * g.maxForce;
+      g.nextForce = g.time + FORCE_EVERY;
+    }
+    g.vel = (g.vel + g.force * dt) * (1 - 0.6 * dt);
+    g.pos += g.vel * dt;
+    if (Math.abs(g.pos) >= 1) {
+      g.pos = 0;
+      g.vel = 0;
+      g.breach = g.time; // a UI mostra "ruptura!"
+      feedback(g, false);
+      if (++g.breaches >= g.maxBreaches && g.status === 'playing') g.status = 'lost';
+    }
+    if (g.status === 'playing' && Math.abs(g.pos) <= g.zone) {
+      g.held += dt;
+      if (g.held >= g.hold) g.status = 'won';
+    }
+    g.timeLeft = Math.max(0, g.timeLeft - dt);
+    if (g.timeLeft === 0 && g.status === 'playing') g.status = 'lost';
+  },
+  input(g, key) {
+    if (key !== 'left' && key !== 'right') return false;
+    g.vel += key === 'left' ? -g.push : g.push;
+    feedback(g, true);
+    return true;
+  },
+};
+
+// Tempestade solar: erupções chegam pelas 4 direções (uma por direção no máximo), cada
+// uma com `warn` s; a seta certa a tempo bloqueia. Seta sem erupção é erro (sem custo).
+const shield = {
+  create(rand, level = 0) {
+    const D = DIFFICULTY.shield;
+    return {
+      kind: 'shield', status: 'playing', time: 0, last: null, seed: seedFrom(rand),
+      flares: [], nextFlare: 0.5, warn: lerp(D.warn, level), gap: lerp(D.gap, level),
+      blocked: 0, need: int(D.need, level), hits: 0, maxHits: int(D.maxHits, level), timeLeft: lerp(D.timeLeft, level),
+    };
+  },
+  step(g, dt) {
+    g.time += dt;
+    for (const f of g.flares) f.left -= dt;
+    const landed = g.flares.filter((f) => f.left <= 0);
+    g.flares = g.flares.filter((f) => f.left > 0);
+    if (landed.length) {
+      g.hits += landed.length;
+      g.hit = g.time;
+      feedback(g, false);
+      if (g.hits >= g.maxHits && g.status === 'playing') g.status = 'lost';
+    }
+    if (g.time >= g.nextFlare && g.status === 'playing') {
+      const free = ARROWS.filter((d) => !g.flares.some((f) => f.dir === d));
+      if (free.length) g.flares.push({ dir: free[Math.floor(own(g) * free.length)], left: g.warn });
+      g.nextFlare = g.time + g.gap * (0.7 + 0.6 * own(g));
+    }
+    g.timeLeft = Math.max(0, g.timeLeft - dt);
+    if (g.timeLeft === 0 && g.status === 'playing') g.status = 'lost';
+  },
+  input(g, key) {
+    if (!ARROWS.includes(key)) return false;
+    const f = g.flares.find((x) => x.dir === key);
+    feedback(g, !!f);
+    if (!f) return true;
+    g.flares = g.flares.filter((x) => x !== f);
+    if (++g.blocked >= g.need) g.status = 'won';
+    return true;
+  },
+};
+
+export const MINIGAMES = { timing, mash, sequence, balance, shield };

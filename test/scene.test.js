@@ -49,7 +49,8 @@ test('cena: um card por tipo comprado, com quantidade e nível de upgrade', () =
 test('cena: sem espaço para todos, o último card vira "+N fontes"', () => {
   const s = lateState();
   const rows = sceneRows(s, 0, 80, 1).map(stripAnsi);
-  assert.match(rows.join('\n'), /\+6 fontes/); // 6 por fileira em 80 col: 5 cards + aviso
+  const n = GENERATORS.length + 1; // todas as fontes e o laboratório
+  assert.match(rows.join('\n'), new RegExp(`\\+${n - 5} fontes`)); // 6 por fileira em 80 col: 5 cards + aviso
   for (const l of rows) assert.ok(visibleLength(l) <= 80);
 });
 
@@ -66,12 +67,19 @@ test('V alterna lista e cena; a cena inteira cabe em 80×24 com todas as fontes'
   assert.match(text(), /V cena/);
   app.key('v');
   const t = text();
-  assert.match(t, /Usinas .* 11 tipos/);
-  assert.doesNotMatch(t, /fontes\b.*\+\d/); // nada escondido: 11 cards em 2 fileiras
+  // Página 1: as 10 primeiras fontes e o laboratório, em 2 fileiras, nada escondido.
+  assert.match(t, /Usinas .* 11 tipos · pág\. 1\/2/);
+  assert.doesNotMatch(t, /\+\d+ fontes/);
   for (const name of ['Eólica', 'Antimatéria', 'Laboratório']) assert.match(t, new RegExp(name));
   assert.match(t, /V volta à lista/);
   for (const l of app.lines(80, 24)) assert.ok(visibleLength(l) <= 80);
   assert.equal(app.lines(80, 24).length, 24);
+  app.key('right'); // página 2: as fontes da Fronteira
+  const t2 = text();
+  assert.match(t2, /pág\. 2\/2/);
+  assert.match(t2, /Enxame/);
+  assert.doesNotMatch(t2, /Eólica/);
+  app.key('left');
   app.key('V');
   assert.match(text(), /Turbina Eólica +x3/);
 });

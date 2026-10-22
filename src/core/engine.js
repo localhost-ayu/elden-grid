@@ -3,7 +3,7 @@ import { GENERATORS, LAB } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import { GRID } from '../data/grid.js';
 import { MILESTONES, UPGRADE_TRACK, UPGRADE_OVERRIDES, UPGRADE_NAMES } from '../data/upgrades.js';
-import { envFactor } from './traits.js';
+import { envFactor, launchOpen, launchLeft } from './traits.js';
 import { heatFactor, heatStep } from './heat.js';
 import { contractDiscount, legacyMult, shopValue } from './prestige.js';
 import { eventMult } from './events.js';
@@ -24,7 +24,7 @@ function mult(s, type, gen) {
 
 const boughtOf = (s, type) => TECHS.filter((t) => t.type === type && bought(s, t.id));
 // traits.js recebe as pesquisas já filtradas para não depender da árvore.
-const traitCtx = (s) => ({ battery: boughtOf(s, 'battery') });
+const traitCtx = (s) => ({ battery: boughtOf(s, 'battery'), vacuumFloor: boughtOf(s, 'vacuumFloor') });
 
 // `average` = média de longo prazo do ambiente, usada offline.
 export const genEnv = (s, g, average = false) => envFactor(s, g, traitCtx(s), average);
@@ -74,13 +74,27 @@ export const genModMult = (s, g, type) => modMult(genModifiers(s, g), type);
 export const achievementMult = (s) => 1 + ACHIEVEMENT_BONUS * Object.keys(s.achievements).length;
 
 // Os multiplicadores globais (pesquisa, Legado e conquistas) entram em power(), uma vez só.
-export function genPower(s, g, average = false) {
+function genRaw(s, g, average) {
   if (!s.owned[g.id]) return 0;
   const out = genModMult(s, g, 'output');
   // Offline não há eventos: um blecaute no instante do save não pune a hora inteira fora.
   const ev = average ? 1 : eventMult(s, 'output', g.id);
   return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev;
 }
+
+// Alimentação (trait `feed`, Kugelblitz): a produção das outras fontes sobre `share` × a
+// dele, até 1. Construir rápido demais, ou perder reatores num desligamento, faz render menos.
+const feedTrait = (g) => g.traits.find((tr) => tr.type === 'feed');
+export const feedShare = (s, g) => feedTrait(g).share * mult(s, 'feed');
+export function feedFactor(s, g, average = false) {
+  if (!feedTrait(g)) return 1;
+  const own = genRaw(s, g, average);
+  if (!own) return 1;
+  const others = GENERATORS.reduce((sum, x) => sum + (feedTrait(x) ? 0 : genRaw(s, x, average)), 0);
+  return Math.min(1, others / (feedShare(s, g) * own));
+}
+
+export const genPower = (s, g, average = false) => genRaw(s, g, average) * feedFactor(s, g, average);
 export const power = (s, average = false) =>
   GENERATORS.reduce((sum, g) => sum + genPower(s, g, average), 0) * mult(s, 'global') * permanentMult(s);
 
@@ -106,11 +120,15 @@ export const capacity = (s) =>
 export const transformerCost = (s) =>
   Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
 
+// Fração do preço paga pelo excedente: armazenamento (pesquisas 'excess') guarda parte
+// dele para vender depois.
+export const excessRate = (s) => GRID.excessPriceRate + boughtOf(s, 'excess').reduce((sum, t) => sum + t.add, 0);
+
 // { full, excess, perSecond }: kW a preço cheio, kW excedentes (com desconto) e $/s.
 export function sales(s, kw) {
   const full = Math.min(kw, capacity(s));
   const excess = kw - full;
-  return { full, excess, perSecond: (full + excess * GRID.excessPriceRate) * price(s) };
+  return { full, excess, perSecond: (full + excess * excessRate(s)) * price(s) };
 }
 // Fração da capacidade em uso (1 = no limite; > 1 = saturada).
 export const gridLoad = (s) => power(s) / capacity(s);
@@ -158,6 +176,16 @@ export const labCost = (s) => unitCost(LAB.baseCost, LAB.growth, s.labs, shopVal
 export const genBulk = (s, g, amount) => bulk(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost'), amount);
 export const labBulk = (s, amount) => bulk(LAB.baseCost, LAB.growth, s.labs, s.money, shopValue(s, 'cost', 1), amount);
 export const genAffordable = (s, g) => maxAffordable(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost')).n;
+// Janela de lançamento (trait `launch`): null se a fonte não tem. Pesquisas 'launch'
+// alargam a janela.
+const launchTrait = (g) => g.traits.find((tr) => tr.type === 'launch');
+export const launchExtra = (s) => boughtOf(s, 'launch').reduce((sum, t) => sum + t.add, 0);
+export function genLaunch(s, g) {
+  const tr = launchTrait(g);
+  return tr ? { open: launchOpen(s, tr, launchExtra(s)), left: launchLeft(s, tr, launchExtra(s)) } : null;
+}
+// Dá para comprar agora (fora da janela de lançamento, não).
+export const genBuyable = (s, g) => genUnlocked(g, s) && (genLaunch(s, g)?.open ?? true);
 export const genUnlocked = (g, s) => (g.unlock === null || bought(s, g.unlock)) && !genDisabled(s, g);
 export const labUnlocked = (s) => s.totalEnergy >= LAB.unlockAt || s.labs > 0;
 export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => bought(s, r));

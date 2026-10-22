@@ -10,6 +10,55 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [1.4.0] - 2026-10-22
+
+Fronteira: três fontes depois da antimatéria, duas crises novas e partidas que fecham na
+Fronteira.
+
+### Adicionado
+- Páginas na aba Geradores: 10 fontes por página, com as teclas `0`–`9` valendo na página
+  aberta e `←→` (ou `PgUp`/`PgDn`) para trocar. A segunda página aparece quando a
+  primeira fonte dela é liberada.
+- **Enxame Orbital**, a primeira fonte depois da antimatéria: espelhos em órbita,
+  sem noite e com produção fixa, mas que só se compram na janela de lançamento (8 s a
+  cada 40 s; a auto-compra espera a janela). Pesquisas: Espelhos em Órbita (libera),
+  Enxame de Dyson (x2) e Foguetes Reutilizáveis (janela +8 s).
+- **Kugelblitz**, um buraco negro artificial que precisa ser alimentado: rende a fração
+  que as outras fontes conseguem sustentar (a produção delas sobre 60% da dele). Construir
+  rápido demais, ou perder reatores num desligamento, derruba a alimentação. Pesquisas:
+  Colapso Gravitacional (libera), Kugelblitz em Cascata (x2) e Acreção Controlada (precisa
+  de metade da alimentação).
+- **Energia do Vácuo**, a última fonte da Fronteira: produção instável que oscila rápido
+  entre x0.2 e x5 (média ~x1.4). Pesquisas: Flutuação do Vácuo (libera), Efeito Casimir
+  Dinâmico (x2) e Volantes de Inércia (a produção nunca cai abaixo de x1).
+- Mais seis pesquisas no fim da árvore (45 no total): Armazenamento em Rede e Baterias de
+  Estado Sólido (o excedente da rede passa a valer 40% e depois 60% do preço), Rede
+  Orbital (capacidade x1000), Antimatéria Catalisada (x2), Economia Pós-Escassez (produção
+  x3) e Inteligência Planetária (pesquisa x3).
+- Duas crises novas com minijogos próprios, já com os níveis de dificuldade:
+  - **Ruptura de contenção** (com antimatéria ou Kugelblitz): um ponteiro deriva com
+    forças que mudam, e ← → o seguram na faixa central até a contenção encher.
+  - **Tempestade solar** (com o Enxame): erupções chegam pelas quatro direções e a seta
+    certa a tempo bloqueia cada uma.
+- Cinco conquistas novas (102 no total): uma para cada fonte da Fronteira e uma para cada
+  crise nova vencida rápido.
+- Árvore de pesquisa: ramos muito fundos empurram a coluna do custo em vez de passar da
+  largura da tela.
+
+### Mudado
+- Da 4ª ascensão em diante, a partida só fecha com a Energia do Vácuo (ou todas as
+  pesquisas); as três primeiras continuam fechando na antimatéria. A aba Legado mostra as
+  condições da fase atual.
+- Pontos de legado pela raiz cúbica do total ganho (antes, raiz quadrada), com a 1ª
+  ascensão ainda em ~20 pontos. Com a raiz quadrada, a primeira partida até a Fronteira
+  dava 100x mais pontos que a anterior. Save **v11**: quem já ascendeu mantém os pontos, e
+  o total ganho é reajustado para o próximo ponto vir no ritmo da curva nova.
+
+- Metas dos desafios nos níveis III a V subiram para $1T, $30T e $1Q: com a Fronteira, o
+  nível V estava saindo 1 h mais rápido que o calibrado.
+- Rede Planetária mais barata (60k PP) e Rede Orbital com capacidade x1000: com o legado
+  forte, a rede passava 70% do tempo saturada nas partidas da Fronteira.
+
 ## [1.3.0] - 2026-10-16
 
 Pressão: partidas mais longas e crises que endurecem a cada ascensão.
@@ -141,7 +190,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.0.1...v1.1.0
