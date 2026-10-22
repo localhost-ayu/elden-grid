@@ -55,6 +55,8 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   4%, 3% e depois 2%) e **Baterias Herdadas** (1, 3 ou 5 bancos no começo).
 - Nove conquistas novas (111 no total), na categoria nova Mercado e manutenção e no desafio
   novo. Mestre dos Desafios passou a pedir os 30 níveis.
+- Aba Estatísticas: seção Mercado e manutenção (contratos, baterias, manutenções, quebras
+  e o que foi pago) e os melhores tempos das crises da Fronteira.
 - Simulador: `--play=active|idle`. O ativo usa baterias, contratos e manutenção à mão; o
   ocioso só contrata a equipe. Ocioso: o mesmo ritmo da 1.4 (1ª ascensão ~1 h, loja em
   ~16 h, desafios V em 2h40–3h50). Ativo: partidas 15–30% mais curtas e loja em ~12 h
