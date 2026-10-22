@@ -85,6 +85,15 @@ export const TRAITS = {
     factor: (s, tr, ctx) => (haulArriving(s, tr, sumAdd(ctx.haul)) ? tr.boost : 1),
     avg: (tr, ctx) => 1 + (tr.boost - 1) * (tr.window + sumAdd(ctx.haul)) / tr.period,
   },
+  pulse: {
+    factor: (s, tr) => (haulArriving(s, tr) ? tr.boost : 1),
+    avg: (tr) => 1 + (tr.boost - 1) * tr.window / tr.period,
+  },
+  // Offline vale o ponto atual da partida (o relógio da partida não anda offline).
+  expansion: {
+    factor: (s, tr) => Math.min(tr.cap, 1 + s.stats.playTime / tr.hour),
+    avg: (tr, ctx, s) => Math.min(tr.cap, 1 + (s?.stats.playTime ?? 0) / tr.hour),
+  },
   // Em órbita a produção é fixa: a janela só limita quando se compra.
   launch: { factor: () => 1, avg: () => 1 },
   vacuum: {
@@ -100,7 +109,7 @@ export function envFactor(s, g, ctx, average = false) {
   let f = 1;
   for (const tr of g.traits) {
     const fx = TRAITS[tr.type];
-    if (fx) f *= average ? fx.avg(tr, ctx) : fx.factor(s, tr, ctx);
+    if (fx) f *= average ? fx.avg(tr, ctx, s) : fx.factor(s, tr, ctx);
   }
   return f;
 }

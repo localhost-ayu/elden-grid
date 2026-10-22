@@ -23,7 +23,7 @@ export function describe(t) {
     case 'unlock': return `destrava ${GENERATORS.find((g) => g.unlock === t.id)?.name ?? 'novo gerador'}`;
     case 'battery': return `solar à noite +${Math.round(t.add * 100)}% da capacidade`;
     case 'capacity': return `capacidade da rede x${t.mult}`;
-    case 'launch': return `janela de lançamento +${t.add} s`;
+    case 'launch': return `janelas de lançamento +${t.add} s`;
     case 'feed': return `Kugelblitz precisa de ${Math.round((1 - t.mult) * 100)}% menos alimentação`;
     case 'vacuumFloor': return `vácuo nunca abaixo de x${t.floor}`;
     case 'lunarFloor': return `Hélio-3 à noite +${Math.round(t.add * 100)}%`;

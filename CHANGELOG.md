@@ -46,6 +46,12 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   Lua, Marte, Cinturão, Júpiter e Sol. Cada partida do capítulo começa com 1 Enxame;
   laboratório, transformador e baterias custam na escala do capítulo. A previsão mostra o
   dia lunar e Júpiter.
+- **Galáxia** (do Tipo II ao Tipo III): seis fontes — Energia do Vácuo (flutuação),
+  **Motor de Penrose** (a rotação gasta rápido: manutenção é a recarga), **Fazenda de
+  Pulsares** (pulsos x4), **Esferas de Dyson** (janelas de lançamento grandes), **Coletor
+  de Quasar** (calor) e **Energia Escura** (rende mais quanto mais longa a partida, até
+  x5) —, com arte, upgrades e 15 pesquisas. Regiões: Estrelas Vizinhas, Bolha Local, Braço
+  de Órion, Disco e Núcleo Galáctico (Tipo III).
 
 ## [1.5.0] - 2026-10-22
 

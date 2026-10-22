@@ -29,12 +29,12 @@ export const REGIONS = {
     { name: 'Júpiter', base: 4e21, need: 1e21 },
     { name: 'Sol', base: 4e24, need: 4e23 },
   ],
-  // Do Tipo II ao Tipo III (4×10^34 kW). A calibrar (2.0, etapa 5).
+  // Do Tipo II ao Tipo III (4×10^34 kW, a galáxia inteira).
   galaxy: [
-    { name: 'Estrelas Vizinhas', base: 1e25, need: 0 },
-    { name: 'Bolha Local', base: 1e27, need: 1e27 },
-    { name: 'Braço de Órion', short: 'Órion', base: 1e30, need: 1e29 },
-    { name: 'Disco Galáctico', short: 'Disco', base: 4e32, need: 1e32 },
+    { name: 'Estrelas Vizinhas', short: 'Vizinhas', base: 1e25, need: 0 },
+    { name: 'Bolha Local', short: 'Bolha', base: 1e27, need: 1e27 },
+    { name: 'Braço de Órion', short: 'Órion', base: 1e29, need: 1e29 },
+    { name: 'Disco Galáctico', short: 'Disco', base: 4e32, need: 1e31 },
     { name: 'Núcleo Galáctico', short: 'Núcleo', base: 4e35, need: 4e34 },
   ],
 };

@@ -145,3 +145,40 @@ test('Armazenamento: o excedente da rede vale mais; toda pesquisa tem descriçã
   assert.ok(sales(s, kw).perSecond > base);
   for (const t of TECHS) assert.ok(describe(t).length > 0, `${t.id} sem descrição`);
 });
+
+test('traços dos capítulos: dia lunar, cargas, pulsos e expansão do universo', () => {
+  const s = newState();
+  s.chapter = 'solar';
+  const he = gen('helium3');
+  const lunar = he.traits[0];
+  s.t = lunar.period / 4; // meio do dia lunar
+  assert.ok(Math.abs(genEnv(s, he) - (lunar.floor + lunar.peak)) < 1e-9);
+  s.t = (3 * lunar.period) / 4; // meio da noite
+  assert.ok(Math.abs(genEnv(s, he) - lunar.floor) < 1e-9);
+  s.techs.t_lunarnight = true;
+  assert.ok(genEnv(s, he) > lunar.floor, 'Reservas Noturnas sobem o piso');
+
+  const ast = gen('asteroids');
+  const haul = ast.traits[0];
+  s.t = haul.period - haul.window / 2;
+  assert.equal(genEnv(s, ast), haul.boost, 'a carga chegando');
+  s.t = 1;
+  assert.equal(genEnv(s, ast), 1);
+  s.techs.t_haul = true;
+  assert.ok(genEnv(s, ast, true) > 1 + (haul.boost - 1) * haul.window / haul.period, 'Rebocadores alargam a janela');
+
+  const g = newState();
+  g.chapter = 'galaxy';
+  const dark = gen('darkenergy');
+  const ex = dark.traits[0];
+  assert.equal(genEnv(g, dark), 1);
+  g.stats.playTime = ex.hour;
+  assert.equal(genEnv(g, dark), 2, 'uma hora de partida: x2');
+  g.stats.playTime = 1e9;
+  assert.equal(genEnv(g, dark), ex.cap);
+  assert.equal(genEnv(g, dark, true), ex.cap, 'offline vale o ponto da partida');
+  const pul = gen('pulsar');
+  const p = pul.traits[0];
+  g.t = p.period - 0.5;
+  assert.equal(genEnv(g, pul), p.boost);
+});

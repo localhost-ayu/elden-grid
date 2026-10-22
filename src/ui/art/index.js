@@ -16,9 +16,14 @@ import * as mercury from './mercury.js';
 import * as asteroids from './asteroids.js';
 import * as jupiter from './jupiter.js';
 import * as starlift from './starlift.js';
+import * as penrose from './penrose.js';
+import * as pulsar from './pulsar.js';
+import * as dyson from './dyson.js';
+import * as quasar from './quasar.js';
+import * as darkenergy from './darkenergy.js';
 import * as vacuum from './vacuum.js';
 import * as lab from './lab.js';
 
 export const ART_W = 11;
 export const ART_H = 5;
-export const ART = { wind, solar, hydro, biomass, gas, geothermal, nuclear, tidal, fusion, antimatter, swarm, helium3, mercury, asteroids, kugelblitz, jupiter, starlift, vacuum, lab };
+export const ART = { wind, solar, hydro, biomass, gas, geothermal, nuclear, tidal, fusion, antimatter, swarm, helium3, mercury, asteroids, kugelblitz, jupiter, starlift, vacuum, penrose, pulsar, dyson, quasar, darkenergy, lab };

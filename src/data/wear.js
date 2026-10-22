@@ -37,6 +37,12 @@ export const WEAR_BY_GEN = {
   asteroids: { time: 1200, what: 'brocas gastas' },
   jupiter: { time: 1500, what: 'cabos corroídos' },
   starlift: { time: 1500, what: 'ímãs desalinhados' },
+  // O Motor de Penrose gasta a rotação do buraco negro rápido: a manutenção é a recarga.
+  penrose: { time: 300, what: 'rotação gasta' },
+  pulsar: { time: 1200, what: 'antenas fora de sintonia' },
+  dyson: { time: 1500, what: 'cascas perfuradas' },
+  quasar: { time: 900, what: 'escudos saturados' },
+  darkenergy: { time: 1500, what: 'campo instável' },
   kugelblitz: { time: 1500, what: 'lentes desalinhadas' },
   vacuum: { time: 1200, what: 'ressonância fora de fase' },
 };

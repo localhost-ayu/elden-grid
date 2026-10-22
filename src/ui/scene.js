@@ -25,7 +25,7 @@ function artInfo(s, g) {
     fed: feedFactor(s, g),
     surge: trait(g, 'vacuum') ? genEnv(s, g) : 1,
     day: trait(g, 'lunarDay') ? lunarIsDay(s, trait(g, 'lunarDay')) : true,
-    arriving: trait(g, 'haul') ? genEnv(s, g) > 1 : false,
+    arriving: trait(g, 'haul') || trait(g, 'pulse') ? genEnv(s, g) > 1 : false,
   };
 }
 

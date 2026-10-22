@@ -11,6 +11,9 @@ import { chapterIndex } from './chapters.js';
 //             (um mês lunar); pesquisas 'lunarFloor' sobem o piso noturno
 //   haul      cargas: nos últimos `window` s de cada `period` s chega a carga, x`boost`
 //             (pesquisas 'haul' alargam a janela)
+//   pulse     pulsos: nos últimos `window` s de cada `period` s, x`boost`
+//   expansion rende mais quanto mais longa a partida: 1 + tempo de partida / `hour`, até
+//             `cap` (a expansão do universo premia partidas longas)
 //   launch    só se compra na janela de lançamento: aberta `window` s a cada `period` s
 //             (pesquisas 'launch' alargam a janela). Em órbita não há noite: produção fixa.
 //   feed      precisa ser alimentado: rende a fração de alimentação, que é a produção das
@@ -44,8 +47,14 @@ export const GENERATORS = [
   { id: 'kugelblitz', key: '5', name: 'Kugelblitz', short: 'Kugelblitz',          baseCost: 1.2e19, growth: 1.16, output: 3e17,    icon: '(@)', art: 'kugelblitz', unlock: 't_kugel',     chapter: 'solar', traits: [{ type: 'feed', share: 0.6 }] },
   { id: 'jupiter',    key: '6', name: 'Dínamo de Júpiter', short: 'Júpiter',     baseCost: 2.5e20, growth: 1.16, output: 5e18,    icon: '(J)', art: 'jupiter',    unlock: 't_jupiter',   chapter: 'solar', traits: [{ type: 'tide', amp: 0.4, period: 120 }] },
   { id: 'starlift',   key: '7', name: 'Star Lifting', short: 'Star Lifting',      baseCost: 6e21,   growth: 1.17, output: 1e20,    icon: '\\O/', art: 'starlift',  unlock: 't_starlift',  chapter: 'solar', traits: [{ type: 'heat', base: 1.1 }] },
-  // ---- Galáxia (2.0) ----
-  { id: 'vacuum',     key: '1', name: 'Energia do Vácuo', short: 'Vácuo',       baseCost: 5e12,   growth: 1.18, output: 1.5e10,  icon: '<~>', art: 'vacuum',     unlock: 't_vacuum',    chapter: 'galaxy', traits: [{ type: 'vacuum', min: 0.2, max: 5 }] },
+  // ---- Galáxia (2.0): do Tipo II ao Tipo III. Escala do capítulo: x1e24 ----
+  // O Vácuo era a última fonte da Fronteira da 1.4.
+  { id: 'vacuum',     key: '1', name: 'Energia do Vácuo', short: 'Vácuo',       baseCost: 1.5e25, growth: 1.15, output: 1e24,    icon: '<~>', art: 'vacuum',     unlock: 't_vacuum',    chapter: 'galaxy', traits: [{ type: 'vacuum', min: 0.2, max: 5 }] },
+  { id: 'penrose',    key: '2', name: 'Motor de Penrose', short: 'Penrose',     baseCost: 3e26,   growth: 1.15, output: 1.5e25,  icon: '(o)', art: 'penrose',    unlock: 't_penrose',   chapter: 'galaxy', traits: [] },
+  { id: 'pulsar',     key: '3', name: 'Fazenda de Pulsares', short: 'Pulsares', baseCost: 5e27,   growth: 1.15, output: 2e26,    icon: '-|-', art: 'pulsar',     unlock: 't_pulsar',    chapter: 'galaxy', traits: [{ type: 'pulse', period: 12, window: 2, boost: 4 }] },
+  { id: 'dyson',      key: '4', name: 'Esferas de Dyson', short: 'Dyson',       baseCost: 9e28,   growth: 1.16, output: 3e27,    icon: '(#)', art: 'dyson',      unlock: 't_dyson',     chapter: 'galaxy', traits: [{ type: 'launch', period: 60, window: 20 }] },
+  { id: 'quasar',     key: '5', name: 'Coletor de Quasar', short: 'Quasar',     baseCost: 2e30,   growth: 1.16, output: 5e28,    icon: '>*<', art: 'quasar',     unlock: 't_quasar',    chapter: 'galaxy', traits: [{ type: 'heat', base: 1.15 }] },
+  { id: 'darkenergy', key: '6', name: 'Energia Escura', short: 'Energia Escura', baseCost: 5e31, growth: 1.17, output: 1e30,    icon: '...', art: 'darkenergy', unlock: 't_dark',      chapter: 'galaxy', traits: [{ type: 'expansion', hour: 3600, cap: 5 }] },
 ];
 
 // Cada capítulo (data/chapters.js) é uma página da aba Geradores, com as teclas 1–9 e 0
