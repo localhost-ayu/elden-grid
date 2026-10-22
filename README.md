@@ -59,6 +59,16 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   rede cresce junto com o legado, então uma partida nova nunca começa saturada. Quando a
   loja acaba, o **Monumento** (x1.1 de produção por nível, sem teto) dá destino aos
   pontos que sobram.
+- **Mercado** (aba `K`). O preço do kWh oscila, a demanda passeia e às vezes vem um
+  **surto** (kWh x1.6 por alguns segundos); vender muito de uma vez derruba o preço. Bancos
+  de **baterias** guardam o excedente da rede para vender na hora boa (à mão ou no
+  automático). **Contratos de fornecimento** (entregar, faturar, manter a produção verde,
+  não deixar reator desligar) pagam minutos de renda ou de pesquisa, e a **reputação** da
+  companhia sobe com eles e com as usinas em dia: contratos maiores e kWh mais caro.
+- **Manutenção.** As usinas se desgastam (até 30% de perda) e de vez em quando uma unidade
+  quebra. Na aba Rede, visão Manutenção: pagar a revisão, fazer à mão (um minijogo de
+  setas, grátis) ou contratar a equipe, que cuida de tudo por 5% da receita. A visão
+  Previsão mostra o tempo e o preço das próximas 24 h de jogo.
 - **Modo disfarce.** Apareceu alguém? `\` (barra invertida) troca a tela inteira, de
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
@@ -97,7 +107,8 @@ cada marco (primeira solar, nuclear, fusão, cada ascensão), as crises (o bot e
 nas de nível alto, como um humano), quanto tempo a rede
 passou saturada, quando a loja do legado ficou completa e o nível do Monumento. Com
 `--challenge=<id> --tier=N` (ou `--daily=AAAA-MM-DD`), joga um desafio e mostra o tempo
-até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
+até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off --play=active|idle`
+(`active` usa mercado, contratos e manutenção à mão; `idle` só contrata a equipe).
 
 ## Controles
 
