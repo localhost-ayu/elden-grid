@@ -31,6 +31,7 @@ import * as challenges from './screens/challenges.js';
 import * as market from './screens/market.js';
 import { surging, rand as marketRand, repTier, repName } from '../core/market.js';
 import { breakdownStep, wearFactor } from '../core/wear.js';
+import { regionName } from '../core/regions.js';
 import { contractsStep, holdContracts } from '../core/contracts.js';
 import { contractTitle, rewardTitle } from './screens/market.js';
 import { MARKET, REPUTATION } from '../data/market.js';
@@ -666,7 +667,7 @@ export function createApp({
   function gridText(s) {
     const load = gridLoad(s);
     const color = load > 1 ? C.red + C.bold : load > 0.85 ? C.yellow : C.green;
-    return 'Rede ' + paint(color, fmtPct(load));
+    return `${regionName(s, true)} ` + paint(color, fmtPct(load));
   }
 
   function messageLines() {

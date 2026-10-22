@@ -126,7 +126,7 @@ test('transformadores: capacidade multiplicada a cada um, custo crescente', () =
   assert.ok(buyTransformer(s));
   assert.ok(buyTransformer(s));
   assert.equal(s.transformers, 2);
-  assert.ok(Math.abs(capacity(s) - GRID.baseCapacity * m ** 2) < 1e-9);
+  assert.ok(Math.abs(capacity(s) - capacity(newState()) * m ** 2) < 1e-9);
   assert.equal(s.money, 1e9 - b - b * k);
   assert.equal(transformerCost(s), b * k * k);
 });

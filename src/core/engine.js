@@ -14,6 +14,7 @@ import { reward, rewardMult } from './rewards.js';
 import { marketFactor, marketStep, batteryCap, addImpact } from './market.js';
 import { BATTERY, MARKET } from '../data/market.js';
 import { wearFactor, wearStep } from './wear.js';
+import { regionBase, regionPrice } from './regions.js';
 import { WEAR } from '../data/wear.js';
 
 export const bought = (s, id) => !!s.techs[id];
@@ -109,7 +110,7 @@ export const upkeep = (s) =>
 export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab') * shopValue(s, 'lab', 1);
 // Preço do kWh oscila ±20% numa senoide lenta (dá vida ao contador de dinheiro).
 // priceBase é a média da oscilação; priceRising vem da derivada (a seta de tendência).
-export const priceBase = (s) => mult(s, 'price') * priceDecay(s) * (1 + reward(s, 'price'));
+export const priceBase = (s) => mult(s, 'price') * priceDecay(s) * (1 + reward(s, 'price')) * regionPrice(s);
 // Por cima disso, o mercado (core/market.js): demanda, surtos e o impacto das vendas.
 // Offline (average) o mercado fica neutro.
 export const price = (s, average = false) =>
@@ -121,9 +122,11 @@ export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 // vendendo quase tudo com desconto. O gargalo volta a ser o que se constrói na partida.
 export const permanentMult = (s) => legacyMult(s) * achievementMult(s) * rewardMult(s);
 
+// A base é a demanda da região atendida (regions.js); pesquisas e transformadores somam
+// por cima. Rede Velha (desafio) rende menos nas regiões e nas pesquisas.
 export const capacity = (s) =>
-  GRID.baseCapacity * mult(s, 'capacity') ** rules(s).capacityExp * GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity') *
-  permanentMult(s) * (1 + reward(s, 'capacity'));
+  GRID.baseCapacity * (regionBase(s) / GRID.baseCapacity * mult(s, 'capacity')) ** rules(s).capacityExp *
+  GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity') * permanentMult(s) * (1 + reward(s, 'capacity'));
 export const transformerCost = (s) =>
   Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
 

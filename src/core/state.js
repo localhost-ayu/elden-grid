@@ -22,6 +22,7 @@ export function newState(seed = 1) {
     heat: hotDefaults(() => ({ h: 0, off: 0 })), // off = desligado até s.t
     cooling: hotDefaults(() => 0),
     transformers: 0,
+    region: 0,      // região atendida (data/regions.js): base da capacidade da rede
     t: 0,           // tempo de jogo em segundos
     earned: 0,      // dinheiro ganho nesta partida (base do Legado; gastar não desconta)
     // Sobrevive à ascensão. earned = pontos já recebidos; points = não gastos.
@@ -53,7 +54,8 @@ export function newState(seed = 1) {
 //   v10 = state.run (fromSave preenche com null)
 //   v11 = pontos de legado pela raiz cúbica: legacy.lifetime é reajustado à curva nova
 //   v12 = state.market, state.wear (fromSave preenche)
-export const SAVE_VERSION = 12;
+//   v13 = state.region: a região equivalente à capacidade que as pesquisas davam
+export const SAVE_VERSION = 13;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -88,6 +90,20 @@ const MIGRATIONS = {
     return { ...raw, saveVersion: 11, state: { ...raw.state, legacy: { ...L, lifetime: L.earned ** 3 * 5e7 } } };
   },
   11: (raw) => ({ ...raw, saveVersion: 12 }),
+  // 2.0: as pesquisas de capacidade passaram de x20…x1000 para x1.5, e o salto grande vem das
+  // regiões. A partida em andamento recebe a menor região que cobre a capacidade que ela
+  // tinha, para não acordar com a rede saturada. Números fixos da 1.5 e da 2.0.
+  12: (raw) => {
+    const OLD = { t_hv: 20, t_substation: 30, t_hvdc: 40, t_continental: 50, t_planetary: 60, t_orbitalgrid: 1000 };
+    const BASES = [1e3, 1e4, 1e5, 1e7, 1e8, 1e11, 1e12];
+    const techs = raw.state?.techs ?? {};
+    const owned = Object.keys(OLD).filter((id) => techs[id]);
+    const before = 150 * owned.reduce((m, id) => m * OLD[id], 1);
+    const now = 1.5 ** owned.length;
+    let region = BASES.findIndex((b) => b * now >= before * (1 - 1e-9));
+    if (region < 0) region = BASES.length - 1;
+    return { ...raw, saveVersion: 13, state: { ...raw.state, region } };
+  },
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.
@@ -161,6 +177,7 @@ export function isValidState(s) {
   if (!Array.isArray(ev.effects) || !ev.effects.every((a) => a && typeof a.id === 'string' && (a.until === null || finite(a.until)))) return false;
   if (ev.crisis !== null && !(ev.crisis && typeof ev.crisis.id === 'string' && finite(ev.crisis.deadline))) return false;
   if (s.run !== null && !isValidRun(s.run)) return false;
+  if (!count(s.region) || s.region > 6) return false;
   const m = s.market;
   if (!m || !Number.isInteger(m.rng) || m.rng < 0 || m.rng > 0xffffffff) return false;
   if (![m.demand, m.target, m.retarget, m.surgeUntil, m.impact].every(finite) || m.impact < 0 || m.demand <= 0) return false;

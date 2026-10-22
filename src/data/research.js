@@ -16,6 +16,8 @@
 //       'vacuumFloor' (piso da flutuação do vácuo: `floor`, o maior vale)
 //       'excess'   (+`add` na fração do preço paga pelo excedente da rede: armazenamento)
 //       'forecast' (x no erro da previsão da aba Rede)
+//       'autoRegion' (expande a região sozinho quando dá; ver data/regions.js)
+// Capacidade: desde a 2.0 cada pesquisa de rede vale x1.5; o salto grande vem das regiões.
 export const TECHS = [
   // ---- eólica ----
   { id: 't_wind2',       name: 'Pás Aerodinâmicas',        cost: 3,      req: [],                type: 'genMult', gen: 'wind', mult: 2 },
@@ -52,12 +54,12 @@ export const TECHS = [
   // ---- rede e mercado ----
   { id: 't_grid',        name: 'Rede Inteligente',         cost: 20,     req: [],                type: 'price',    mult: 1.25 },
   { id: 't_forecast',    name: 'Satélites Meteorológicos', cost: 250,    req: ['t_grid'],        type: 'forecast', mult: 0.33 },
-  { id: 't_hv',          name: 'Linhas de Alta Tensão',    cost: 30,     req: ['t_grid'],        type: 'capacity', mult: 20 },
-  { id: 't_substation',  name: 'Subestações',              cost: 400,    req: ['t_hv'],          type: 'capacity', mult: 30 },
-  { id: 't_hvdc',        name: 'Linhas HVDC',              cost: 2500,   req: ['t_substation'],  type: 'capacity', mult: 40 },
-  { id: 't_continental', name: 'Rede Continental',         cost: 12000,  req: ['t_hvdc'],        type: 'capacity', mult: 50 },
-  { id: 't_planetary',   name: 'Rede Planetária',          cost: 60000,  req: ['t_continental'], type: 'capacity', mult: 60 },
-  { id: 't_orbitalgrid', name: 'Rede Orbital',             cost: 100000, req: ['t_planetary'],   type: 'capacity', mult: 1000 },
+  { id: 't_hv',          name: 'Linhas de Alta Tensão',    cost: 30,     req: ['t_grid'],        type: 'capacity', mult: 1.5 },
+  { id: 't_substation',  name: 'Subestações',              cost: 400,    req: ['t_hv'],          type: 'capacity', mult: 1.5 },
+  { id: 't_hvdc',        name: 'Linhas HVDC',              cost: 2500,   req: ['t_substation'],  type: 'capacity', mult: 1.5 },
+  { id: 't_continental', name: 'Rede Continental',         cost: 12000,  req: ['t_hvdc'],        type: 'capacity', mult: 1.5 },
+  { id: 't_planetary',   name: 'Rede Planetária',          cost: 60000,  req: ['t_continental'], type: 'capacity', mult: 1.5 },
+  { id: 't_orbitalgrid', name: 'Rede Orbital',             cost: 100000, req: ['t_planetary'],   type: 'capacity', mult: 1.5 },
   // Armazenamento: o excedente vai para baterias e é vendido depois, valendo mais.
   { id: 't_storage',     name: 'Armazenamento em Rede',    cost: 120000, req: ['t_planetary', 't_battery'], type: 'excess', add: 0.15 },
   { id: 't_storage2',    name: 'Baterias de Estado Sólido', cost: 600000, req: ['t_storage'],     type: 'excess', add: 0.2 },
@@ -72,5 +74,6 @@ export const TECHS = [
   { id: 't_lab3',        name: 'Colaboração Global',       cost: 60000,  req: ['t_lab2'],        type: 'lab',  mult: 3 },
   { id: 't_lab4',        name: 'Inteligência Planetária',  cost: 250000, req: ['t_lab3'],        type: 'lab',  mult: 3 },
   { id: 't_auto',        name: 'Automação Industrial',     cost: 800,    req: ['t_lab'],         type: 'auto', interval: 1 },
+  { id: 't_autoregion',  name: 'Concessões Automáticas',   cost: 3000,   req: ['t_auto', 't_substation'], type: 'autoRegion' },
   { id: 't_auto2',       name: 'Gestão por IA',            cost: 20000,  req: ['t_auto'],        type: 'auto', interval: 0.2 },
 ];

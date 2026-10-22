@@ -41,6 +41,7 @@ import { BATTERY } from '../src/data/market.js';
 const DT = 0.1;
 const FAIL_PER_LEVEL = 0.03;
 const HAND_EVERY = 5;
+const SAVE_FOR = 300;
 
 // Sorte do próprio bot (erros nas crises), separada da sorte do jogo para não mudar a
 // sequência de eventos da partida.
@@ -98,10 +99,9 @@ function marketBot(s, play, bot) {
   }
 }
 
-function botStep(s, crises, play, bot) {
-  // Com a manivela automática o bot para de girar: um humano também pararia.
-  if (s.stats.playTime < 300 && !P.shopPerk(s, 'crank').autoCrank && Math.round(s.t / DT) % 3 === 0) A.crank(s);
-  for (const t of TECHS) if (E.techVisible(t, s) && s.rp >= t.cost) A.buyTech(s, t.id);
+// Compras com dinheiro: laboratório, upgrades, resfriamento, transformador e a fonte com
+// mais kW médio por $.
+function shopping(s) {
   if (E.labUnlocked(s) && E.labCost(s) < s.money * 0.2) A.buyLab(s);
   for (const g of GENERATORS) {
     if (s.owned[g.id] < 1) continue;
@@ -123,6 +123,17 @@ function botStep(s, crises, play, bot) {
     if (v > bestV) { bestV = v; best = g; }
   }
   if (best) A.buyGenBulk(s, best.id, 'max');
+}
+
+function botStep(s, crises, play, bot) {
+  // Com a manivela automática o bot para de girar: um humano também pararia.
+  if (s.stats.playTime < 300 && !P.shopPerk(s, 'crank').autoCrank && Math.round(s.t / DT) % 3 === 0) A.crank(s);
+  for (const t of TECHS) if (E.techVisible(t, s) && s.rp >= t.cost) A.buyTech(s, t.id);
+  // Região: com a rede cheia, junta dinheiro para a concessão (sem comprar nada) se ela
+  // couber em até SAVE_FOR s de renda; senão segue comprando e expande quando der.
+  const saving = A.canExpand(s) && A.expandCost(s) <= E.income(s) * SAVE_FOR;
+  if (A.canExpand(s) && s.money >= A.expandCost(s)) A.expandRegion(s);
+  if (!saving) shopping(s);
   E.tick(s, DT);
   marketBot(s, play, bot);
   autoStep(s, DT);
@@ -139,7 +150,7 @@ function botStep(s, crises, play, bot) {
   }
 }
 
-export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active' } = {}) {
+export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active', onStep = null } = {}) {
   const bot = { hand: 0 };
   botSeed = seed;
   const s = newState(daily ? dailySeed(daily) : seed);
@@ -158,6 +169,7 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, ch
     if (E.gridLoad(s) > 1) { saturated++; runSat++; }
     runSteps++;
     const min = (step * DT) / 60;
+    onStep?.(s, min);
     for (const g of GENERATORS) if (s.owned[g.id] > 0 && !(g.id in marks)) marks[g.id] = min;
     if (s.labs > 0 && !('lab' in marks)) marks.lab = min;
     if (!('shop' in marks) && shopDone(s)) marks.shop = min;

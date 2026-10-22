@@ -110,7 +110,7 @@ test('T compra transformador; sem dinheiro avisa', () => {
   s.money = 5000;
   app.key('T');
   assert.equal(s.transformers, 1);
-  assert.match(text(), /Transformador instalado: capacidade 180\.0 kW/);
+  assert.match(text(), /Transformador instalado: capacidade 1\.20k kW/);
 });
 
 test('Calor: ↑↓ escolhe o reator e C compra resfriamento', () => {

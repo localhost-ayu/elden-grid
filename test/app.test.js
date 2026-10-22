@@ -309,7 +309,7 @@ test('linha de upgrade cabe em 80 colunas para toda fonte e todo nível', () => 
 test('cabeçalho mostra uso da rede; Geradores: A liga/desliga a auto-compra', () => {
   const { app, press, text } = make();
   startNew(press);
-  assert.match(text(), /Rede 0%/);
+  assert.match(text(), /Bairro 0%/);
   press('a');
   assert.match(text(), /requer a pesquisa Automação Industrial/);
   app.state.techs.t_lab = true;

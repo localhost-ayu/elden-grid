@@ -28,7 +28,7 @@ export function describeRule(r) {
     const names = [...r.disabled.map(genName), ...(r.noCrank ? ['manivela'] : [])];
     parts.push(`sem ${names.length > 1 ? `${names.slice(0, -1).join(', ')} e ${names.at(-1)}` : names[0]}`);
   }
-  if (r.capacityExp) parts.push(`Linhas de Alta Tensão rendem x${(20 ** r.capacityExp).toFixed(1)} em vez de x20`);
+  if (r.capacityExp) parts.push(`cada região rende x${(25 ** r.capacityExp).toFixed(1)} em vez de x25 (e as pesquisas menos)`);
   if (r.priceHalfLife) parts.push(`preço cai à metade a cada ${Math.round(r.priceHalfLife / 60)} min, até ${Math.round(r.priceFloor * 100)}%`);
   if (r.upkeep) parts.push(`operação x${r.upkeep}`);
   if (r.cost) parts.push(`construir ${Object.keys(r.cost).map(genName).join('/')} x${Object.values(r.cost)[0]}`);

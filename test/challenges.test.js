@@ -57,7 +57,11 @@ test('Rede Velha, Mercado em Queda e Combustível Caro mudam rede, preço e oper
   const old = inRun('oldgrid', 3);
   old.techs = { ...normal.techs };
   const exp = CHALLENGES.find((c) => c.id === 'oldgrid').rules[2].capacityExp;
-  assert.ok(Math.abs(capacity(old) / capacity(normal) - 20 ** exp / 20) < 1e-9);
+  // A regra vale para a região e as pesquisas juntas: (região × pesquisas)^exp.
+  normal.region = 2;
+  old.region = 2;
+  const full = (1e5 / 150) * 1.5; // base da Metrópole sobre a normalização (150), vezes Linhas (x1.5)
+  assert.ok(Math.abs(capacity(old) / capacity(normal) - full ** exp / full) < 1e-9);
 
   const crash = inRun('crash', 1);
   assert.equal(priceDecay(crash), 1);

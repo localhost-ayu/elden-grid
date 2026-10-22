@@ -15,6 +15,18 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   produção a partir de 1 MW (K 0), e as estatísticas guardam o recorde com o marco
   passado (bairro, cidade, país, humanidade, Tipo I, II e III).
 
+### Mudado
+- **Regiões atendidas**: a rede passa a ser a concessão da região (Bairro, Cidade, Região
+  Metropolitana, Estado, País, Continente, Planeta). Para assumir a próxima (aba Rede,
+  tecla `N`) é preciso produzir o que ela pede, na escala real (Cidade 10 MW, País 1 TW,
+  Planeta 10 PW = Kardashev Tipo I), e pagar a concessão (90 s dessa renda). Cada região
+  traz a capacidade-base da rede e +5% no kWh. O cabeçalho mostra a região no lugar de
+  "Rede" ("Estado 87%"). A pesquisa nova Concessões Automáticas expande sozinha, e a
+  auto-compra guarda o dinheiro de uma concessão disponível.
+- Pesquisas de capacidade valem x1.5 cada (antes x20 a x1000): o salto vem das regiões. A
+  Rede Velha (desafio) passa a valer para as regiões também. Save **v13**: a partida em
+  andamento recebe a região que cobre a capacidade que tinha.
+
 ## [1.5.0] - 2026-10-22
 
 Operação: mercado vivo, baterias, contratos, previsão, manutenção e reputação.

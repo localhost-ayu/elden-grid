@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { REGIONS } from '../src/data/regions.js';
 import { TECHS } from '../src/data/research.js';
 import { GRID } from '../src/data/grid.js';
 import { newState, migrate, fromSave, isValidState, SAVE_VERSION } from '../src/core/state.js';
@@ -38,26 +39,28 @@ test('não compra pesquisa bloqueada, nem com PP de sobra; pré-requisito extra 
   assert.ok(buyTech(s, 't_market'));
 });
 
-test('capacidade da rede: base e multiplicadores das pesquisas', () => {
-  assert.equal(capacity(newState()), GRID.baseCapacity);
+test('capacidade da rede: base da região e multiplicadores das pesquisas', () => {
+  const base = REGIONS.earth[0].base;
+  assert.equal(capacity(newState()), base);
   const mult = (id) => TECHS.find((t) => t.id === id).mult;
-  assert.equal(capacity(withTechs('t_hv')), GRID.baseCapacity * mult('t_hv'));
-  assert.equal(capacity(withTechs('t_hv', 't_substation')), GRID.baseCapacity * mult('t_hv') * mult('t_substation'));
+  assert.ok(Math.abs(capacity(withTechs('t_hv')) - base * mult('t_hv')) < 1e-9);
+  assert.ok(Math.abs(capacity(withTechs('t_hv', 't_substation')) - base * mult('t_hv') * mult('t_substation')) < 1e-9);
 });
 
 test('venda: até a capacidade a preço cheio, excedente com desconto', () => {
   const s = newState();
   const p = price(s);
+  const cap = capacity(s);
   assert.deepEqual(sales(s, 100), { full: 100, excess: 0, perSecond: 100 * p });
-  const over = sales(s, 250);
-  assert.equal(over.full, 150);
+  const over = sales(s, cap + 100);
+  assert.equal(over.full, cap);
   assert.equal(over.excess, 100);
-  assert.ok(Math.abs(over.perSecond - (150 + 100 * GRID.excessPriceRate) * p) < 1e-9);
+  assert.ok(Math.abs(over.perSecond - (cap + 100 * GRID.excessPriceRate) * p) < 1e-9);
 });
 
 test('tick e renda respeitam a capacidade (energia total conta tudo)', () => {
   const s = newState();
-  s.owned.nuclear = 1; // 6000 kW numa rede de 150
+  s.owned.nuclear = 1; // 6000 kW numa rede de 1000 (Bairro)
   s.techs.t_nuclear = true;
   assert.ok(gridLoad(s) > 1);
   const kw = power(s);
