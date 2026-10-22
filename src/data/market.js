@@ -13,3 +13,16 @@ export const MARKET = {
   surge: { chance: 0.15, mult: 1.6, duration: [8, 15] },
   impact: { halfLife: 20, depthSeconds: 60 },
 };
+
+// Banco de baterias: cada banco guarda `bankSeconds` s da capacidade da rede (escala com
+// a partida). Custo = baseCost × growth^bancos; no máximo `maxBanks`.
+//   Carga: o excedente da rede (o que passaria da capacidade) entra sozinho; com
+//   "carregar barato" ligado, também `cheapShare` da produção quando o preço está abaixo
+//   da média (essa energia deixa de ser vendida na hora).
+//   Venda manual: tudo de uma vez a `manualRate` do valor, sofrendo o próprio impacto.
+//   Venda automática: quando o preço passa de `autoAbove` × a média (ou num surto),
+//   vende `autoShare` da carga por segundo, a `autoRate` do valor.
+export const BATTERY = {
+  bankSeconds: 20, baseCost: 5000, growth: 6, maxBanks: 10,
+  cheapShare: 0.5, manualRate: 0.95, autoRate: 0.8, autoAbove: 1.12, autoShare: 0.25,
+};

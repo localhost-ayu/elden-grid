@@ -22,6 +22,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   vez derruba o preço por um tempo (o impacto cai à metade a cada 20 s). A aba Mercado
   mostra demanda, surto, impacto e o gráfico do preço. Offline o mercado fica neutro.
   Save **v12** (`state.market`), migrado sem perda.
+- **Baterias** na aba Mercado: bancos (`B`, até 10) que guardam 20 s da capacidade da rede
+  cada e carregam sozinhos com o excedente. `V` vende a carga ao preço do momento (vender
+  muito de uma vez rende menos e derruba o preço); `A` liga a venda automática (no surto
+  ou com o preço alto, a 80% do valor); `C` liga a carga barata (guarda metade da
+  produção quando o preço está abaixo da média).
 
 ## [1.4.0] - 2026-10-22
 

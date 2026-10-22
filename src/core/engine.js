@@ -11,7 +11,8 @@ import { add, peak } from './records.js';
 import { ACHIEVEMENT_BONUS } from '../data/achievements.js';
 import { rules, priceDecay, genDisabled } from './challenges.js';
 import { reward, rewardMult } from './rewards.js';
-import { marketFactor, marketStep } from './market.js';
+import { marketFactor, marketStep, batteryCap, addImpact } from './market.js';
+import { BATTERY, MARKET } from '../data/market.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -196,10 +197,54 @@ export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => boug
 
 // `average` = médias do ambiente (offline); nesse modo o calor não é simulado.
 // Retorna os ids de reatores que desligaram por superaquecimento.
+// Baterias (online): guardam o excedente e, com "carregar barato", parte da produção
+// quando o preço está abaixo da média. Retorna os kW desviados da venda.
+function charge(s, kw, dt) {
+  const b = s.market.battery;
+  const room = batteryCap(s, capacity(s)) - b.kwh;
+  if (room <= 0 || !b.banks) return 0;
+  const excess = Math.max(0, kw - capacity(s));
+  const cheap = b.cheap && price(s) < priceBase(s) ? BATTERY.cheapShare * (kw - excess) : 0;
+  const stored = Math.min(room, (excess + cheap) * dt);
+  b.kwh += stored;
+  add(s, 'batteryIn', stored);
+  return stored / dt;
+}
+
+// Valor de vender `kwh` agora: o impacto da própria venda entra pela metade (média entre
+// o preço antes e depois), então vender muito de uma vez rende cada vez menos.
+const depth = (s) => capacity(s) * MARKET.impact.depthSeconds;
+export function batteryValue(s, kwh, rate) {
+  const d = depth(s);
+  const slip = d > 0 ? 1 / (1 + kwh / d / 2 / (1 + s.market.impact)) : 1;
+  return kwh * price(s) * slip * rate;
+}
+export function sellBattery(s, kwh = s.market.battery.kwh, rate = BATTERY.manualRate) {
+  const b = s.market.battery;
+  const e = Math.min(kwh, b.kwh);
+  if (e <= 0) return 0;
+  const money = batteryValue(s, e, rate);
+  b.kwh -= e;
+  addImpact(s, e, depth(s));
+  s.money += money;
+  s.earned += money;
+  add(s, 'batteryOut', e);
+  add(s, 'batteryMoney', money);
+  return money;
+}
+// Venda automática: no surto ou com o preço bem acima da média, um pouco por segundo.
+function autoSell(s, dt) {
+  const b = s.market.battery;
+  if (!b.auto || b.kwh <= 0) return;
+  if (s.t >= s.market.surgeUntil && price(s) < priceBase(s) * BATTERY.autoAbove) return;
+  sellBattery(s, b.kwh * Math.min(1, BATTERY.autoShare * dt), BATTERY.autoRate);
+}
+
 export function tick(s, dt, average = false) {
   const shutdowns = average ? [] : heatStep(s, dt, (g) => genModMult(s, g, 'output'));
   const kw = power(s, average);
-  const sold = sales(s, kw, average);
+  const stored = average ? 0 : charge(s, kw, dt);
+  const sold = sales(s, kw - stored, average);
   const cost = upkeep(s) * dt;
   const net = sold.perSecond * dt - cost;
   s.totalEnergy += kw * dt;
@@ -207,7 +252,7 @@ export function tick(s, dt, average = false) {
   s.earned += Math.max(0, net);
   s.rp += rpRate(s) * dt;
   record(s, dt, average, { kw, sold, cost, net, shutdowns });
-  if (!average) marketStep(s, dt);
+  if (!average) { autoSell(s, dt); marketStep(s, dt); }
   s.t += dt;
   return shutdowns;
 }

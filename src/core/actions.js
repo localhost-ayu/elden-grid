@@ -9,6 +9,7 @@ import { isHot, nextCooling } from './heat.js';
 import { shopValue } from './prestige.js';
 import { add, crankTap } from './records.js';
 import { rules } from './challenges.js';
+import { bankCost, canBuyBank } from './market.js';
 
 // Rende uma fração da produção de 1 s (mínimo 1 kWh): continua útil a partida toda.
 // Retorna 0 se a manivela está desligada (desafio Sem Vento).
@@ -102,6 +103,17 @@ export function buyTransformer(s) {
   s.money -= c;
   s.transformers++;
   add(s, 'transformers');
+  add(s, 'moneySpent', c);
+  return true;
+}
+
+// Banco de baterias (aba Mercado): mais capacidade de guardar energia.
+export function buyBank(s) {
+  const c = bankCost(s);
+  if (!canBuyBank(s) || s.money < c) return false;
+  s.money -= c;
+  s.market.battery.banks++;
+  add(s, 'banks');
   add(s, 'moneySpent', c);
   return true;
 }

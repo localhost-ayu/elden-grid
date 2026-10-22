@@ -1,6 +1,6 @@
 // Mercado: demanda, surtos e impacto das vendas no preço. Não importa o engine (o engine
 // consulta marketFactor daqui), e quem vende passa a profundidade do mercado.
-import { MARKET } from '../data/market.js';
+import { MARKET, BATTERY } from '../data/market.js';
 import { rules } from './challenges.js';
 
 // mulberry32 com o estado em s.market.rng (separado da sorte dos eventos).
@@ -16,6 +16,7 @@ export const newMarket = (seed) => ({
   rng: (seed ^ 0x9e3779b9) >>> 0,
   demand: 1, target: 1, retarget: MARKET.demand.every[0], surgeUntil: 0,
   impact: 0,
+  battery: { kwh: 0, banks: 0, cheap: false, auto: false },
 });
 
 export const surging = (s) => s.t < s.market.surgeUntil;
@@ -55,3 +56,8 @@ export function marketStep(s, dt) {
 export function addImpact(s, kwh, depthKwh) {
   if (depthKwh > 0) s.market.impact += kwh / depthKwh;
 }
+
+// ---- baterias ----
+export const batteryCap = (s, capacityKw) => s.market.battery.banks * BATTERY.bankSeconds * capacityKw;
+export const bankCost = (s) => Math.ceil(BATTERY.baseCost * BATTERY.growth ** s.market.battery.banks);
+export const canBuyBank = (s) => s.market.battery.banks < BATTERY.maxBanks;
