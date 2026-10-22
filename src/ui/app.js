@@ -524,6 +524,12 @@ export function createApp({
           : `Reputação caiu para ${repName(app.state)}.`, tier > app.repTier ? 'ok' : 'err', 6000);
       }
       app.repTier = tier;
+      // Fim do jogo: Kardashev 3.0, uma vez. O jogo segue em modo livre.
+      if (!app.state.empire.ended && !app.state.run && kardashev(power(app.state)) >= 3) {
+        app.state.empire.ended = true;
+        say('Kardashev 3.0: uma civilização Tipo III. A galáxia inteira acende com a sua rede.', 'ok', 20000);
+        say('Do primeiro giro da manivela até aqui: obrigado por jogar! O jogo continua em modo livre.', 'ok', 20000);
+      }
       if (!app.state.events.crisis) app.crisisOpen = false;
       celebrate(checkAchievements(app.state));
       if (goalReached(app.state)) finishChallenge();

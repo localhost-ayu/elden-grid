@@ -149,3 +149,22 @@ test('conquistas de regiões e Kardashev: valem no capítulo e ficam para trás 
   for (const id of ['k_city', 'k_country', 'k_planet', 'k_mars']) assert.ok(got.includes(id), id);
   assert.ok(!got.includes('k_sun'));
 });
+
+test('fim do jogo: Kardashev 3.0 avisa uma vez e o jogo segue', async () => {
+  const { createApp } = await import('../src/ui/app.js');
+  const { stripAnsi } = await import('../src/ui/format.js');
+  const s = newState();
+  s.chapter = 'galaxy';
+  s.owned.darkenergy = 50000; // muito acima de 4×10^34 kW
+  s.events.next = 1e9;
+  const slots = { 1: { status: 'ok', savedAt: null, state: s } };
+  const store = { list: () => [1, 2, 3].map((n) => ({ slot: n, ...(slots[n] ?? { status: 'empty' }) })), load: (n) => slots[n], save: () => true, remove() {} };
+  const app = createApp({ store, now: 0 });
+  app.key('1');
+  app.update(0.1, 100);
+  const text = () => app.lines(80, 24).map(stripAnsi).join('\n');
+  assert.match(text(), /Kardashev 3\.0: uma civilização Tipo III/);
+  assert.equal(s.empire.ended, true);
+  assert.ok(s.achievements.k_k3);
+  assert.ok(isValidState(s));
+});

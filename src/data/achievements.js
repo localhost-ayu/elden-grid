@@ -178,6 +178,7 @@ export const ACHIEVEMENTS = [
   { id: 'k_orion', cat: 'empire', name: 'Braço de Órion', desc: 'atenda o Braço de Órion', type: 'region', chapter: 'galaxy', at: 2 },
   { id: 'k_core', cat: 'empire', name: 'Tipo III', desc: 'atenda o Núcleo Galáctico', type: 'region', chapter: 'galaxy', at: 4 },
   { id: 'k_k15', cat: 'empire', name: 'Meio Caminho', desc: 'chegue a Kardashev 1.5', type: 'kardashev', at: 1.5 },
+  { id: 'k_k3', cat: 'empire', name: 'Escala Completa', desc: 'chegue a Kardashev 3.0', type: 'kardashev', at: 3 },
   { id: 'k_patents', cat: 'empire', name: 'Inventor', desc: 'guarde 25 Patentes', type: 'patents', at: 25 },
   { id: 'c_daily1', cat: 'challenges', name: 'Bom Dia', desc: 'complete uma semente do dia', type: 'dailies', at: 1 },
   { id: 'c_daily7', cat: 'challenges', name: 'Hábito', desc: '7 sementes do dia completas', type: 'dailies', at: 7 },
