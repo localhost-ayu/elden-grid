@@ -1,6 +1,7 @@
 // O estado é JSON puro para poder ser salvo/carregado sem perdas.
 import { GENERATORS } from '../data/generators.js';
 import { newMarket } from './market.js';
+import { newWear } from './wear.js';
 import { SCHEDULE } from '../data/events.js';
 import { newStats, mergeStats, isValidStats } from './records.js';
 
@@ -32,6 +33,7 @@ export function newState(seed = 1) {
     // effects: [{ id, until }] (until null = crise em aberto); crisis: { id, deadline, game }
     events: { rng: seed >>> 0, next: SCHEDULE.first, effects: [], crisis: null, seen: 0 },
     market: newMarket(seed >>> 0), // demanda, surtos e impacto das vendas no preço
+    wear: newWear(), // desgaste por fonte, unidades quebradas e a equipe de manutenção
     stats: newStats(),  // esta partida
     career: newStats(), // todas as partidas (sobrevive à ascensão)
   };
@@ -50,7 +52,7 @@ export function newState(seed = 1) {
 //   v9 = state.achievements, state.legacy.monument, state.auto.crank (fromSave preenche)
 //   v10 = state.run (fromSave preenche com null)
 //   v11 = pontos de legado pela raiz cúbica: legacy.lifetime é reajustado à curva nova
-//   v12 = state.market (fromSave preenche)
+//   v12 = state.market, state.wear (fromSave preenche)
 export const SAVE_VERSION = 12;
 
 const MIGRATIONS = {
@@ -121,6 +123,7 @@ export function fromSave(raw) {
     battery: { ...base.market.battery, ...raw.market?.battery },
     contracts: { ...base.market.contracts, ...raw.market?.contracts },
   };
+  s.wear = { ...base.wear, ...raw.wear, level: { ...base.wear.level, ...raw.wear?.level } };
   s.stats = mergeStats(base.stats, raw.stats);
   s.career = mergeStats(base.career, raw.career);
   // Um minijogo pela metade não sobrevive ao save: a crise volta ao alerta.
@@ -166,5 +169,8 @@ export function isValidState(s) {
   const k = m.contracts;
   if (!k || !Array.isArray(k.offers) || !finite(k.next) || !count(k.done) || !count(k.failed)) return false;
   if (k.active !== null && !(k.active && typeof k.active.type === 'string' && finite(k.active.deadline))) return false;
+  const w = s.wear;
+  if (!w || typeof w.crew !== 'boolean' || !w.level || !Object.values(w.level).every((x) => finite(x) && x >= 0 && x <= 1)) return false;
+  if (!Array.isArray(w.broken) || !w.broken.every((b) => b && typeof b.gen === 'string' && finite(b.at))) return false;
   return !!s.techs && typeof s.techs === 'object';
 }

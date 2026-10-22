@@ -35,6 +35,14 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - **Previsão**, quinta visão da aba Rede: as próximas 24 h de jogo de vento, sol, maré,
   Vácuo e preço, com o pico de cada um. O erro cresce com a distância (até ±30%); a
   pesquisa nova Satélites Meteorológicos o reduz a um terço. Surtos não se preveem.
+- **Desgaste e manutenção**: cada fonte perde eficiência com o tempo, do jeito dela
+  (poeira na solar, rolamentos na eólica, cracas na maremotriz...), até no máximo 30%.
+  Visão nova **Manutenção** na aba Rede: `F` paga a revisão na hora, `J` faz à mão
+  (quatro setas na ordem, grátis) e `A` contrata a equipe, que fica com 5% da receita e
+  segura o desgaste em 10% para todas as fontes. O cabeçalho avisa quando as usinas
+  passam a render menos de 95%. Offline nada se desgasta.
+- **Quebras**: de vez em quando uma unidade para (no máximo duas abertas). A revisão paga
+  ou à mão conserta; com a equipe, o conserto sai sozinho em 30 s.
 
 ## [1.4.0] - 2026-10-22
 

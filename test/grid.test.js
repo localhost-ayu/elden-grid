@@ -66,7 +66,7 @@ test('flowArrow: largura fixa, mais ">" para fonte maior, anda com o tempo', () 
   assert.equal(stripAnsi(flowArrow(0, 0)), '········');
 });
 
-test('V alterna Mapa → Fluxo → Gráfico → Calor → Previsão → Mapa', () => {
+test('V alterna Mapa → Fluxo → Gráfico → Calor → Previsão → Manutenção → Mapa', () => {
   const s = newState();
   s.owned.wind = 5;
   const { app, text } = open(s);
@@ -78,6 +78,7 @@ test('V alterna Mapa → Fluxo → Gráfico → Calor → Previsão → Mapa', (
   assert.match(text(), /Vento .* \d\.\d\dx → /);
   assert.match(text(), /Preço .* \$\d/);
   for (const l of app.lines(80, 24)) assert.ok(visibleLength(l) <= 80, stripAnsi(l));
+  app.key('v'); assert.match(text(), /sem equipe/);
   app.key('v'); assert.match(text(), /ociosa/);
 });
 

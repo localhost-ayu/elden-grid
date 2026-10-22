@@ -106,7 +106,8 @@ até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
 | Geradores | `↑↓` + `Enter` ou `0`–`9` compram · `←→` troca de página (10 fontes por página) · `B` lote · `U` upgrade · `A` auto-compra · `V` cena das usinas |
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
 | Desafios | `↑↓` desafio · `←→` nível · `Enter` joga · `C` continua a partida do slot D |
-| Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento |
+| Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento · na Manutenção: `↑↓` fonte, `F` paga, `J` à mão, `A` equipe |
+| Mercado | `B` banco de baterias · `V` vende a carga · `A` venda automática · `C` carga barata · `1`–`3` aceita contrato · `D` desiste |
 | Legado | `↑↓` + `Enter` ascende ou compra na loja (com confirmação `S`/`N`) |
 | Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` · `V` conquistas |
 | Opções | `↑↓` escolhe, `←→`/`Enter` muda |

@@ -1,7 +1,7 @@
 // Roteador de telas. Não toca o terminal: recebe nomes de tecla (input.js) e devolve
 // linhas (para o screen.js), por isso dá para testar sem TTY.
 import { newState } from '../core/state.js';
-import { tick, power, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
+import { tick, power, genPower, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
 import { autoStep, autoCrankStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
@@ -29,7 +29,8 @@ import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
 import * as market from './screens/market.js';
-import { surging } from '../core/market.js';
+import { surging, rand as marketRand } from '../core/market.js';
+import { breakdownStep, wearFactor } from '../core/wear.js';
 import { contractsStep, holdContracts } from '../core/contracts.js';
 import { contractTitle, rewardTitle } from './screens/market.js';
 import { MARKET } from '../data/market.js';
@@ -438,6 +439,12 @@ export function createApp({
     }
   }
 
+  function announceWear(note) {
+    const g = GENERATORS.find((x) => x.id === note.gen);
+    if (note.type === 'broke') say(`${glyphs().warn} Uma unidade de ${g.name} quebrou e parou. Conserte na aba Rede (Manutenção).`, 'err', 8000);
+    else say(`A equipe consertou a unidade de ${g.name}.`, 'info', 4000);
+  }
+
   function announceContract(note) {
     const c = note.contract ?? note.offer;
     if (note.type === 'offer') say(`Nova oferta de contrato: ${contractTitle(c)} (aba Mercado).`, 'info', 4000);
@@ -485,6 +492,7 @@ export function createApp({
       else {
         eventsStep(app.state, dt).forEach(announce);
         contractsStep(app.state).forEach(announceContract);
+        breakdownStep(app.state, dt, () => marketRand(app.state)).forEach(announceWear);
       }
       // Surto de demanda: avisa uma vez quando começa (escondido, não interrompe).
       const surge = surging(app.state);
@@ -585,6 +593,7 @@ export function createApp({
       // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
       paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`) +
       (s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : '') +
+      wearText(s) +
       (s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${Math.round((legacyMult(s) - 1) * 100)}%`) : '') +
       challengeBadge(s),
     ];
@@ -614,6 +623,23 @@ export function createApp({
     const color = p >= priceBase(s) ? C.green : C.yellow;
     const surge = surging(s) ? paint(C.yellow + C.bold, ' surto') : '';
     return `Preço ${paint(color, '$' + p.toFixed(2) + '/kWh ' + (priceRising(s) ? glyphs().up : glyphs().down))}${surge}`;
+  }
+
+  // Eficiência média das usinas (desgaste e quebras, pesada pela produção): aparece só
+  // quando a manutenção começa a pesar.
+  function wearText(s) {
+    let raw = 0;
+    let real = 0;
+    for (const g of GENERATORS) {
+      if (!s.owned[g.id]) continue;
+      const kw = genPower(s, g);
+      const f = wearFactor(s, g);
+      real += kw;
+      raw += f > 0 ? kw / f : 0;
+    }
+    const eff = raw > 0 ? real / raw : 1;
+    if (eff >= 0.95 && !s.wear.broken.length) return '';
+    return '  ' + paint(eff < 0.85 || s.wear.broken.length ? C.red : C.yellow, `Usinas ${Math.round(eff * 100)}%`);
   }
 
   // Uso da rede: verde folgada, amarelo perto do limite, vermelho saturada (vendendo

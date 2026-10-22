@@ -13,6 +13,8 @@ import { rules, priceDecay, genDisabled } from './challenges.js';
 import { reward, rewardMult } from './rewards.js';
 import { marketFactor, marketStep, batteryCap, addImpact } from './market.js';
 import { BATTERY, MARKET } from '../data/market.js';
+import { wearFactor, wearStep } from './wear.js';
+import { WEAR } from '../data/wear.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -81,7 +83,7 @@ function genRaw(s, g, average) {
   const out = genModMult(s, g, 'output');
   // Offline não há eventos: um blecaute no instante do save não pune a hora inteira fora.
   const ev = average ? 1 : eventMult(s, 'output', g.id);
-  return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev;
+  return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev * wearFactor(s, g);
 }
 
 // Alimentação (trait `feed`, Kugelblitz): a produção das outras fontes sobre `share` × a
@@ -138,8 +140,18 @@ export function sales(s, kw, average = false) {
 // Fração da capacidade em uso (1 = no limite; > 1 = saturada).
 export const gridLoad = (s) => power(s) / capacity(s);
 
+// Equipe de manutenção (core/wear.js): fica com uma fração fixa da receita bruta.
+export const crewCut = (s) => (s.wear.crew ? WEAR.crewShare : 0);
+
 // Centralizada aqui para a UI não refazer a conta por conta própria.
-export const income = (s) => sales(s, power(s)).perSecond - upkeep(s);
+export const income = (s) => sales(s, power(s)).perSecond * (1 - crewCut(s)) - upkeep(s);
+
+// Receita bruta (antes da equipe e da operação) que vem de uma fonte, pela parte dela na
+// produção. Base do preço da manutenção paga.
+export function genRevenue(s, g) {
+  const total = GENERATORS.reduce((sum, x) => sum + genPower(s, x), 0);
+  return total > 0 ? sales(s, power(s)).perSecond * genPower(s, g) / total : 0;
+}
 
 // Cada unidade é arredondada para cima individualmente (como no MVP), então o custo
 // de um lote é a soma das unidades — comprar x10 custa exatamente o mesmo que 10 x1.
@@ -245,14 +257,16 @@ export function tick(s, dt, average = false) {
   const kw = power(s, average);
   const stored = average ? 0 : charge(s, kw, dt);
   const sold = sales(s, kw - stored, average);
-  const cost = upkeep(s) * dt;
+  const crew = sold.perSecond * crewCut(s) * dt;
+  const cost = upkeep(s) * dt + crew;
   const net = sold.perSecond * dt - cost;
   s.totalEnergy += kw * dt;
   s.money += net;
   s.earned += Math.max(0, net);
   s.rp += rpRate(s) * dt;
   record(s, dt, average, { kw, sold, cost, net, shutdowns });
-  if (!average) { autoSell(s, dt); marketStep(s, dt); }
+  if (!average) { autoSell(s, dt); marketStep(s, dt); wearStep(s, dt); }
+  if (crew) add(s, 'crewWages', crew);
   s.t += dt;
   return shutdowns;
 }
