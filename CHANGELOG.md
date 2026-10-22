@@ -10,11 +10,9 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
-### Corrigido
-- A segunda linha do cabeçalho passava de 80 colunas com o legado muito alto: o bônus
-  do legado usa o formato curto (+1.23M%) e, sem espaço, os selos menos importantes saem.
-- O recorde de tempo das crises da Fronteira (contenção e tempestade solar) não era
-  gravado, e as conquistas Mão Firme e Escudo Vivo nunca eram liberadas.
+## [1.5.0] - 2026-10-22
+
+Operação: mercado vivo, baterias, contratos, previsão, manutenção e reputação.
 
 ### Adicionado
 - Aba **Mercado** (tecla `K`), entre Rede e Legado. Em 80 colunas a barra de abas mostra
@@ -61,6 +59,12 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   ocioso só contrata a equipe. Ocioso: o mesmo ritmo da 1.4 (1ª ascensão ~1 h, loja em
   ~16 h, desafios V em 2h40–3h50). Ativo: partidas 15–30% mais curtas e loja em ~12 h
   (o bot joga de forma perfeita; é o teto, não o esperado).
+
+### Corrigido
+- A segunda linha do cabeçalho passava de 80 colunas com o legado muito alto: o bônus
+  do legado usa o formato curto (+1.23M%) e, sem espaço, os selos menos importantes saem.
+- O recorde de tempo das crises da Fronteira (contenção e tempestade solar) não era
+  gravado, e as conquistas Mão Firme e Escudo Vivo nunca eram liberadas.
 
 ## [1.4.0] - 2026-10-22
 
@@ -242,7 +246,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.4.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...v1.2.0
