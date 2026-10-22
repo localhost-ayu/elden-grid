@@ -26,6 +26,16 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - Pesquisas de capacidade valem x1.5 cada (antes x20 a x1000): o salto vem das regiões. A
   Rede Velha (desafio) passa a valer para as regiões também. Save **v13**: a partida em
   andamento recebe a região que cobre a capacidade que tinha.
+- **Capítulos**: Terra, Sistema Solar e Galáxia, em sequência. Cada fonte e cada pesquisa
+  de fonte pertence a um capítulo (a aba Geradores mostra só as do capítulo atual); as
+  pesquisas gerais (laboratório, automação, rede, mercado) valem em todos. Enxame e
+  Kugelblitz passam para o Sistema Solar; o Vácuo, para a Galáxia.
+- O marco de ascensão passa a ser uma região: na Terra, atender o País (e, da 4ª ascensão
+  em diante, o Planeta), ou a árvore do capítulo completa.
+- Saves com Enxame, Kugelblitz ou Vácuo na Terra: unidades, upgrades e pesquisas deles
+  ficam guardados (aviso uma vez ao carregar) e voltam como Herança da Fronteira ao
+  colonizar o Sistema Solar. Conquistas de "todas as fontes/upgrades/pesquisas" contam as
+  do capítulo.
 
 ## [1.5.0] - 2026-10-22
 

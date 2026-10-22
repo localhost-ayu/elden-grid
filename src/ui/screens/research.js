@@ -2,7 +2,7 @@
 // só aparecem como "requer".
 import { GENERATORS } from '../../data/generators.js';
 import { TECHS } from '../../data/research.js';
-import { bought, capacity, excessRate, rpRate } from '../../core/engine.js';
+import { bought, capacity, excessRate, rpRate, chapterTechs } from '../../core/engine.js';
 import { buyTech } from '../../core/actions.js';
 import { C, paint } from '../theme.js';
 import { fmt, visibleLength } from '../format.js';
@@ -55,7 +55,12 @@ export function flattenTree(techs = TECHS) {
   walk(roots, '');
   return out;
 }
-const TREE = flattenTree();
+// Uma árvore por capítulo: as pesquisas gerais e as do capítulo (calculada uma vez).
+const TREES = new Map();
+const treeOf = (s) => {
+  if (!TREES.has(s.chapter)) TREES.set(s.chapter, flattenTree(chapterTechs(s)));
+  return TREES.get(s.chapter);
+};
 
 function status(s, t) {
   if (bought(s, t.id)) return 'done';
@@ -105,10 +110,12 @@ function detail(s, t) {
 
 export function render(ctx, height, width) {
   const s = ctx.state;
+  const TREE = treeOf(s);
   ctx.ui.sel = Math.max(0, Math.min(ctx.ui.sel ?? 0, TREE.length - 1));
-  const done = TECHS.filter((t) => bought(s, t.id)).length;
+  const all = chapterTechs(s);
+  const done = all.filter((t) => bought(s, t.id)).length;
   const top = [
-    '   ' + paint(C.bold, 'Árvore de pesquisa') + paint(C.dim, `  ${done}/${TECHS.length} concluídas`) +
+    '   ' + paint(C.bold, 'Árvore de pesquisa') + paint(C.dim, `  ${done}/${all.length} concluídas`) +
       paint(C.dim, `  ·  rede ${fmt(capacity(s))} kW (excedente a ${Math.round(excessRate(s) * 100)}%)`),
   ];
   if (s.labs === 0) top.push(paint(C.dim, '   Construa um Laboratório (aba Geradores) para gerar Pontos de Pesquisa.'));
@@ -119,6 +126,7 @@ export function render(ctx, height, width) {
 
 export function key(ctx, k) {
   const ui = ctx.ui;
+  const TREE = treeOf(ctx.state);
   if (k === 'up') { ui.sel = Math.max(0, (ui.sel ?? 0) - 1); return true; }
   if (k === 'down') { ui.sel = Math.min(TREE.length - 1, (ui.sel ?? 0) + 1); return true; }
   if (k === 'pageup') { ui.sel = Math.max(0, (ui.sel ?? 0) - 10); return true; }

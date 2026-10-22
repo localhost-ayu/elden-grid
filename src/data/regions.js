@@ -20,4 +20,21 @@ export const REGIONS = {
     { name: 'Continente', base: 1e11, need: 1e10 },
     { name: 'Planeta', base: 1e12, need: 1e13 },
   ],
+  // Do Tipo I (10^13 kW) ao Tipo II (4×10^23 kW). A calibrar com o capítulo (2.0, etapa 4).
+  solar: [
+    { name: 'Órbita Baixa', base: 1e13, need: 0 },
+    { name: 'Lua', base: 1e14, need: 1e14 },
+    { name: 'Marte', base: 1e16, need: 1e16 },
+    { name: 'Cinturão de Asteroides', short: 'Cinturão', base: 1e18, need: 1e18 },
+    { name: 'Júpiter', base: 4e21, need: 1e20 },
+    { name: 'Sol', base: 4e24, need: 4e23 },
+  ],
+  // Do Tipo II ao Tipo III (4×10^34 kW). A calibrar (2.0, etapa 5).
+  galaxy: [
+    { name: 'Estrelas Vizinhas', base: 1e25, need: 0 },
+    { name: 'Bolha Local', base: 1e27, need: 1e27 },
+    { name: 'Braço de Órion', short: 'Órion', base: 1e30, need: 1e29 },
+    { name: 'Disco Galáctico', short: 'Disco', base: 4e32, need: 1e32 },
+    { name: 'Núcleo Galáctico', short: 'Núcleo', base: 4e35, need: 4e34 },
+  ],
 };

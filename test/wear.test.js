@@ -120,7 +120,7 @@ test('legado: Equipe Herdada começa contratada e cobra menos; Baterias Herdadas
   const { LEGACY } = await import('../src/data/legacy.js');
   const s = newState();
   s.earned = LEGACY.minRunEarned;
-  s.owned.antimatter = 1;
+  s.region = 4; // atende o País: fecha a partida
   s.legacy.shop.heircrew = 2;
   s.legacy.shop.heirbanks = 3;
   assert.ok(ascend(s) > 0);

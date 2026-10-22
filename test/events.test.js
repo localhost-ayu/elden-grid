@@ -284,7 +284,7 @@ test('ascender mantém a sorte correndo (não repete os eventos da 1ª partida)'
   rand(s);
   const rng = s.events.rng;
   s.earned = LEGACY.minRunEarned;
-  s.owned.antimatter = 1;
+  s.region = 4; // atende o País: fecha a partida
   assert.ok(ascend(s) > 0);
   assert.equal(s.events.rng, rng);
   assert.equal(s.events.crisis, null);

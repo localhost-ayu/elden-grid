@@ -281,6 +281,13 @@ export function createApp({
     app.particles = createParticles();
     app.crisisOpen = false;
     remember(n);
+    // Save da 1.4/1.5 com fontes da Fronteira na Terra: explica uma vez para onde foram.
+    const stash = state.empire?.frontierStash;
+    if (stash && !stash.noticed) {
+      stash.noticed = true;
+      say('A Fronteira mudou de lugar na 2.0: Enxame, Kugelblitz e Vácuo agora são do Sistema Solar e da Galáxia.', 'info', 12000);
+      say('O que você tinha delas ficou guardado e volta como Herança da Fronteira ao colonizar o Sistema Solar.', 'info', 12000);
+    }
   }
 
   function loadSlot(n) {

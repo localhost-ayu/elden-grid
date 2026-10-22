@@ -27,6 +27,7 @@ function make(state) {
 
 test('Enxame: só se compra na janela de lançamento; a pesquisa alarga a janela', () => {
   const s = newState();
+  s.chapter = 'solar';
   const g = gen('swarm');
   const tr = g.traits.find((x) => x.type === 'launch');
   s.techs.t_orbital = true;
@@ -49,6 +50,7 @@ test('Enxame: só se compra na janela de lançamento; a pesquisa alarga a janela
 
 test('Enxame: produção fixa (sem noite) e a auto-compra pula a janela fechada', () => {
   const s = newState();
+  s.chapter = 'solar';
   s.techs.t_orbital = true;
   s.owned.swarm = 1;
   const kw = [0, 6, 12, 18].map((h) => { s.t = h; return power(s); });
@@ -58,53 +60,48 @@ test('Enxame: produção fixa (sem noite) e a auto-compra pula a janela fechada'
   assert.notEqual(cheapestGen(s)?.id, 'swarm');
 });
 
-test('aba Geradores: página 2 com a Fronteira, ←→ troca e as teclas valem na página aberta', () => {
+test('aba Geradores: só as fontes do capítulo, com as teclas na ordem dele', () => {
   const s = newState();
   s.money = 1e15;
-  const { app, text } = make(s);
-  assert.doesNotMatch(text(), /pág \d/, 'uma página só no começo');
-  app.key('right');
-  assert.doesNotMatch(text(), /pág \d/);
   s.techs.t_orbital = true;
-  assert.match(text(), /fonte  pág 1\/2 ←→/);
-  assert.match(text(), /←→ página/);
-  app.key('right');
+  const { app, text } = make(s);
+  assert.doesNotMatch(text(), /Enxame/, 'na Terra, o Enxame não existe');
+  app.key('1');
+  assert.ok(s.owned.wind > 0, 'na Terra, a tecla 1 é a eólica');
+  s.chapter = 'solar';
   const t = text();
-  assert.match(t, /pág 2\/2/);
   assert.match(t, /\[1\] Enxame Orbital/);
   assert.match(t, /janela aberta|lançamento em/);
-  assert.doesNotMatch(t, /Turbina Eólica/);
+  assert.doesNotMatch(t, /\[1\] Turbina Eólica/);
   for (const l of app.lines(80, 24)) assert.ok(visibleLength(l) <= 80, stripAnsi(l));
+  s.t = 0;
   app.key('1');
-  assert.ok(s.owned.swarm > 0, 'a tecla 1 da página 2 compra o Enxame');
-  assert.equal(s.owned.wind, 0);
+  assert.ok(s.owned.swarm > 0, 'no Sistema Solar, a tecla 1 compra o Enxame');
   app.state.t = 30;
   app.key('1');
   assert.match(text(), /próxima janela de lançamento abre em \d+ s/);
-  app.key('left');
-  app.key('1');
-  assert.ok(s.owned.wind > 0, 'de volta à página 1, a tecla 1 é a eólica');
 });
 
 test('Kugelblitz: rende a fração de alimentação que as outras fontes dão; Acreção Controlada ajuda', () => {
   const s = newState();
+  s.chapter = 'solar';
   const k = gen('kugelblitz');
   s.techs.t_kugel = true;
   s.owned.kugelblitz = 1;
   assert.equal(feedFactor(s, k), 0, 'sozinho, sem alimentação');
   assert.equal(power(s), 0);
   const share = k.traits.find((t) => t.type === 'feed').share;
-  // Fonte estável (sem vento/sol) para a conta ficar exata.
-  s.techs.t_geo = true;
-  const geo = gen('geothermal');
-  s.owned.geothermal = 10;
+  // Fonte estável (sem vento/sol) para a conta ficar exata: o Enxame.
+  s.techs.t_orbital = true;
+  const geo = gen('swarm');
+  s.owned.swarm = 1;
   const expected = genPower(s, geo) / (share * k.output);
   assert.ok(expected > 0 && expected < 0.5);
   assert.ok(Math.abs(feedFactor(s, k) - expected) < 1e-9);
   assert.ok(Math.abs(genPower(s, k) - k.output * expected) < 1e-3, 'rende só a parte alimentada');
   s.techs.t_feed = true; // precisa de metade: rende o dobro
   assert.ok(Math.abs(feedFactor(s, k) - 2 * expected) < 1e-9);
-  s.owned.geothermal = 1e5;
+  s.owned.swarm = 1e3;
   assert.equal(feedFactor(s, k), 1, 'nunca passa de 100%');
   s.owned.kugelblitz = 0;
   assert.equal(feedFactor(s, k), 1);
@@ -112,6 +109,7 @@ test('Kugelblitz: rende a fração de alimentação que as outras fontes dão; A
 
 test('Energia do Vácuo: oscila entre x0.2 e x5; Volantes de Inércia sobem o piso e a média offline', () => {
   const s = newState();
+  s.chapter = 'galaxy';
   const v = gen('vacuum');
   s.techs.t_vacuum = true;
   s.owned.vacuum = 1;

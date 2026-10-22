@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PAGE_SIZE, GENERATORS } from '../src/data/generators.js';
+import { CHAPTERS, chapterIndex } from '../src/data/chapters.js';
 import { TECHS } from '../src/data/research.js';
 import { GRID } from '../src/data/grid.js';
 import { newState } from '../src/core/state.js';
@@ -26,11 +27,24 @@ function sample(fn, hours = 20000, step = 0.25) {
 
 test('dados: ids únicos, tecla pela posição na página, desbloqueios e pré-requisitos existem', () => {
   assert.equal(new Set(GENERATORS.map((g) => g.id)).size, GENERATORS.length);
-  // Página de PAGE_SIZE fontes; teclas 1..9 e 0 na ordem, sem repetir dentro da página.
-  for (const [i, g] of GENERATORS.entries()) {
-    assert.equal(g.page, Math.floor(i / PAGE_SIZE), g.id);
-    assert.equal(g.key, String(((i % PAGE_SIZE) + 1) % 10), `${g.id}: tecla fora de ordem`);
+  // Uma página por capítulo, no máximo PAGE_SIZE fontes; teclas 1..9 e 0 na ordem.
+  for (const c of CHAPTERS) {
+    const list = GENERATORS.filter((g) => g.chapter === c.id);
+    assert.ok(list.length <= PAGE_SIZE, c.id);
+    list.forEach((g, i) => {
+      assert.equal(g.page, chapterIndex(c.id), g.id);
+      assert.equal(g.key, String((i + 1) % 10), `${g.id}: tecla fora de ordem`);
+    });
   }
+  // Pesquisas: nenhum requisito cruza capítulos; fonte e a pesquisa que a libera no mesmo.
+  const byId = new Map(TECHS.map((x) => [x.id, x]));
+  for (const t of TECHS) {
+    for (const r of t.req) {
+      const req = byId.get(r);
+      assert.ok(!req.chapter || req.chapter === t.chapter, `${t.id} (${t.chapter ?? 'geral'}) pede ${r} (${req.chapter})`);
+    }
+  }
+  for (const g of GENERATORS.filter((x) => x.unlock)) assert.equal(byId.get(g.unlock).chapter, g.chapter, g.id);
   const techIds = new Set(TECHS.map((t) => t.id));
   for (const g of GENERATORS) {
     assert.ok(g.unlock === null || techIds.has(g.unlock), `${g.id}: unlock inexistente`);

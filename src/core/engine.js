@@ -211,9 +211,13 @@ export function genLaunch(s, g) {
 }
 // Dá para comprar agora (fora da janela de lançamento, não).
 export const genBuyable = (s, g) => genUnlocked(g, s) && (genLaunch(s, g)?.open ?? true);
-export const genUnlocked = (g, s) => (g.unlock === null || bought(s, g.unlock)) && !genDisabled(s, g);
+// Só as fontes do capítulo atual existem na partida (2.0).
+export const genUnlocked = (g, s) => g.chapter === s.chapter && (g.unlock === null || bought(s, g.unlock)) && !genDisabled(s, g);
 export const labUnlocked = (s) => s.totalEnergy >= LAB.unlockAt || s.labs > 0;
-export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => bought(s, r));
+// Pesquisas do capítulo atual mais as gerais (sem `chapter`).
+export const inChapter = (t, s) => !t.chapter || t.chapter === s.chapter;
+export const chapterTechs = (s) => TECHS.filter((t) => inChapter(t, s));
+export const techVisible = (t, s) => inChapter(t, s) && !bought(s, t.id) && t.req.every((r) => bought(s, r));
 
 // `average` = médias do ambiente (offline); nesse modo o calor não é simulado.
 // Retorna os ids de reatores que desligaram por superaquecimento.

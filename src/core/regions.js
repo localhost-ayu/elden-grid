@@ -2,12 +2,11 @@
 // engine consulta regionMult e regionPrice daqui, e a ação de expandir mora em actions.js.
 import { REGIONS, REGION_RULES } from '../data/regions.js';
 
-const ladder = () => REGIONS.earth;
-export const regionDef = (s) => ladder()[s.region];
-export const nextRegion = (s) => ladder()[s.region + 1] ?? null;
+const ladder = (s) => REGIONS[s.chapter];
+export const regionDef = (s) => ladder(s)[s.region];
+export const nextRegion = (s) => ladder(s)[s.region + 1] ?? null;
 export const regionName = (s, short = false) => (short ? regionDef(s).short ?? regionDef(s).name : regionDef(s).name);
-export const lastRegion = (s) => s.region === ladder().length - 1;
-export const regionIndex = (name) => ladder().findIndex((r) => r.name === name);
+export const lastRegion = (s) => s.region === ladder(s).length - 1;
 
 // Base da capacidade (kW): a demanda da região atendida.
 export const regionBase = (s) => regionDef(s).base;

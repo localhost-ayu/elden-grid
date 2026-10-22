@@ -2,7 +2,7 @@
 // depois de uma prévia do que se ganha e do que se perde, com confirmação S/N.
 import { LEGACY, SHOP, MONUMENT } from '../../data/legacy.js';
 import { TECHS } from '../../data/research.js';
-import { offlineMax } from '../../core/engine.js';
+import { offlineMax, chapterTechs } from '../../core/engine.js';
 import {
   ascend, buyMonument, buyShop, canAscend, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
 } from '../../core/prestige.js';
@@ -56,8 +56,9 @@ function ascendBlock(s, selected) {
   const need = LEGACY.minRunEarned;
   const gl = glyphs();
   const check = (ok) => (ok ? paint(C.green, gl.dot) : paint(C.dim, gl.dotEmpty));
-  const techs = TECHS.filter((t) => s.techs[t.id]).length;
-  const gate = gateStatus(s).map((c) => `${check(c.done)} ${paint(c.done ? C.green : C.dim, c.type === 'techs' ? `${c.label} (${techs}/${TECHS.length})` : c.label)}`);
+  const all = chapterTechs(s);
+  const techs = all.filter((t) => s.techs[t.id]).length;
+  const gate = gateStatus(s).map((c) => `${check(c.done)} ${paint(c.done ? C.green : C.dim, c.type === 'techs' ? `${c.label} (${techs}/${all.length})` : c.label)}`);
   return [
     ' ' + paint(selected ? C.bold : '', `${mark} ${star} Ascender`) +
       paint(C.dim, '   fecha a partida: as duas condições abaixo'),

@@ -1,3 +1,4 @@
+import { chapterIndex } from './chapters.js';
 // Convenção: 1 segundo real = 1 hora de jogo, então 1 kW produzindo por 1s = 1 kWh.
 //
 // `traits` são modificadores dinâmicos, interpretados em src/core/traits.js:
@@ -29,16 +30,19 @@ export const GENERATORS = [
   { id: 'tidal',      key: '8', name: 'Maremotriz', short: 'Maremotriz',         baseCost: 900000, growth: 1.15, output: 18000,   icon: '≈≈≈', art: 'tidal',      unlock: 't_tidal',     traits: [{ type: 'tide', amp: 0.5, period: 12.42 }] },
   { id: 'fusion',     key: '9', name: 'Reator de Fusão', short: 'Fusão',    baseCost: 4e6,    growth: 1.15, output: 60000,   icon: '(*)', art: 'fusion',     unlock: 't_fusion',    traits: [{ type: 'upkeep', money: 11000 }, { type: 'heat', base: 0.85 }] },
   { id: 'antimatter', key: '0', name: 'Antimatéria', short: 'Antimatéria',        baseCost: 8e7,    growth: 1.16, output: 1.2e6,   icon: '<@>', art: 'antimatter', unlock: 't_antimatter', traits: [{ type: 'heat', base: 1.05 }] },
-  // ---- Fronteira (1.4): página 2 da aba Geradores ----
-  { id: 'swarm',      key: '1', name: 'Enxame Orbital', short: 'Enxame',         baseCost: 3e9,    growth: 1.16, output: 3e7,     icon: '-O-', art: 'swarm',      unlock: 't_orbital',   traits: [{ type: 'launch', period: 40, window: 8 }] },
-  { id: 'kugelblitz', key: '2', name: 'Kugelblitz', short: 'Kugelblitz',          baseCost: 1.2e11, growth: 1.17, output: 8e8,     icon: '(@)', art: 'kugelblitz', unlock: 't_kugel',     traits: [{ type: 'feed', share: 0.6 }] },
-  { id: 'vacuum',     key: '3', name: 'Energia do Vácuo', short: 'Vácuo',       baseCost: 5e12,   growth: 1.18, output: 1.5e10,  icon: '<~>', art: 'vacuum',     unlock: 't_vacuum',    traits: [{ type: 'vacuum', min: 0.2, max: 5 }] },
+  // ---- Sistema Solar (2.0; eram a Fronteira da 1.4) ----
+  { id: 'swarm',      key: '1', name: 'Enxame Orbital', short: 'Enxame',         baseCost: 3e9,    growth: 1.16, output: 3e7,     icon: '-O-', art: 'swarm',      unlock: 't_orbital',   chapter: 'solar', traits: [{ type: 'launch', period: 40, window: 8 }] },
+  { id: 'kugelblitz', key: '2', name: 'Kugelblitz', short: 'Kugelblitz',          baseCost: 1.2e11, growth: 1.17, output: 8e8,     icon: '(@)', art: 'kugelblitz', unlock: 't_kugel',     chapter: 'solar', traits: [{ type: 'feed', share: 0.6 }] },
+  // ---- Galáxia (2.0) ----
+  { id: 'vacuum',     key: '1', name: 'Energia do Vácuo', short: 'Vácuo',       baseCost: 5e12,   growth: 1.18, output: 1.5e10,  icon: '<~>', art: 'vacuum',     unlock: 't_vacuum',    chapter: 'galaxy', traits: [{ type: 'vacuum', min: 0.2, max: 5 }] },
 ];
 
-// A aba Geradores mostra PAGE_SIZE fontes por página, com as teclas 1–9 e 0 (`key`) valendo
-// na página aberta. A página vem da posição na lista; a tecla de cada fonte segue a
-// posição dentro da página (testado).
+// Cada capítulo (data/chapters.js) é uma página da aba Geradores, com as teclas 1–9 e 0
+// (`key`) na ordem das fontes dele (testado). Sem `chapter`, a fonte é da Terra.
 export const PAGE_SIZE = 10;
-for (const [i, g] of GENERATORS.entries()) g.page = Math.floor(i / PAGE_SIZE);
+for (const g of GENERATORS) {
+  g.chapter ??= 'earth';
+  g.page = chapterIndex(g.chapter);
+}
 
 export const LAB = { name: 'Laboratório', baseCost: 400, growth: 1.25, rpPerSec: 0.25, unlockAt: 200 };

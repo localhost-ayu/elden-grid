@@ -23,10 +23,11 @@ export const legacyGain = (s) => Math.max(0, pointsFor(lifetimeEarned(s)) - s.le
 // Condições de fim de partida (fase atual de LEGACY.gate): basta uma. Cada uma com o
 // texto e se já foi cumprida, para a aba Legado mostrar o checklist.
 const GATE = {
+  region: (s, c) => s.region >= c.at,
   owned: (s, c) => (s.owned[c.gen] ?? 0) > 0,
-  techs: (s) => TECHS.every((t) => s.techs[t.id]),
+  techs: (s) => TECHS.every((t) => (t.chapter && t.chapter !== s.chapter) || s.techs[t.id]),
 };
-export const gatePhase = (s) => LEGACY.gate.filter((p) => p.from <= s.legacy.ascensions).at(-1);
+export const gatePhase = (s) => LEGACY.gate[s.chapter].filter((p) => p.from <= s.legacy.ascensions).at(-1);
 export const gateStatus = (s) => gatePhase(s).any.map((c) => ({ ...c, done: GATE[c.type](s, c) }));
 export const gateMet = (s) => gateStatus(s).some((c) => c.done);
 
@@ -89,7 +90,7 @@ export function ascend(s) {
   const run = s.stats.playTime;
   if (s.career.fastestRun === null || run < s.career.fastestRun) s.career.fastestRun = run;
   peak(s, 'bestGain', gain);
-  const { career, achievements } = s;
+  const { career, achievements, chapter, empire } = s;
   const legacy = {
     ...s.legacy,
     lifetime: lifetimeEarned(s),
@@ -100,7 +101,7 @@ export function ascend(s) {
   };
   const rng = s.events.rng; // a sorte continua de onde parou, não repete a 1ª partida
   for (const k of Object.keys(s)) delete s[k];
-  Object.assign(s, newState(rng), { legacy, career, achievements });
+  Object.assign(s, newState(rng), { legacy, career, achievements, chapter, empire });
   startRun(s);
   return gain;
 }

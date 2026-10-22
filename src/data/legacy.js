@@ -3,24 +3,28 @@
 // Raiz cúbica desde a 1.4: o dinheiro cresce exponencialmente com a duração da partida, e
 // com a raiz quadrada uma partida longa até a Fronteira dava 100x mais pontos que a
 // anterior (simulado). O divisor mantém a 1ª ascensão em ~20 pontos.
-// Ascender pede minRunEarned na partida E uma das condições da fase atual de `gate` (o
-// fim da árvore que o jogador já alcança): a ascensão fecha uma partida completa, em vez
-// de chegar no meio dela. Ficar mais tempo rende mais pontos pela raiz. A fase é a última
-// com `from` <= ascensões feitas: as primeiras partidas fecham na antimatéria; depois,
-// com o legado ajudando, só a Fronteira inteira fecha a partida.
+// Ascender pede minRunEarned na partida E uma das condições da fase atual de `gate` do
+// capítulo (2.0: uma região atendida): a ascensão fecha uma partida completa. Ficar mais
+// tempo rende mais pontos pela raiz. A fase é a última com `from` <= ascensões feitas: as
+// primeiras partidas da Terra fecham no País; depois, só no Planeta (Tipo I).
 // Tipos de condição (avaliadas em core/prestige.js):
-//   owned  ter ao menos 1 unidade de `gen` nesta partida
-//   techs  todas as pesquisas concluídas
+//   region at     atender a região de índice `at` (data/regions.js) nesta partida
+//   owned  gen    ter ao menos 1 unidade de `gen` nesta partida
+//   techs         todas as pesquisas do capítulo concluídas
 // `label` vai no checklist da aba Legado; `short`, na mensagem do que falta.
 const ALL_TECHS = { type: 'techs', label: 'todas as pesquisas', short: 'todas as pesquisas' };
 export const LEGACY = {
   divisor: 5e7,
   exponent: 1 / 3,
   minRunEarned: 2.5e10,
-  gate: [
-    { from: 0, any: [{ type: 'owned', gen: 'antimatter', label: 'uma usina de antimatéria', short: 'antimatéria' }, ALL_TECHS] },
-    { from: 3, any: [{ type: 'owned', gen: 'vacuum', label: 'Energia do Vácuo', short: 'Energia do Vácuo' }, ALL_TECHS] },
-  ],
+  gate: {
+    earth: [
+      { from: 0, any: [{ type: 'region', at: 4, label: 'atender o País', short: 'atender o País' }, ALL_TECHS] },
+      { from: 3, any: [{ type: 'region', at: 6, label: 'atender o Planeta', short: 'atender o Planeta' }, ALL_TECHS] },
+    ],
+    solar: [{ from: 0, any: [{ type: 'region', at: 5, label: 'atender o Sol', short: 'atender o Sol' }, ALL_TECHS] }],
+    galaxy: [{ from: 0, any: [{ type: 'region', at: 4, label: 'atender o Núcleo Galáctico', short: 'atender o Núcleo' }, ALL_TECHS] }],
+  },
   bonusPerPoint: 0.1,
 };
 

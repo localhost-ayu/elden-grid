@@ -67,19 +67,14 @@ test('V alterna lista e cena; a cena inteira cabe em 80×24 com todas as fontes'
   assert.match(text(), /V cena/);
   app.key('v');
   const t = text();
-  // Página 1: as 10 primeiras fontes e o laboratório, em 2 fileiras, nada escondido.
-  assert.match(t, /Usinas .* 11 tipos · pág\. 1\/2/);
+  // Só as fontes do capítulo (Terra: 10) e o laboratório, em 2 fileiras, nada escondido.
+  assert.match(t, /Usinas .* 11 tipos/);
   assert.doesNotMatch(t, /\+\d+ fontes/);
   for (const name of ['Eólica', 'Antimatéria', 'Laboratório']) assert.match(t, new RegExp(name));
+  assert.doesNotMatch(t, /Enxame/, 'fontes de outro capítulo não aparecem');
   assert.match(t, /V volta à lista/);
   for (const l of app.lines(80, 24)) assert.ok(visibleLength(l) <= 80);
   assert.equal(app.lines(80, 24).length, 24);
-  app.key('right'); // página 2: as fontes da Fronteira
-  const t2 = text();
-  assert.match(t2, /pág\. 2\/2/);
-  assert.match(t2, /Enxame/);
-  assert.doesNotMatch(t2, /Eólica/);
-  app.key('left');
   app.key('V');
   assert.match(text(), /Turbina Eólica +x3/);
 });

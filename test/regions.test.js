@@ -84,3 +84,53 @@ test('aba Rede: N expande com mensagem; o cabeçalho mostra a região', async ()
   assert.match(text(), /agora você atende Cidade/);
   assert.match(stripAnsi(app.lines(80, 24)[2]), /Cidade /);
 });
+
+test('save v12 com a Fronteira na Terra: o que era dela vai para o estoque, e o save fica válido', () => {
+  const st = JSON.parse(JSON.stringify(newState()));
+  delete st.chapter;
+  delete st.empire;
+  Object.assign(st.owned, { swarm: 40, kugelblitz: 12, vacuum: 3, antimatter: 50 });
+  Object.assign(st.upgrades, { swarm: 3, vacuum: 1 });
+  st.techs = { t_antimatter: true, t_orbital: true, t_kugel: true, t_vacuum: true, t_flywheel: true, t_global3: true, t_lab: true };
+  st.wear.broken = [{ gen: 'swarm', at: 1 }, { gen: 'wind', at: 1 }];
+  const s = fromSave(migrate({ saveVersion: 12, savedAt: 1, state: st }).state);
+  assert.ok(isValidState(s));
+  assert.equal(s.chapter, 'earth');
+  for (const id of ['swarm', 'kugelblitz', 'vacuum']) assert.equal(s.owned[id], 0, id);
+  assert.equal(s.owned.antimatter, 50, 'a Terra fica como estava');
+  assert.ok(s.techs.t_antimatter && s.techs.t_lab);
+  assert.ok(!s.techs.t_orbital && !s.techs.t_vacuum && !s.techs.t_global3);
+  assert.deepEqual(s.wear.broken.map((b) => b.gen), ['wind']);
+  const stash = s.empire.frontierStash;
+  assert.deepEqual(stash.owned, { swarm: 40, kugelblitz: 12, vacuum: 3 });
+  assert.deepEqual(stash.upgrades, { swarm: 3, kugelblitz: 0, vacuum: 1 });
+  assert.deepEqual(stash.techs.sort(), ['t_flywheel', 't_global3', 't_kugel', 't_orbital', 't_vacuum']);
+  // Sem Fronteira, sem estoque.
+  const plain = fromSave(migrate({ saveVersion: 12, savedAt: 1, state: JSON.parse(JSON.stringify(newState())) }).state);
+  assert.equal(plain.empire.frontierStash, null);
+  assert.equal(isValidState({ ...plain, chapter: 'marte' }), false);
+});
+
+test('capítulos: fontes e pesquisas só existem no seu capítulo; a ascensão mantém o capítulo', async () => {
+  const { genUnlocked, techVisible, chapterTechs } = await import('../src/core/engine.js');
+  const { GENERATORS } = await import('../src/data/generators.js');
+  const { TECHS } = await import('../src/data/research.js');
+  const { ascend } = await import('../src/core/prestige.js');
+  const { LEGACY } = await import('../src/data/legacy.js');
+  const s = newState();
+  const swarm = GENERATORS.find((g) => g.id === 'swarm');
+  const orbital = TECHS.find((t) => t.id === 't_orbital');
+  s.techs.t_orbital = true;
+  assert.equal(genUnlocked(swarm, s), false, 'Enxame não existe na Terra');
+  delete s.techs.t_orbital;
+  assert.equal(techVisible(orbital, s), false);
+  s.chapter = 'solar';
+  assert.equal(techVisible(orbital, s), true, 'raiz do Sistema Solar');
+  assert.ok(chapterTechs(s).some((t) => t.id === 't_lab'), 'pesquisas gerais valem em todo capítulo');
+  assert.ok(!chapterTechs(s).some((t) => t.id === 't_solar'), 'as da Terra não');
+  s.region = 5;
+  s.earned = LEGACY.minRunEarned;
+  assert.ok(ascend(s) > 0);
+  assert.equal(s.chapter, 'solar');
+  assert.equal(s.region, 0);
+});

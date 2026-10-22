@@ -7,10 +7,12 @@
 //   run     key, at   ficha desta partida
 //   sum     key, at   soma de um mapa da carreira (eventos vistos, desligamentos...)
 //   owned   gen, at   unidades de uma fonte nesta partida ('any' = a fonte com mais)
-//   ownedAll at       todas as fontes com pelo menos `at` unidades
+//   ownedAll at       todas as fontes do capítulo com pelo menos `at` unidades
 //   tech    tech      pesquisa concluída nesta partida
 //   techs   at        quantas pesquisas nesta partida
 //   upgradesMax at    fontes com a trilha de upgrades completa
+//   upgradesAll       todas as fontes do capítulo com a trilha completa
+//   techsAll          todas as pesquisas do capítulo nesta partida
 //   transformers at   transformadores nesta partida
 //   coolingMax        algum reator com o resfriamento máximo
 //   heat    at        algum reator com calor >= at sem estar desligado
@@ -75,19 +77,19 @@ export const ACHIEVEMENTS = [
   { id: 'a_vacuum', cat: 'sources', name: 'Ponto Zero', desc: 'tire energia do vácuo', type: 'owned', gen: 'vacuum', at: 1 },
   { id: 'a_nuc100', cat: 'sources', name: 'Centenário Nuclear', desc: '100 reatores nucleares numa partida', type: 'owned', gen: 'nuclear', at: 100 },
   { id: 'a_any250', cat: 'sources', name: 'Monocultura', desc: '250 unidades de uma mesma fonte', type: 'owned', gen: 'any', at: 250 },
-  { id: 'a_all1', cat: 'sources', name: 'Coleção Completa', desc: 'tenha as 10 fontes na mesma partida', type: 'ownedAll', at: 1 },
+  { id: 'a_all1', cat: 'sources', name: 'Coleção Completa', desc: 'todas as fontes do capítulo', type: 'ownedAll', at: 1 },
   { id: 'a_all25', cat: 'sources', name: 'Frota', desc: '25 unidades de cada fonte', type: 'ownedAll', at: 25 },
   { id: 'a_all100', cat: 'sources', name: 'Império', desc: '100 unidades de cada fonte', type: 'ownedAll', at: 100 },
   { id: 'a_upg1', cat: 'sources', name: 'Melhoria Contínua', desc: 'compre um upgrade', type: 'career', key: 'upgrades', at: 1 },
   { id: 'a_upgmax', cat: 'sources', name: 'Trilha Completa', desc: 'todos os upgrades de uma fonte', type: 'upgradesMax', at: 1 },
-  { id: 'a_upgall', cat: 'sources', name: 'Tudo no Máximo', desc: 'todos os upgrades de todas as fontes', type: 'upgradesMax', at: GENERATORS.length },
+  { id: 'a_upgall', cat: 'sources', name: 'Tudo no Máximo', desc: 'todos os upgrades do capítulo', type: 'upgradesAll' },
   { id: 'a_mile1', cat: 'sources', name: 'Marco Zero', desc: 'atinja um marco de quantidade', type: 'career', key: 'milestones', at: 1 },
   { id: 'a_mile100', cat: 'sources', name: 'Colecionador de Marcos', desc: '100 marcos no total', type: 'career', key: 'milestones', at: 100 },
 
   // ---- pesquisa ----
   { id: 'a_tech1', cat: 'research', name: 'Eureka', desc: 'conclua uma pesquisa', type: 'career', key: 'techs', at: 1 },
   { id: 'a_tech15', cat: 'research', name: 'Cientista', desc: '15 pesquisas numa partida', type: 'techs', at: 15 },
-  { id: 'a_techall', cat: 'research', name: 'Árvore Completa', desc: 'todas as pesquisas numa partida', type: 'techs', at: TECHS.length },
+  { id: 'a_techall', cat: 'research', name: 'Árvore Completa', desc: 'todas as pesquisas do capítulo', type: 'techsAll' },
   { id: 'a_labs50', cat: 'research', name: 'Campus', desc: '50 laboratórios numa partida', type: 'run', key: 'labsBought', at: 50 },
   { id: 'a_auto2', cat: 'research', name: 'IA no Comando', desc: 'pesquise Gestão por IA', type: 'tech', tech: 't_auto2' },
   { id: 'a_planet', cat: 'research', name: 'Rede Planetária', desc: 'pesquise a Rede Planetária', type: 'tech', tech: 't_planetary' },
