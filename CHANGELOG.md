@@ -11,6 +11,8 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 ## [Não lançado]
 
 ### Corrigido
+- A segunda linha do cabeçalho passava de 80 colunas com o legado muito alto: o bônus
+  do legado usa o formato curto (+1.23M%) e, sem espaço, os selos menos importantes saem.
 - O recorde de tempo das crises da Fronteira (contenção e tempestade solar) não era
   gravado, e as conquistas Mão Firme e Escudo Vivo nunca eram liberadas.
 

@@ -589,22 +589,32 @@ export function createApp({
     return bar(' ⚡', true);
   }
 
-  function statsLines() {
+  // Porcentagem inteira até 999; acima, no formato curto (+1.23M%).
+  const bigPct = (v) => (v < 1000 ? String(Math.round(v)) : fmt(v));
+
+  // A 2ª linha junta selos opcionais; sem largura, os menos importantes saem primeiro
+  // (auto-compra, depois o bônus do legado, depois o aviso das usinas).
+  function statsLines(cols = 80) {
     const s = app.state;
+    const base = ` Renda ${paint(C.green, '$' + fmt(income(s)) + '/s')}  ` +
+      `PP ${paint(C.mag, fmt(s.rp))} ${paint(C.dim, '(+' + fmt(rpRate(s)) + '/s)')}  ` +
+      gridText(s) + '  ' +
+      // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
+      paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`);
+    const badges = [
+      wearText(s),
+      s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${bigPct((legacyMult(s) - 1) * 100)}%`) : '',
+      s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : '',
+    ];
+    const badge = challengeBadge(s);
+    let line = base + badges.join('') + badge;
+    for (let drop = badges.length; visibleLength(line) > cols && drop > 0; drop--) line = base + badges.slice(0, drop - 1).join('') + badge;
     return [
       ` Dinheiro ${paint(C.green, '$' + fmt(app.shown.money))}  ` +
       `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}  ` +
       `Total ${paint(C.cyan, fmt(app.shown.energy) + ' kWh')}  ` +
       priceText(s),
-      ` Renda ${paint(C.green, '$' + fmt(income(s)) + '/s')}  ` +
-      `PP ${paint(C.mag, fmt(s.rp))} ${paint(C.dim, '(+' + fmt(rpRate(s)) + '/s)')}  ` +
-      gridText(s) + '  ' +
-      // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
-      paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`) +
-      (s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : '') +
-      wearText(s) +
-      (s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${Math.round((legacyMult(s) - 1) * 100)}%`) : '') +
-      challengeBadge(s),
+      line,
     ];
   }
 
@@ -693,7 +703,7 @@ export function createApp({
       help = helpOf(menu, c);
       body = menu.render(c, room(header), cols);
     } else if (app.mode === 'game') {
-      header = [tabBar(cols), ...statsLines(), banner(cols)];
+      header = [tabBar(cols), ...statsLines(cols), banner(cols)];
       const tab = app.crisisOpen ? { id: 'crisis', screen: crisis } : TABS[app.tab];
       help = helpOf(tab.screen, ctx(tab.id));
       body = tab.screen.render(ctx(tab.id), room(header), cols);
