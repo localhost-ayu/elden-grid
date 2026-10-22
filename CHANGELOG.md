@@ -10,6 +10,10 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+### Adicionado
+- Aba **Mercado** (tecla `K`), entre Rede e Legado. Em 80 colunas a barra de abas mostra
+  só o raio no lugar do título para caber.
+
 ## [1.4.0] - 2026-10-22
 
 Fronteira: três fontes depois da antimatéria, duas crises novas e partidas que fecham na

@@ -102,7 +102,7 @@ até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
 | Onde | Teclas |
 |---|---|
 | Em qualquer tela | `\` disfarça o jogo (e volta) |
-| Em qualquer aba | `G` `P` `R` `L` `E` `O` (ou `Tab`/`Shift+Tab`) trocam de aba · `espaço` gira a manivela · `X` abre o manual de crise · `M`/`Esc` menu (salva) · `Q` sai (salva) |
+| Em qualquer aba | `G` `P` `R` `K` `L` `E` `O` (ou `Tab`/`Shift+Tab`) trocam de aba (`K` é o Mercado) · `espaço` gira a manivela · `X` abre o manual de crise · `M`/`Esc` menu (salva) · `Q` sai (salva) |
 | Geradores | `↑↓` + `Enter` ou `0`–`9` compram · `←→` troca de página (10 fontes por página) · `B` lote · `U` upgrade · `A` auto-compra · `V` cena das usinas |
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
 | Desafios | `↑↓` desafio · `←→` nível · `Enter` joga · `C` continua a partida do slot D |

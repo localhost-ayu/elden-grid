@@ -341,3 +341,17 @@ test('árvore de pesquisa completa cabe em 80 colunas em qualquer posição', ()
     press('down');
   }
 });
+
+test('barra de abas: K abre o Mercado; o título encolhe para caber em 80 colunas', () => {
+  const { app, press } = make();
+  startNew(press);
+  press('k');
+  assert.equal(app.tab, 'market');
+  const at = (cols) => stripAnsi(app.lines(cols, 24)[0]);
+  assert.match(at(100), /⚡ ELDEN GRID .*Mercado/);
+  assert.doesNotMatch(at(80), /ELDEN GRID/);
+  for (const t of TABS) assert.ok(at(80).includes(t.label), `${t.label} cabe inteiro em 80 colunas`);
+  for (const t of TABS) { press(t.key); assert.ok(visibleLength(app.lines(80, 24)[0]) <= 80, t.id); }
+  press('k');
+  assert.match(stripAnsi(app.lines(80, 24).join('\n')), /Mercado de energia/);
+});

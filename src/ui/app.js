@@ -28,6 +28,7 @@ import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
+import * as market from './screens/market.js';
 import { ROMAN, rewardText } from './screens/challenges.js';
 import { newProfile, completeChallenge, recordDaily } from '../core/profile.js';
 import { applyRunStart, challengeDef, goalReached, runGoal, localDate, dailySeed, dailyChallenges, dailyCode } from '../core/challenges.js';
@@ -37,14 +38,17 @@ import { DEFAULT_SETTINGS } from '../storage/settings.js';
 import { compareVersions, CHECK_EVERY_MS, RELEASES_URL } from '../storage/update.js';
 import { tooSmall, renderTooSmall } from './screens/too-small.js';
 
-// A 1ª letra do rótulo é a tecla direta, e é sublinhada na barra de abas.
+// `key` é a tecla direta, sublinhada na barra de abas quando é a 1ª letra do rótulo. O
+// Mercado usa K (M é o menu, e as outras iniciais já são teclas das telas). `short` é o
+// rótulo na barra apertada.
 export const TABS = [
-  { id: 'gens', key: 'g', label: 'Geradores', screen: generators },
-  { id: 'research', key: 'p', label: 'Pesquisa', screen: research },
-  { id: 'grid', key: 'r', label: 'Rede', screen: grid },
-  { id: 'legacy', key: 'l', label: 'Legado', screen: legacy },
-  { id: 'stats', key: 'e', label: 'Estatísticas', screen: stats },
-  { id: 'options', key: 'o', label: 'Opções', screen: options },
+  { id: 'gens', key: 'g', label: 'Geradores', short: 'Gerad.', screen: generators },
+  { id: 'research', key: 'p', label: 'Pesquisa', short: 'Pesq.', screen: research },
+  { id: 'grid', key: 'r', label: 'Rede', short: 'Rede', screen: grid },
+  { id: 'market', key: 'k', label: 'Mercado', short: 'Merc.', screen: market },
+  { id: 'legacy', key: 'l', label: 'Legado', short: 'Leg.', screen: legacy },
+  { id: 'stats', key: 'e', label: 'Estatísticas', short: 'Estat.', screen: stats },
+  { id: 'options', key: 'o', label: 'Opções', short: 'Opç.', screen: options },
 ];
 
 const MAX_MESSAGES = 3;
@@ -525,14 +529,24 @@ export function createApp({
     return paint(C.dim, ' ──') + paint(color, ` ${text} `) + paint(C.dim, '─'.repeat(rest));
   }
 
-  function tabBar() {
-    const parts = TABS.map((t, i) => {
-      const label = paint(C.underline, t.label[0]) + t.label.slice(1);
-      // Avisa de qualquer aba que a ascensão ficou disponível.
-      const badge = t.id === 'legacy' && canAscend(app.state) ? paint(C.yellow + C.bold, glyphs().legacy) : '';
-      return i === app.tab ? paint(C.inverse + C.bold, ` ${t.label} `) + badge : ` ${label}${badge} `;
-    });
-    return paint(C.bold + C.yellow, ' ⚡ ELDEN GRID') + '  ' + parts.join(paint(C.dim, '│'));
+  // Sem largura para tudo: primeiro o título vira só o raio, depois os rótulos encurtam
+  // (a aba aberta mantém o nome inteiro).
+  function tabBar(cols) {
+    const bar = (title, short) => {
+      const parts = TABS.map((t, i) => {
+        const text = short && i !== app.tab ? t.short : t.label;
+        const label = text[0].toLowerCase() === t.key ? paint(C.underline, text[0]) + text.slice(1) : text;
+        // Avisa de qualquer aba que a ascensão ficou disponível.
+        const badge = t.id === 'legacy' && canAscend(app.state) ? paint(C.yellow + C.bold, glyphs().legacy) : '';
+        return i === app.tab ? paint(C.inverse + C.bold, ` ${text} `) + badge : ` ${label}${badge} `;
+      });
+      return paint(C.bold + C.yellow, title) + '  ' + parts.join(paint(C.dim, '│'));
+    };
+    for (const [title, short] of [[' ⚡ ELDEN GRID', false], [' ⚡', false], [' ⚡', true]]) {
+      const line = bar(title, short);
+      if (visibleLength(line) <= cols) return line;
+    }
+    return bar(' ⚡', true);
   }
 
   function statsLines() {
@@ -620,7 +634,7 @@ export function createApp({
       help = helpOf(menu, c);
       body = menu.render(c, room(header), cols);
     } else if (app.mode === 'game') {
-      header = [tabBar(), ...statsLines(), banner(cols)];
+      header = [tabBar(cols), ...statsLines(), banner(cols)];
       const tab = app.crisisOpen ? { id: 'crisis', screen: crisis } : TABS[app.tab];
       help = helpOf(tab.screen, ctx(tab.id));
       body = tab.screen.render(ctx(tab.id), room(header), cols);
