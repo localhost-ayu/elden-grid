@@ -37,8 +37,8 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   de 45 techs: novas fontes, multiplicadores, capacidade da rede, armazenamento e
   auto-compra.
 - **A rede é o gargalo.** Acima da capacidade de transmissão, o excedente vale só 25% do
-  preço (mais com as pesquisas de armazenamento). A aba Rede mostra a rede em quatro
-  visões (mapa, fluxo, gráfico e calor).
+  preço (mais com as pesquisas de armazenamento). A aba Rede mostra a rede em cinco
+  visões (mapa, fluxo, gráfico, calor e previsão do tempo e do preço).
 - **Upgrades e marcos.** Cada fonte tem 5 upgrades e dobra a produção ao chegar a 25, 50
   e 100 unidades. Compras em lote x1, x10, x100 ou MAX.
 - **Eventos e crises.** Tempestades, picos de demanda e descobertas mudam o jogo por um

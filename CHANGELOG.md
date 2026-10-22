@@ -32,6 +32,9 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   Tipos: Entrega (produzir X kWh no prazo), Venda (faturar $X; baterias e surtos ajudam),
   Verde (manter N% da produção renovável) e Firme (nenhum reator desliga). Pagam minutos
   de renda ou de pesquisa. Ficam parados offline e com o jogo disfarçado.
+- **Previsão**, quinta visão da aba Rede: as próximas 24 h de jogo de vento, sol, maré,
+  Vácuo e preço, com o pico de cada um. O erro cresce com a distância (até ±30%); a
+  pesquisa nova Satélites Meteorológicos o reduz a um terço. Surtos não se preveem.
 
 ## [1.4.0] - 2026-10-22
 

@@ -18,6 +18,7 @@ import { buyCooling, buyTransformer } from '../../core/actions.js';
 import { HISTORY_LEN } from '../../core/stats.js';
 import { COOLING } from '../../data/heat.js';
 import { C, paint, glyphs, GEN_COLOR } from '../theme.js';
+import { forecast, STEP } from '../../core/forecast.js';
 import { fmt, fmtPct, bar, sparkline, padVisible } from '../format.js';
 
 const VIEWS = [
@@ -25,6 +26,7 @@ const VIEWS = [
   { id: 'flow', label: 'Fluxo' },
   { id: 'chart', label: 'Gráfico' },
   { id: 'heat', label: 'Calor' },
+  { id: 'forecast', label: 'Previsão' },
 ];
 
 export const help = 'V muda visão  T transformador  ↑↓ C resfriar  espaço gira  M menu  Q sair';
@@ -212,6 +214,27 @@ function chartView(s, height, history) {
   return out;
 }
 
+// ---------- 5. previsão ----------
+const FORECAST_COLOR = { wind: C.cyan, sun: C.yellow, tide: C.blue, vacuum: C.mag, price: C.green };
+function forecastView(s, height) {
+  const { err, series } = forecast(s);
+  const out = [
+    `  ${paint(C.bold, 'Próximas 24 h de jogo')} ${paint(C.dim, `(24 s) · erro até ±${Math.round(err * 100)}% no fim · surtos não se preveem`)}`,
+    '',
+  ];
+  for (const { id, label, values } of series) {
+    if (out.length + 2 > height) break;
+    const now = values[0];
+    const hi = Math.max(...values);
+    const peak = Math.round(values.indexOf(hi) * STEP);
+    const unit = id === 'price' ? `$${now.toFixed(2)}` : `${now.toFixed(2)}x`;
+    const when = peak === 0 ? 'no máximo' : `pico em ${peak}h`;
+    out.push(`  ${paint(C.bold, label.padEnd(6))} ${paint(FORECAST_COLOR[id], sparkline(values, values.length))}  ${paint(C.dim, `${unit} → ${when}`)}`);
+  }
+  if (out.length <= 3) out.push(paint(C.dim, '   Compre eólicas, solares ou maremotrizes para ver o clima delas.'));
+  return out;
+}
+
 // ---------- 4. calor ----------
 const hotOwned = (s) => HOT_GENERATORS.filter((g) => s.owned[g.id] > 0);
 
@@ -270,6 +293,7 @@ export function render(ctx, height) {
   const body = view === 'map' ? mapView(s, room)
     : view === 'flow' ? flowView(s, room, ctx.anim)
     : view === 'chart' ? chartView(s, room, ctx.history)
+    : view === 'forecast' ? forecastView(s, room)
     : heatView(s, room, ctx.anim, ui);
   return [...top, ...body];
 }

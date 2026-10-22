@@ -26,6 +26,7 @@ export function describe(t) {
     case 'launch': return `janela de lançamento +${t.add} s`;
     case 'feed': return `Kugelblitz precisa de ${Math.round((1 - t.mult) * 100)}% menos alimentação`;
     case 'vacuumFloor': return `vácuo nunca abaixo de x${t.floor}`;
+    case 'forecast': return `previsão ${Math.round((1 - t.mult) * 100)}% mais precisa`;
     case 'excess': return `excedente da rede vale +${Math.round(t.add * 100)}% do preço`;
     case 'auto': return `auto-compra do gerador mais barato (${t.interval < 1 ? `${Math.round(1 / t.interval)}/s` : `1 a cada ${t.interval} s`})`;
     default: return '';
