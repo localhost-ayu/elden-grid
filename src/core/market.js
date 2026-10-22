@@ -3,20 +3,23 @@
 import { MARKET, BATTERY } from '../data/market.js';
 import { rules } from './challenges.js';
 
-// mulberry32 com o estado em s.market.rng (separado da sorte dos eventos).
-function rand(s) {
+// mulberry32 com o estado em s.market.rng (separado da sorte dos eventos). Exportada
+// para os contratos usarem a mesma sorte.
+export function rand(s) {
   let t = (s.market.rng = (s.market.rng + 0x6d2b79f5) >>> 0);
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
-const between = (s, [a, b]) => a + (b - a) * rand(s);
+export const between = (s, [a, b]) => a + (b - a) * rand(s);
 
 export const newMarket = (seed) => ({
   rng: (seed ^ 0x9e3779b9) >>> 0,
   demand: 1, target: 1, retarget: MARKET.demand.every[0], surgeUntil: 0,
   impact: 0,
   battery: { kwh: 0, banks: 0, cheap: false, auto: false },
+  // offers: ofertas na mesa; active: contrato em andamento (ver core/contracts.js).
+  contracts: { offers: [], active: null, next: 0, done: 0, failed: 0 },
 });
 
 export const surging = (s) => s.t < s.market.surgeUntil;

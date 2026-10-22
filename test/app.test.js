@@ -353,5 +353,5 @@ test('barra de abas: K abre o Mercado; o título encolhe para caber em 80 coluna
   for (const t of TABS) assert.ok(at(80).includes(t.label), `${t.label} cabe inteiro em 80 colunas`);
   for (const t of TABS) { press(t.key); assert.ok(visibleLength(app.lines(80, 24)[0]) <= 80, t.id); }
   press('k');
-  assert.match(stripAnsi(app.lines(80, 24).join('\n')), /Mercado de energia/);
+  assert.match(stripAnsi(app.lines(80, 24).join('\n')), /Mercado  preço \$/);
 });

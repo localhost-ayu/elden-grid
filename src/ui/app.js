@@ -30,6 +30,8 @@ import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
 import * as market from './screens/market.js';
 import { surging } from '../core/market.js';
+import { contractsStep, holdContracts } from '../core/contracts.js';
+import { contractTitle, rewardTitle } from './screens/market.js';
 import { MARKET } from '../data/market.js';
 import { ROMAN, rewardText } from './screens/challenges.js';
 import { newProfile, completeChallenge, recordDaily } from '../core/profile.js';
@@ -286,7 +288,9 @@ export function createApp({
     open(n, r.state);
     if (r.status === 'recovered') say(`Save do slot ${n} estava corrompido: recuperado do backup.`, 'info', 8000);
     // Progresso offline só ao abrir um save do disco (eventos/calor não rodam offline).
+    const t0 = app.state.t;
     app.offline = r.savedAt != null ? applyOffline(app.state, (app.now - r.savedAt) / 1000) : null;
+    holdContracts(app.state, app.state.t - t0); // contratos não correm offline
     app.mode = app.offline ? 'offline' : 'game';
   }
 
@@ -434,6 +438,13 @@ export function createApp({
     }
   }
 
+  function announceContract(note) {
+    const c = note.contract ?? note.offer;
+    if (note.type === 'offer') say(`Nova oferta de contrato: ${contractTitle(c)} (aba Mercado).`, 'info', 4000);
+    else if (note.type === 'won') say(`Contrato cumprido! ${contractTitle(c)}: ${rewardTitle(c.reward)}.`, 'ok', 8000);
+    else say(`Contrato perdido: ${contractTitle(c)}. Sem multa; outra oferta virá.`, 'err', 6000);
+  }
+
   // Esconder salva na hora (se o jogador fechar a janela depois, nada se perde) e não
   // deixa rastro: sem mensagens, partículas ou alerta piscando por baixo do disfarce.
   function toggleStealth() {
@@ -470,8 +481,11 @@ export function createApp({
       const shutdowns = tick(app.state, dt);
       autoStep(app.state, dt);
       autoCrankStep(app.state, dt);
-      if (app.stealth) holdEvents(app.state, dt);
-      else eventsStep(app.state, dt).forEach(announce);
+      if (app.stealth) { holdEvents(app.state, dt); holdContracts(app.state, dt); }
+      else {
+        eventsStep(app.state, dt).forEach(announce);
+        contractsStep(app.state).forEach(announceContract);
+      }
       // Surto de demanda: avisa uma vez quando começa (escondido, não interrompe).
       const surge = surging(app.state);
       if (surge && !app.surging && !app.stealth) {

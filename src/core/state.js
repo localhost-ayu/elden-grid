@@ -116,7 +116,11 @@ export function fromSave(raw) {
   s.legacy = { ...base.legacy, ...raw.legacy, shop: { ...raw.legacy?.shop } };
   s.achievements = { ...raw.achievements };
   s.events = { ...base.events, ...raw.events };
-  s.market = { ...base.market, ...raw.market, battery: { ...base.market.battery, ...raw.market?.battery } };
+  s.market = {
+    ...base.market, ...raw.market,
+    battery: { ...base.market.battery, ...raw.market?.battery },
+    contracts: { ...base.market.contracts, ...raw.market?.contracts },
+  };
   s.stats = mergeStats(base.stats, raw.stats);
   s.career = mergeStats(base.career, raw.career);
   // Um minijogo pela metade não sobrevive ao save: a crise volta ao alerta.
@@ -159,5 +163,8 @@ export function isValidState(s) {
   if (![m.demand, m.target, m.retarget, m.surgeUntil, m.impact].every(finite) || m.impact < 0 || m.demand <= 0) return false;
   const b = m.battery;
   if (!b || !finite(b.kwh) || b.kwh < 0 || !count(b.banks) || typeof b.cheap !== 'boolean' || typeof b.auto !== 'boolean') return false;
+  const k = m.contracts;
+  if (!k || !Array.isArray(k.offers) || !finite(k.next) || !count(k.done) || !count(k.failed)) return false;
+  if (k.active !== null && !(k.active && typeof k.active.type === 'string' && finite(k.active.deadline))) return false;
   return !!s.techs && typeof s.techs === 'object';
 }

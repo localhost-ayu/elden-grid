@@ -27,6 +27,11 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   muito de uma vez rende menos e derruba o preço); `A` liga a venda automática (no surto
   ou com o preço alto, a 80% do valor); `C` liga a carga barata (guarda metade da
   produção quando o preço está abaixo da média).
+- **Contratos de fornecimento** na aba Mercado: até três ofertas por vez (uma nova a cada
+  45 s, somem em 2:30) e um contrato ativo, aceito com `1`–`3` (`D` desiste, sem multa).
+  Tipos: Entrega (produzir X kWh no prazo), Venda (faturar $X; baterias e surtos ajudam),
+  Verde (manter N% da produção renovável) e Firme (nenhum reator desliga). Pagam minutos
+  de renda ou de pesquisa. Ficam parados offline e com o jogo disfarçado.
 
 ## [1.4.0] - 2026-10-22
 

@@ -18,6 +18,7 @@ export function newStats() {
     purchases: 0, bulkPurchases: 0, autoBought: 0, labsBought: 0,
     upgrades: 0, milestones: 0, techs: 0, cooling: 0, transformers: 0,
     batteryIn: 0, batteryOut: 0, batteryMoney: 0, banks: 0,
+    contractsDone: 0, contractsFailed: 0, contractMoney: 0, contractRp: 0,
     bought: perGen(), produced: perGen(), shutdowns: perGen(),
     events: Object.fromEntries(EVENTS.map((e) => [e.id, 0])),
     crises: { won: 0, lost: 0, crew: 0, timeout: 0 },
