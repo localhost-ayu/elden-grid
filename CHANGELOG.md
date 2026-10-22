@@ -10,6 +10,10 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+### Corrigido
+- O recorde de tempo das crises da Fronteira (contenção e tempestade solar) não era
+  gravado, e as conquistas Mão Firme e Escudo Vivo nunca eram liberadas.
+
 ### Adicionado
 - Aba **Mercado** (tecla `K`), entre Rede e Legado. Em 80 colunas a barra de abas mostra
   só o raio no lugar do título para caber.
