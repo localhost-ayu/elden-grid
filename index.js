@@ -5,6 +5,7 @@ import {
 import { readSettings, writeSettings } from './src/storage/settings.js';
 import { updater } from './src/storage/update.js';
 import { readProfile, writeProfile } from './src/storage/profile.js';
+import { readChangelog } from './src/storage/changelog.js';
 import * as term from './src/ui/term.js';
 import { parseKeys } from './src/ui/input.js';
 import { createScreen } from './src/ui/screen.js';
@@ -50,6 +51,7 @@ const app = createApp({
   copy: term.copy,
   who: whoami(),
   profile: { read: () => readProfile(), write: (p) => writeProfile(p) },
+  changelog: () => readChangelog(),
   // ELDEN_GRID_NO_UPDATE_CHECK=1: nada de rede (a versão continua aparecendo).
   updater: process.env.ELDEN_GRID_NO_UPDATE_CHECK ? { ...updater, latest: async () => null } : updater,
 });

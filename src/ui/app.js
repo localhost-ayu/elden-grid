@@ -29,6 +29,8 @@ import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
 import * as market from './screens/market.js';
+import * as news from './screens/news.js';
+import * as credits from './screens/credits.js';
 import { surging, rand as marketRand, repTier, repName } from '../core/market.js';
 import { breakdownStep, wearFactor } from '../core/wear.js';
 import { regionName } from '../core/regions.js';
@@ -67,6 +69,8 @@ const FULL = {
   offline: { screen: offline, title: 'Bem-vindo de volta' },
   options: { screen: options, title: 'Opções' },
   challenges: { screen: challenges, title: 'Desafios' },
+  news: { screen: news, title: 'Novidades' },
+  credits: { screen: credits, title: 'Créditos' },
 };
 
 export const CHALLENGE_SLOT = 'D';
@@ -87,7 +91,7 @@ const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 // O store também guarda o slot de Desafio, com n = 'D' (fora da lista dos slots 1–3).
 export function createApp({
   store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random,
-  noColor = false, copy = () => false, who = {}, updater = null, profile: profileStore = null,
+  noColor = false, copy = () => false, who = {}, updater = null, profile: profileStore = null, changelog = () => null,
 }) {
   const app = {
     state: null,  // jogo aberto (null = nenhum slot carregado ainda)
@@ -348,6 +352,8 @@ export function createApp({
     history: app.history,
     say,
     go: (mode) => { app.mode = mode; },
+    // Lido do disco só quando a tela Novidades abre.
+    get changelog() { return (app.changelogText ??= changelog() ?? ''); },
     continueGame: () => loadSlot(continueTarget()),
     openSlots(purpose) {
       app.ui.slots = { purpose, sel: Math.max(0, (app.slot ?? 1) - 1) };

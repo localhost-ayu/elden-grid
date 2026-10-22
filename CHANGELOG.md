@@ -66,6 +66,8 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   Sistema Solar direto, e a Herança da Fronteira devolve unidades, upgrades e pesquisas.
 - Dez conquistas novas (121 no total), na categoria Regiões e Kardashev: da Cidade ao
   Núcleo Galáctico, colonizar, Kardashev 1.5 e Patentes.
+- Menu: **Novidades** mostra este changelog, da 1.0 até aqui (↑↓ PgUp PgDn rolam, ←→
+  pulam de versão), e **Créditos** traz quem fez, as inspirações e um obrigado por jogar.
 
 ## [1.5.0] - 2026-10-22
 
