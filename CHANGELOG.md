@@ -30,6 +30,8 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   de fonte pertence a um capítulo (a aba Geradores mostra só as do capítulo atual); as
   pesquisas gerais (laboratório, automação, rede, mercado) valem em todos. Enxame e
   Kugelblitz passam para o Sistema Solar; o Vácuo, para a Galáxia.
+- Desafios e semente do dia são partidas da Terra; metas dos níveis IV e V recalibradas
+  para $3T e $30T (com as regiões e sem as fontes dos outros capítulos).
 - O marco de ascensão passa a ser uma região: na Terra, atender o País (e, da 4ª ascensão
   em diante, o Planeta), ou a árvore do capítulo completa.
 - Saves com Enxame, Kugelblitz ou Vácuo na Terra: unidades, upgrades e pesquisas deles
@@ -62,6 +64,8 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - Pontos de legado e o mínimo da partida acompanham a escala de dinheiro do capítulo.
 - Veteranos da 1.x (estoque da Fronteira ou a conquista Ponto Zero) podem colonizar o
   Sistema Solar direto, e a Herança da Fronteira devolve unidades, upgrades e pesquisas.
+- Dez conquistas novas (121 no total), na categoria Regiões e Kardashev: da Cidade ao
+  Núcleo Galáctico, colonizar, Kardashev 1.5 e Patentes.
 
 ## [1.5.0] - 2026-10-22
 

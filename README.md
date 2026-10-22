@@ -82,7 +82,7 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Semente do dia.** Uma partida por dia igual para todo mundo (mesma seed, mesmas
   regras sorteadas): quem chega a $25B mais rápido? Ao terminar, o jogo mostra um código
   com o tempo para mandar aos amigos.
-- **Conquistas.** 111 metas em dez categorias (algumas secretas), da primeira faísca a
+- **Conquistas.** 121 metas em onze categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%

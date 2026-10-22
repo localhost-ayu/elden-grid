@@ -133,3 +133,19 @@ test('aba Legado, Império: I abre, C coloniza com S/N, Enter compra na árvore;
   app.key('i');
   assert.match(text(), /Loja do Legado/);
 });
+
+test('conquistas de regiões e Kardashev: valem no capítulo e ficam para trás ao avançar', async () => {
+  const { checkAchievements } = await import('../src/core/achievements.js');
+  const s = newState();
+  s.region = 4;
+  let got = checkAchievements(s).map((a) => a.id);
+  assert.ok(got.includes('k_city') && got.includes('k_country'));
+  assert.ok(!got.includes('k_planet'));
+  const t = newState();
+  t.chapter = 'solar';
+  t.region = 2;
+  t.owned.swarm = 1;
+  got = checkAchievements(t).map((a) => a.id);
+  for (const id of ['k_city', 'k_country', 'k_planet', 'k_mars']) assert.ok(got.includes(id), id);
+  assert.ok(!got.includes('k_sun'));
+});

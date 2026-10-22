@@ -29,6 +29,9 @@
 //   dailies at        dias com a semente do dia completa
 //   dailyFast at      semente do dia completa em até `at` segundos
 //   rep     at        faixa de reputação (índice em REPUTATION.tiers) nesta partida
+//   region  chapter, at  atender a região `at` do capítulo (ou já estar num capítulo além)
+//   kardashev at      produção com Kardashev >= at
+//   patents at        Patentes guardadas
 // `secret`: nome e descrição ficam ocultos até conquistar.
 import { GENERATORS } from './generators.js';
 import { TECHS } from './research.js';
@@ -46,6 +49,7 @@ export const CATEGORIES = [
   { id: 'crank', name: 'Manivela e tempo' },
   { id: 'challenges', name: 'Desafios' },
   { id: 'market', name: 'Mercado e manutenção' },
+  { id: 'empire', name: 'Regiões e Kardashev' },
   { id: 'secret', name: 'Segredos' },
 ];
 
@@ -164,6 +168,17 @@ export const ACHIEVEMENTS = [
   { id: 'm_rep4', cat: 'market', name: 'Marca Global', desc: 'reputação Global', type: 'rep', at: 4 },
   { id: 'm_hand25', cat: 'market', name: 'Mão na Graxa', desc: 'faça 25 manutenções à mão', type: 'career', key: 'cleanedByHand', at: 25 },
   { id: 'm_repair10', cat: 'market', name: 'Pronto-Socorro', desc: 'conserte 10 quebras pagando', type: 'career', key: 'repairs', at: 10 },
+  // ---- regiões e Kardashev (2.0) ----
+  { id: 'k_city', cat: 'empire', name: 'Luzes da Cidade', desc: 'atenda uma Cidade', type: 'region', chapter: 'earth', at: 1 },
+  { id: 'k_country', cat: 'empire', name: 'Concessão Nacional', desc: 'atenda um País', type: 'region', chapter: 'earth', at: 4 },
+  { id: 'k_planet', cat: 'empire', name: 'Tipo I', desc: 'atenda o Planeta inteiro', type: 'region', chapter: 'earth', at: 6 },
+  { id: 'k_colony', cat: 'empire', name: 'Colonizador', desc: 'colonize o Sistema Solar', type: 'career', key: 'colonizations', at: 1 },
+  { id: 'k_mars', cat: 'empire', name: 'Vermelho Aceso', desc: 'atenda Marte', type: 'region', chapter: 'solar', at: 2 },
+  { id: 'k_sun', cat: 'empire', name: 'Tipo II', desc: 'atenda o Sol', type: 'region', chapter: 'solar', at: 5 },
+  { id: 'k_orion', cat: 'empire', name: 'Braço de Órion', desc: 'atenda o Braço de Órion', type: 'region', chapter: 'galaxy', at: 2 },
+  { id: 'k_core', cat: 'empire', name: 'Tipo III', desc: 'atenda o Núcleo Galáctico', type: 'region', chapter: 'galaxy', at: 4 },
+  { id: 'k_k15', cat: 'empire', name: 'Meio Caminho', desc: 'chegue a Kardashev 1.5', type: 'kardashev', at: 1.5 },
+  { id: 'k_patents', cat: 'empire', name: 'Inventor', desc: 'guarde 25 Patentes', type: 'patents', at: 25 },
   { id: 'c_daily1', cat: 'challenges', name: 'Bom Dia', desc: 'complete uma semente do dia', type: 'dailies', at: 1 },
   { id: 'c_daily7', cat: 'challenges', name: 'Hábito', desc: '7 sementes do dia completas', type: 'dailies', at: 7 },
   { id: 'c_daily30', cat: 'challenges', name: 'Ritual', desc: '30 sementes do dia completas', type: 'dailies', at: 30 },

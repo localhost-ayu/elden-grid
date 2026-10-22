@@ -22,9 +22,10 @@
 //   volatility     x na largura da faixa da demanda e na chance de surto (data/market.js)
 //   demandShift    desloca o centro da demanda (negativo = o mercado paga menos na média)
 //   impact         x no impacto das vendas no preço
-// 1.4: metas III–V subiram (eram 5e11, 2.5e12, 1e13): com a Fronteira, o nível V caía
-// para ~1h30–2h20. Bot: I ~40 min, III ~1h20, IV ~2h10, V 2h45–3h55.
-export const GOALS = [2.5e10, 1e11, 1e12, 3e13, 1e15];
+// 2.0: desafios e semente do dia são partidas da Terra (sem as fontes dos outros
+// capítulos, com as regiões). Bot ocioso: I ~50 min, III ~1h20–1h50, IV ~1h30–2h20,
+// V ~2h20–4h.
+export const GOALS = [2.5e10, 1e11, 1e12, 3e12, 3e13];
 
 // Recompensas (valem nos slots 1–3, nunca dentro de um desafio). Cada nível completo de
 // qualquer desafio multiplica a produção por TIER_MULT (25 níveis: x10.8), e cada desafio

@@ -6,7 +6,8 @@ import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import { SHOP } from '../data/legacy.js';
 import { COOLING } from '../data/heat.js';
-import { bought, power, income, gridLoad, upgradeLevel, upgradeTrack, chapterTechs } from './engine.js';
+import { bought, power, income, gridLoad, upgradeLevel, upgradeTrack, chapterTechs, kardashev } from './engine.js';
+import { chapterIndex } from '../data/chapters.js';
 import { HOT_GENERATORS, coolingLevel, heatLevel, isShutdown } from './heat.js';
 import { shopLevel } from './prestige.js';
 import { activeProfile, totalTiers } from './rewards.js';
@@ -43,6 +44,9 @@ const PROGRESS = {
   shopMax: (s, a) => ratio(SHOP.filter((it) => shopLevel(s, it) >= it.costs.length).length, a.at),
   fastest: (s, a) => under(s.career.fastestRun, a.at),
   rep: (s, a) => ratio(repTier(s), a.at),
+  region: (s, a) => (chapterIndex(s.chapter) > chapterIndex(a.chapter) ? 1 : s.chapter === a.chapter ? ratio(s.region, a.at) : 0),
+  kardashev: (s, a) => Math.max(0, ratio(kardashev(power(s)), a.at)),
+  patents: (s, a) => ratio(s.empire.patents, a.at),
   fastWin: (s, a) => under(s.career.bestWin[a.game], a.at),
   without: (s, a) => (get(s.stats, a.key) === 0 ? ratio(s.stats.moneyEarned, a.at) : 0),
   count: (s, a) => ratio(Object.keys(s.achievements).length, a.at),
