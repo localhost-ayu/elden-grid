@@ -2,7 +2,7 @@
 // chega a cada marco. Serve para ajustar as curvas em src/data/ com números, não no olho.
 //
 //   bun scripts/simulate.js [minutos=90] [--seeds=5] [--crises=play|idle|off] [--runs=1]
-//                           [--challenge=<id> --tier=1..5 | --daily=AAAA-MM-DD]
+//                           [--play=active|idle] [--challenge=<id> --tier=1..5 | --daily=AAAA-MM-DD]
 // Com desafio ou semente do dia, o bot joga a partida especial (sem legado) e mostra
 // quanto tempo levou até a meta.
 //
@@ -13,6 +13,12 @@
 // metade dos pontos já recebidos (ascender a cada ponto novo seria pouco humano).
 // Na loja, gasta metade dos pontos e ergue o Monumento só quando ele rende mais que
 // guardar os pontos que custa.
+//
+// Mercado e manutenção (1.5), conforme --play:
+//   idle    contrata a equipe de manutenção e esquece; sem baterias nem contratos
+//   active  manutenção à mão (uma a cada HAND_EVERY s, quando passa de 25%), bancos de
+//           bateria quando baratos, venda no surto ou no preço alto, carga barata ligada e
+//           contratos (aceita a oferta de maior prêmio por segundo)
 import { fileURLToPath } from 'node:url';
 import { newState } from '../src/core/state.js';
 import * as E from '../src/core/engine.js';
@@ -27,9 +33,14 @@ import { TECHS } from '../src/data/research.js';
 import { SHOP, LEGACY, MONUMENT } from '../src/data/legacy.js';
 import { ACHIEVEMENTS } from '../src/data/achievements.js';
 import { applyRunStart, goalReached, runGoal, dailySeed } from '../src/core/challenges.js';
+import { contractsStep, accept } from '../src/core/contracts.js';
+import { breakdownStep, wearLevel, brokenCount } from '../src/core/wear.js';
+import { rand as marketRand, surging, bankCost, canBuyBank } from '../src/core/market.js';
+import { BATTERY } from '../src/data/market.js';
 
 const DT = 0.1;
 const FAIL_PER_LEVEL = 0.03;
+const HAND_EVERY = 5;
 
 // Sorte do próprio bot (erros nas crises), separada da sorte do jogo para não mudar a
 // sequência de eventos da partida.
@@ -62,7 +73,32 @@ function shop(s) {
 
 const shopDone = (s) => SHOP.every((it) => P.shopLevel(s, it) >= it.costs.length);
 
-function botStep(s, crises) {
+// Mercado e manutenção. `bot` guarda o relógio da manutenção à mão.
+function marketBot(s, play, bot) {
+  breakdownStep(s, DT, () => marketRand(s));
+  contractsStep(s);
+  if (play === 'idle') {
+    s.wear.crew = true;
+    return;
+  }
+  if (s.t >= bot.hand) {
+    const g = GENERATORS.filter((x) => s.owned[x.id] > 0)
+      .sort((a, b) => (brokenCount(s, b) - brokenCount(s, a)) || (wearLevel(s, b) - wearLevel(s, a)))[0];
+    if (g && (brokenCount(s, g) || wearLevel(s, g) > 0.25)) { A.handClean(s, g.id); bot.hand = s.t + HAND_EVERY; }
+  }
+  const b = s.market.battery;
+  if (canBuyBank(s) && bankCost(s) < s.money * 0.1) A.buyBank(s);
+  b.cheap = true;
+  if (b.kwh > 0 && (surging(s) || E.price(s) >= E.priceBase(s) * BATTERY.autoAbove)) E.sellBattery(s);
+  const c = s.market.contracts;
+  if (!c.active && c.offers.length) {
+    const value = (o) => (o.reward.money ?? o.reward.rp * 50) / o.duration;
+    const best = c.offers.map((o, i) => ({ i, v: value(o) })).sort((x, y) => y.v - x.v)[0];
+    accept(s, best.i);
+  }
+}
+
+function botStep(s, crises, play, bot) {
   // Com a manivela automática o bot para de girar: um humano também pararia.
   if (s.stats.playTime < 300 && !P.shopPerk(s, 'crank').autoCrank && Math.round(s.t / DT) % 3 === 0) A.crank(s);
   for (const t of TECHS) if (E.techVisible(t, s) && s.rp >= t.cost) A.buyTech(s, t.id);
@@ -88,6 +124,7 @@ function botStep(s, crises) {
   }
   if (best) A.buyGenBulk(s, best.id, 'max');
   E.tick(s, DT);
+  marketBot(s, play, bot);
   autoStep(s, DT);
   autoCrankStep(s, DT);
   checkAchievements(s);
@@ -102,7 +139,8 @@ function botStep(s, crises) {
   }
 }
 
-export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null } = {}) {
+export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active' } = {}) {
+  const bot = { hand: 0 };
   botSeed = seed;
   const s = newState(daily ? dailySeed(daily) : seed);
   if (challenge) s.run = { challenge, tier };
@@ -116,7 +154,7 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, ch
   let runSat = 0;
   let runSteps = 0;
   for (let step = 0; step < minutes * 60 / DT; step++) {
-    botStep(s, crises);
+    botStep(s, crises, play, bot);
     if (E.gridLoad(s) > 1) { saturated++; runSat++; }
     runSteps++;
     const min = (step * DT) / 60;
@@ -153,9 +191,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const seeds = Number(args.seeds ?? 5);
   const crises = args.crises ?? 'play';
   const runs = Number(args.runs ?? 1);
-  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null };
+  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null, play: args.play ?? 'active' };
   const what = special.challenge ? ` · desafio ${special.challenge} ${special.tier}` : special.daily ? ` · semente ${special.daily}` : '';
-  console.log(`Simulação: ${minutes} min, ${seeds} seeds, crises=${crises}, até ${runs} ascensão(ões)${what}\n`);
+  console.log(`Simulação: ${minutes} min, ${seeds} seeds, crises=${crises}, jogo ${special.play}, até ${runs} ascensão(ões)${what}\n`);
   for (let seed = 1; seed <= seeds; seed++) {
     const { s, marks, ascensions, saturated } = simulate({ minutes, seed, crises, runs, ...special });
     if (s.run) {

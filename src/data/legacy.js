@@ -55,6 +55,8 @@ export const MONUMENT = { name: 'Monumento', mult: 1.1, baseCost: 10, growth: 2 
 //   damage       x no custo das crises perdidas ou deixadas para a equipe
 //   milestones   x na quantidade exigida pelos marcos (25/50/100 -> 20/40/80 -> 15/30/60)
 //   transformers transformadores com que cada partida começa
+//   crew         a equipe de manutenção começa contratada e fica com esta fração da receita
+//   banks        bancos de bateria com que cada partida começa
 const T1 = ['t_wind2', 't_solar', 't_grid', 't_lab'];
 const T2 = [...T1, 't_hydro', 't_hv', 't_solar2', 't_biomass'];
 const T3 = [...T2, 't_gas', 't_substation', 't_auto', 't_hydro2'];
@@ -98,4 +100,6 @@ export const SHOP = [
   { id: 'insurance', name: 'Seguro de Rede', type: 'damage', costs: [4, 50, 2500], values: [0.75, 0.5, 0.35] },
   { id: 'early', name: 'Marcos Antecipados', type: 'milestones', costs: [300, 80000], values: [0.8, 0.6] },
   { id: 'inherited', name: 'Rede Herdada', type: 'transformers', costs: [3, 30, 1500], values: [1, 2, 3] },
+  { id: 'heircrew', name: 'Equipe Herdada', type: 'crew', costs: [8, 120, 3000], values: [0.04, 0.03, 0.02] },
+  { id: 'heirbanks', name: 'Baterias Herdadas', type: 'banks', costs: [6, 90, 2500], values: [1, 3, 5] },
 ];

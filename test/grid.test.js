@@ -66,7 +66,7 @@ test('flowArrow: largura fixa, mais ">" para fonte maior, anda com o tempo', () 
   assert.equal(stripAnsi(flowArrow(0, 0)), '········');
 });
 
-test('V alterna Mapa → Fluxo → Gráfico → Calor → Mapa', () => {
+test('V alterna Mapa → Fluxo → Gráfico → Calor → Previsão → Manutenção → Mapa', () => {
   const s = newState();
   s.owned.wind = 5;
   const { app, text } = open(s);
@@ -74,7 +74,32 @@ test('V alterna Mapa → Fluxo → Gráfico → Calor → Mapa', () => {
   app.key('v'); assert.match(text(), /MERCADO/);
   app.key('v'); assert.match(text(), /Participação agora/);
   app.key('V'); assert.match(text(), /Nenhum reator ainda/);
+  app.key('v'); assert.match(text(), /Próximas 24 h de jogo/);
+  assert.match(text(), /Vento .* \d\.\d\dx → /);
+  assert.match(text(), /Preço .* \$\d/);
+  for (const l of app.lines(80, 24)) assert.ok(visibleLength(l) <= 80, stripAnsi(l));
+  app.key('v'); assert.match(text(), /sem equipe/);
   app.key('v'); assert.match(text(), /ociosa/);
+});
+
+test('previsão: o ponto de agora é exato, o erro cresce com a distância e a pesquisa reduz', async () => {
+  const { forecast, forecastError, HORIZON, STEP } = await import('../src/core/forecast.js');
+  const { windLevel } = await import('../src/core/traits.js');
+  const s = newState();
+  s.owned.wind = 1;
+  s.owned.solar = 1;
+  s.owned.vacuum = 1;
+  const f = forecast(s);
+  assert.deepEqual(f.series.map((x) => x.id), ['wind', 'sun', 'vacuum', 'price']);
+  const wind = f.series[0].values;
+  assert.equal(wind.length, HORIZON / STEP);
+  assert.equal(wind[0], windLevel(s));
+  const far = Math.abs(wind.at(-1) / windLevel({ ...s, t: s.t + HORIZON - STEP }) - 1);
+  assert.ok(far <= forecastError(s) + 1e-9);
+  assert.deepEqual(forecast(s).series[0].values, wind, 'não pisca entre quadros');
+  const before = forecastError(s);
+  s.techs.t_forecast = true;
+  assert.ok(forecastError(s) < before / 2);
 });
 
 test('T compra transformador; sem dinheiro avisa', () => {

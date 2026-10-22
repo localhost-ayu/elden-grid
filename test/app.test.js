@@ -341,3 +341,38 @@ test('árvore de pesquisa completa cabe em 80 colunas em qualquer posição', ()
     press('down');
   }
 });
+
+test('barra de abas: K abre o Mercado; o título encolhe para caber em 80 colunas', () => {
+  const { app, press } = make();
+  startNew(press);
+  press('k');
+  assert.equal(app.tab, 'market');
+  const at = (cols) => stripAnsi(app.lines(cols, 24)[0]);
+  assert.match(at(100), /⚡ ELDEN GRID .*Mercado/);
+  assert.doesNotMatch(at(80), /ELDEN GRID/);
+  for (const t of TABS) assert.ok(at(80).includes(t.label), `${t.label} cabe inteiro em 80 colunas`);
+  for (const t of TABS) { press(t.key); assert.ok(visibleLength(app.lines(80, 24)[0]) <= 80, t.id); }
+  press('k');
+  assert.match(stripAnsi(app.lines(80, 24).join('\n')), /Mercado  preço \$/);
+});
+
+test('cabeçalho lotado (legado enorme, auto, usinas gastas, surto) cabe em 80 colunas', () => {
+  const s = newState();
+  s.owned.wind = 500;
+  s.auto.buy = true;
+  s.legacy.points = 123456;
+  s.rp = 1.23e15;
+  s.money = 1.23e30;
+  s.wear.level.wind = 1;
+  s.wear.broken.push({ gen: 'wind', at: 0 });
+  s.market.surgeUntil = 1e9;
+  s.events.next = 1e9;
+  const slots = { 1: { status: 'ok', savedAt: null, state: s } };
+  const store = { list: () => [1, 2, 3].map((n) => ({ slot: n, ...(slots[n] ?? { status: 'empty' }) })), load: (n) => slots[n], save: () => true, remove() {} };
+  const app = createApp({ store, now: 0 });
+  app.key('1');
+  const lines = app.lines(80, 24);
+  for (const l of lines.slice(0, 4)) assert.ok(visibleLength(l) <= 80, stripAnsi(l));
+  assert.match(stripAnsi(lines[2]), /Usinas \d+%/, 'o aviso das usinas fica');
+  assert.match(stripAnsi(app.lines(140, 24)[2]), /✦ \+1\.23M%.*⟳ auto/, 'com espaço, tudo aparece');
+});

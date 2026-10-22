@@ -11,6 +11,10 @@ import { add, peak } from './records.js';
 import { ACHIEVEMENT_BONUS } from '../data/achievements.js';
 import { rules, priceDecay, genDisabled } from './challenges.js';
 import { reward, rewardMult } from './rewards.js';
+import { marketFactor, marketStep, batteryCap, addImpact } from './market.js';
+import { BATTERY, MARKET } from '../data/market.js';
+import { wearFactor, wearStep } from './wear.js';
+import { WEAR } from '../data/wear.js';
 
 export const bought = (s, id) => !!s.techs[id];
 
@@ -79,7 +83,7 @@ function genRaw(s, g, average) {
   const out = genModMult(s, g, 'output');
   // Offline não há eventos: um blecaute no instante do save não pune a hora inteira fora.
   const ev = average ? 1 : eventMult(s, 'output', g.id);
-  return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev;
+  return s.owned[g.id] * g.output * out * genEnv(s, g, average) * heatFactor(s, g, out, average) * ev * wearFactor(s, g);
 }
 
 // Alimentação (trait `feed`, Kugelblitz): a produção das outras fontes sobre `share` × a
@@ -106,7 +110,10 @@ export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab') * shopValue(
 // Preço do kWh oscila ±20% numa senoide lenta (dá vida ao contador de dinheiro).
 // priceBase é a média da oscilação; priceRising vem da derivada (a seta de tendência).
 export const priceBase = (s) => mult(s, 'price') * priceDecay(s) * (1 + reward(s, 'price'));
-export const price = (s) => (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price');
+// Por cima disso, o mercado (core/market.js): demanda, surtos e o impacto das vendas.
+// Offline (average) o mercado fica neutro.
+export const price = (s, average = false) =>
+  (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price') * marketFactor(s, average);
 export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 
 // Multiplicadores que atravessam partidas (Legado, conquistas e desafios). A rede cresce junto com
@@ -125,16 +132,27 @@ export const transformerCost = (s) =>
 export const excessRate = (s) => GRID.excessPriceRate + boughtOf(s, 'excess').reduce((sum, t) => sum + t.add, 0);
 
 // { full, excess, perSecond }: kW a preço cheio, kW excedentes (com desconto) e $/s.
-export function sales(s, kw) {
+export function sales(s, kw, average = false) {
   const full = Math.min(kw, capacity(s));
   const excess = kw - full;
-  return { full, excess, perSecond: (full + excess * excessRate(s)) * price(s) };
+  return { full, excess, perSecond: (full + excess * excessRate(s)) * price(s, average) };
 }
 // Fração da capacidade em uso (1 = no limite; > 1 = saturada).
 export const gridLoad = (s) => power(s) / capacity(s);
 
+// Equipe de manutenção (core/wear.js): fica com uma fração fixa da receita bruta.
+// Equipe Herdada (Legado) cobra menos.
+export const crewCut = (s) => (s.wear.crew ? shopValue(s, 'crew', WEAR.crewShare) : 0);
+
 // Centralizada aqui para a UI não refazer a conta por conta própria.
-export const income = (s) => sales(s, power(s)).perSecond - upkeep(s);
+export const income = (s) => sales(s, power(s)).perSecond * (1 - crewCut(s)) - upkeep(s);
+
+// Receita bruta (antes da equipe e da operação) que vem de uma fonte, pela parte dela na
+// produção. Base do preço da manutenção paga.
+export function genRevenue(s, g) {
+  const total = GENERATORS.reduce((sum, x) => sum + genPower(s, x), 0);
+  return total > 0 ? sales(s, power(s)).perSecond * genPower(s, g) / total : 0;
+}
 
 // Cada unidade é arredondada para cima individualmente (como no MVP), então o custo
 // de um lote é a soma das unidades — comprar x10 custa exatamente o mesmo que 10 x1.
@@ -192,17 +210,64 @@ export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => boug
 
 // `average` = médias do ambiente (offline); nesse modo o calor não é simulado.
 // Retorna os ids de reatores que desligaram por superaquecimento.
+// Baterias (online): guardam o excedente e, com "carregar barato", parte da produção
+// quando o preço está abaixo da média. Retorna os kW desviados da venda.
+function charge(s, kw, dt) {
+  const b = s.market.battery;
+  const room = batteryCap(s, capacity(s)) - b.kwh;
+  if (room <= 0 || !b.banks) return 0;
+  const excess = Math.max(0, kw - capacity(s));
+  const cheap = b.cheap && price(s) < priceBase(s) ? BATTERY.cheapShare * (kw - excess) : 0;
+  const stored = Math.min(room, (excess + cheap) * dt);
+  b.kwh += stored;
+  add(s, 'batteryIn', stored);
+  return stored / dt;
+}
+
+// Valor de vender `kwh` agora: o impacto da própria venda entra pela metade (média entre
+// o preço antes e depois), então vender muito de uma vez rende cada vez menos.
+const depth = (s) => capacity(s) * MARKET.impact.depthSeconds;
+export function batteryValue(s, kwh, rate) {
+  const d = depth(s);
+  const slip = d > 0 ? 1 / (1 + kwh / d / 2 / (1 + s.market.impact)) : 1;
+  return kwh * price(s) * slip * rate;
+}
+export function sellBattery(s, kwh = s.market.battery.kwh, rate = BATTERY.manualRate) {
+  const b = s.market.battery;
+  const e = Math.min(kwh, b.kwh);
+  if (e <= 0) return 0;
+  const money = batteryValue(s, e, rate);
+  b.kwh -= e;
+  addImpact(s, e, depth(s));
+  s.money += money;
+  s.earned += money;
+  add(s, 'batteryOut', e);
+  add(s, 'batteryMoney', money);
+  return money;
+}
+// Venda automática: no surto ou com o preço bem acima da média, um pouco por segundo.
+function autoSell(s, dt) {
+  const b = s.market.battery;
+  if (!b.auto || b.kwh <= 0) return;
+  if (s.t >= s.market.surgeUntil && price(s) < priceBase(s) * BATTERY.autoAbove) return;
+  sellBattery(s, b.kwh * Math.min(1, BATTERY.autoShare * dt), BATTERY.autoRate);
+}
+
 export function tick(s, dt, average = false) {
   const shutdowns = average ? [] : heatStep(s, dt, (g) => genModMult(s, g, 'output'));
   const kw = power(s, average);
-  const sold = sales(s, kw);
-  const cost = upkeep(s) * dt;
+  const stored = average ? 0 : charge(s, kw, dt);
+  const sold = sales(s, kw - stored, average);
+  const crew = sold.perSecond * crewCut(s) * dt;
+  const cost = upkeep(s) * dt + crew;
   const net = sold.perSecond * dt - cost;
   s.totalEnergy += kw * dt;
   s.money += net;
   s.earned += Math.max(0, net);
   s.rp += rpRate(s) * dt;
   record(s, dt, average, { kw, sold, cost, net, shutdowns });
+  if (!average) { autoSell(s, dt); marketStep(s, dt); wearStep(s, dt); }
+  if (crew) add(s, 'crewWages', crew);
   s.t += dt;
   return shutdowns;
 }

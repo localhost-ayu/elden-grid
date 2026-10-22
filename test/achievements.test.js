@@ -137,9 +137,10 @@ test('conquistas de desafio olham o perfil compartilhado e saem no save aberto',
     for (let t = 2; t <= 5; t++) completeChallenge(p, 'fuel', t, 2000);
     recordDaily(p, '2026-10-16', 1700);
     const got = checkAchievements(s).map((a) => a.id);
-    for (const id of ['c_tiers1', 'c_all1', 'c_fuel', 'c_daily1', 'c_dfast30']) assert.ok(got.includes(id), id);
-    for (const id of ['c_tiers10', 'c_all3', 'c_calm', 'c_daily7', 'c_dfast20']) assert.ok(!got.includes(id), id);
-    assert.ok(Math.abs(achievementProgress(s, byId('c_tiers10')) - 0.9) < 1e-9);
+    const tiers = CHALLENGES.length + 4;
+    for (const id of ['c_tiers1', 'c_tiers10', 'c_all1', 'c_fuel', 'c_daily1', 'c_dfast30']) assert.ok(got.includes(id), id);
+    for (const id of ['c_tiers25', 'c_all3', 'c_calm', 'c_daily7', 'c_dfast20']) assert.ok(!got.includes(id), id);
+    assert.ok(Math.abs(achievementProgress(s, byId('c_tiers25')) - tiers / byId('c_tiers25').at) < 1e-9);
   } finally {
     useProfile(null);
   }

@@ -1,5 +1,7 @@
 // O estado é JSON puro para poder ser salvo/carregado sem perdas.
 import { GENERATORS } from '../data/generators.js';
+import { newMarket } from './market.js';
+import { newWear } from './wear.js';
 import { SCHEDULE } from '../data/events.js';
 import { newStats, mergeStats, isValidStats } from './records.js';
 
@@ -30,6 +32,8 @@ export function newState(seed = 1) {
     run: null,
     // effects: [{ id, until }] (until null = crise em aberto); crisis: { id, deadline, game }
     events: { rng: seed >>> 0, next: SCHEDULE.first, effects: [], crisis: null, seen: 0 },
+    market: newMarket(seed >>> 0), // demanda, surtos e impacto das vendas no preço
+    wear: newWear(), // desgaste por fonte, unidades quebradas e a equipe de manutenção
     stats: newStats(),  // esta partida
     career: newStats(), // todas as partidas (sobrevive à ascensão)
   };
@@ -48,7 +52,8 @@ export function newState(seed = 1) {
 //   v9 = state.achievements, state.legacy.monument, state.auto.crank (fromSave preenche)
 //   v10 = state.run (fromSave preenche com null)
 //   v11 = pontos de legado pela raiz cúbica: legacy.lifetime é reajustado à curva nova
-export const SAVE_VERSION = 11;
+//   v12 = state.market, state.wear (fromSave preenche)
+export const SAVE_VERSION = 12;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -82,6 +87,7 @@ const MIGRATIONS = {
     if (!L || !(L.earned > 0)) return { ...raw, saveVersion: 11 };
     return { ...raw, saveVersion: 11, state: { ...raw.state, legacy: { ...L, lifetime: L.earned ** 3 * 5e7 } } };
   },
+  11: (raw) => ({ ...raw, saveVersion: 12 }),
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.
@@ -112,6 +118,12 @@ export function fromSave(raw) {
   s.legacy = { ...base.legacy, ...raw.legacy, shop: { ...raw.legacy?.shop } };
   s.achievements = { ...raw.achievements };
   s.events = { ...base.events, ...raw.events };
+  s.market = {
+    ...base.market, ...raw.market,
+    battery: { ...base.market.battery, ...raw.market?.battery },
+    contracts: { ...base.market.contracts, ...raw.market?.contracts },
+  };
+  s.wear = { ...base.wear, ...raw.wear, level: { ...base.wear.level, ...raw.wear?.level } };
   s.stats = mergeStats(base.stats, raw.stats);
   s.career = mergeStats(base.career, raw.career);
   // Um minijogo pela metade não sobrevive ao save: a crise volta ao alerta.
@@ -149,5 +161,17 @@ export function isValidState(s) {
   if (!Array.isArray(ev.effects) || !ev.effects.every((a) => a && typeof a.id === 'string' && (a.until === null || finite(a.until)))) return false;
   if (ev.crisis !== null && !(ev.crisis && typeof ev.crisis.id === 'string' && finite(ev.crisis.deadline))) return false;
   if (s.run !== null && !isValidRun(s.run)) return false;
+  const m = s.market;
+  if (!m || !Number.isInteger(m.rng) || m.rng < 0 || m.rng > 0xffffffff) return false;
+  if (![m.demand, m.target, m.retarget, m.surgeUntil, m.impact].every(finite) || m.impact < 0 || m.demand <= 0) return false;
+  if (!finite(m.rep) || m.rep < 0 || !finite(m.careClock)) return false;
+  const b = m.battery;
+  if (!b || !finite(b.kwh) || b.kwh < 0 || !count(b.banks) || typeof b.cheap !== 'boolean' || typeof b.auto !== 'boolean') return false;
+  const k = m.contracts;
+  if (!k || !Array.isArray(k.offers) || !finite(k.next) || !count(k.done) || !count(k.failed)) return false;
+  if (k.active !== null && !(k.active && typeof k.active.type === 'string' && finite(k.active.deadline))) return false;
+  const w = s.wear;
+  if (!w || typeof w.crew !== 'boolean' || !w.level || !Object.values(w.level).every((x) => finite(x) && x >= 0 && x <= 1)) return false;
+  if (!Array.isArray(w.broken) || !w.broken.every((b) => b && typeof b.gen === 'string' && finite(b.at))) return false;
   return !!s.techs && typeof s.techs === 'object';
 }

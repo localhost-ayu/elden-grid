@@ -153,3 +153,15 @@ test('aba Estatísticas: colunas, rolagem até o fim e cabe em 80×24', () => {
     app.key('down');
   }
 });
+
+test('recorde de vitória vale para todo minijogo, inclusive os da Fronteira', async () => {
+  const { MINIGAMES } = await import('../src/core/minigames.js');
+  const { best } = await import('../src/core/records.js');
+  const { newState } = await import('../src/core/state.js');
+  const s = newState();
+  for (const kind of Object.keys(MINIGAMES)) {
+    assert.ok(kind in s.stats.bestWin, `${kind} sem campo de recorde`);
+    best(s, 'bestWin', kind, 4.2);
+    assert.equal(s.career.bestWin[kind], 4.2, kind);
+  }
+});

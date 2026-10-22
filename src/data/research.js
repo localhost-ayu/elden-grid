@@ -15,6 +15,7 @@
 //       'feed'     (x no quanto o Kugelblitz precisa ser alimentado)
 //       'vacuumFloor' (piso da flutuação do vácuo: `floor`, o maior vale)
 //       'excess'   (+`add` na fração do preço paga pelo excedente da rede: armazenamento)
+//       'forecast' (x no erro da previsão da aba Rede)
 export const TECHS = [
   // ---- eólica ----
   { id: 't_wind2',       name: 'Pás Aerodinâmicas',        cost: 3,      req: [],                type: 'genMult', gen: 'wind', mult: 2 },
@@ -50,6 +51,7 @@ export const TECHS = [
 
   // ---- rede e mercado ----
   { id: 't_grid',        name: 'Rede Inteligente',         cost: 20,     req: [],                type: 'price',    mult: 1.25 },
+  { id: 't_forecast',    name: 'Satélites Meteorológicos', cost: 250,    req: ['t_grid'],        type: 'forecast', mult: 0.33 },
   { id: 't_hv',          name: 'Linhas de Alta Tensão',    cost: 30,     req: ['t_grid'],        type: 'capacity', mult: 20 },
   { id: 't_substation',  name: 'Subestações',              cost: 400,    req: ['t_hv'],          type: 'capacity', mult: 30 },
   { id: 't_hvdc',        name: 'Linhas HVDC',              cost: 2500,   req: ['t_substation'],  type: 'capacity', mult: 40 },

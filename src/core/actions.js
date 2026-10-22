@@ -4,11 +4,15 @@ import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import {
   power, price, genUnlocked, genBuyable, labUnlocked, techVisible, genBulk, labBulk, nextUpgrade, transformerCost, milestones,
+  genRevenue,
 } from './engine.js';
 import { isHot, nextCooling } from './heat.js';
 import { shopValue } from './prestige.js';
 import { add, crankTap } from './records.js';
 import { rules } from './challenges.js';
+import { bankCost, canBuyBank } from './market.js';
+import { wearLevel, clean, fix, brokenCount } from './wear.js';
+import { WEAR } from '../data/wear.js';
 
 // Rende uma fração da produção de 1 s (mínimo 1 kWh): continua útil a partida toda.
 // Retorna 0 se a manivela está desligada (desafio Sem Vento).
@@ -104,4 +108,56 @@ export function buyTransformer(s) {
   add(s, 'transformers');
   add(s, 'moneySpent', c);
   return true;
+}
+
+// Banco de baterias (aba Mercado): mais capacidade de guardar energia.
+export function buyBank(s) {
+  const c = bankCost(s);
+  if (!canBuyBank(s) || s.money < c) return false;
+  s.money -= c;
+  s.market.battery.banks++;
+  add(s, 'banks');
+  add(s, 'moneySpent', c);
+  return true;
+}
+
+// ---- manutenção (aba Rede, visão Manutenção) ----
+export const cleanCost = (s, g) => genRevenue(s, g) * WEAR.paySeconds * wearLevel(s, g);
+export function payClean(s, id) {
+  const g = GENERATORS.find((x) => x.id === id);
+  if (!g || !s.owned[id] || wearLevel(s, g) <= 0) return false;
+  const c = cleanCost(s, g);
+  if (s.money < c) return false;
+  s.money -= c;
+  clean(s, g);
+  add(s, 'cleaned');
+  add(s, 'maintenancePaid', c);
+  return true;
+}
+// Feito à mão (minijogo vencido): grátis.
+export function handClean(s, id) {
+  const g = GENERATORS.find((x) => x.id === id);
+  if (!g || !s.owned[id]) return false;
+  clean(s, g);
+  if (brokenCount(s, g)) fix(s, id);
+  add(s, 'cleaned');
+  add(s, 'cleanedByHand');
+  return true;
+}
+// Conserto pago de uma unidade quebrada: a receita de uma unidade por fixSeconds.
+export const fixCost = (s, g) => (s.owned[g.id] ? genRevenue(s, g) / Math.max(1, s.owned[g.id] - brokenCount(s, g)) * WEAR.fixSeconds : 0);
+export function payFix(s, id) {
+  const g = GENERATORS.find((x) => x.id === id);
+  if (!g || !brokenCount(s, g)) return false;
+  const c = fixCost(s, g);
+  if (s.money < c) return false;
+  s.money -= c;
+  fix(s, id);
+  add(s, 'repairs');
+  add(s, 'maintenancePaid', c);
+  return true;
+}
+export function toggleCrew(s) {
+  s.wear.crew = !s.wear.crew;
+  return s.wear.crew;
 }

@@ -26,6 +26,7 @@
 //   allTiers at       todos os desafios com pelo menos `at` níveis
 //   dailies at        dias com a semente do dia completa
 //   dailyFast at      semente do dia completa em até `at` segundos
+//   rep     at        faixa de reputação (índice em REPUTATION.tiers) nesta partida
 // `secret`: nome e descrição ficam ocultos até conquistar.
 import { GENERATORS } from './generators.js';
 import { TECHS } from './research.js';
@@ -42,6 +43,7 @@ export const CATEGORIES = [
   { id: 'legacy', name: 'Legado' },
   { id: 'crank', name: 'Manivela e tempo' },
   { id: 'challenges', name: 'Desafios' },
+  { id: 'market', name: 'Mercado e manutenção' },
   { id: 'secret', name: 'Segredos' },
 ];
 
@@ -142,7 +144,7 @@ export const ACHIEVEMENTS = [
   // ---- desafios ----
   { id: 'c_tiers1', cat: 'challenges', name: 'Desafiante', desc: 'complete um nível de desafio', type: 'tiers', at: 1 },
   { id: 'c_tiers10', cat: 'challenges', name: 'Calejado', desc: '10 níveis de desafio', type: 'tiers', at: 10 },
-  { id: 'c_tiers25', cat: 'challenges', name: 'Mestre dos Desafios', desc: 'todos os 25 níveis de desafio', type: 'tiers', at: 25 },
+  { id: 'c_tiers25', cat: 'challenges', name: 'Mestre dos Desafios', desc: 'todos os 30 níveis de desafio', type: 'tiers', at: 30 },
   { id: 'c_all1', cat: 'challenges', name: 'Polivalente', desc: 'nível I em todos os desafios', type: 'allTiers', at: 1 },
   { id: 'c_all3', cat: 'challenges', name: 'Versátil', desc: 'nível III em todos os desafios', type: 'allTiers', at: 3 },
   { id: 'c_blackout', cat: 'challenges', name: 'Apagão Domado', desc: 'Apagão Eterno no nível V', type: 'challenge', challenge: 'blackout', at: 5 },
@@ -150,6 +152,16 @@ export const ACHIEVEMENTS = [
   { id: 'c_oldgrid', cat: 'challenges', name: 'Rede de Aço', desc: 'Rede Velha no nível V', type: 'challenge', challenge: 'oldgrid', at: 5 },
   { id: 'c_crash', cat: 'challenges', name: 'Especulador', desc: 'Mercado em Queda no nível V', type: 'challenge', challenge: 'crash', at: 5 },
   { id: 'c_fuel', cat: 'challenges', name: 'Mão de Vaca', desc: 'Combustível Caro no nível V', type: 'challenge', challenge: 'fuel', at: 5 },
+  { id: 'c_volatile', cat: 'challenges', name: 'Sangue Frio', desc: 'Mercado Volátil no nível V', type: 'challenge', challenge: 'volatile', at: 5 },
+  // ---- mercado e manutenção (1.5) ----
+  { id: 'm_contract1', cat: 'market', name: 'Primeiro Cliente', desc: 'cumpra um contrato', type: 'career', key: 'contractsDone', at: 1 },
+  { id: 'm_contract25', cat: 'market', name: 'Fornecedor Oficial', desc: 'cumpra 25 contratos', type: 'career', key: 'contractsDone', at: 25 },
+  { id: 'm_contract100', cat: 'market', name: 'Concessionária', desc: 'cumpra 100 contratos', type: 'career', key: 'contractsDone', at: 100 },
+  { id: 'm_battery', cat: 'market', name: 'Compre Barato', desc: 'fature $1B vendendo baterias', type: 'career', key: 'batteryMoney', at: 1e9 },
+  { id: 'm_rep2', cat: 'market', name: 'Nome na Praça', desc: 'reputação Regional', type: 'rep', at: 2 },
+  { id: 'm_rep4', cat: 'market', name: 'Marca Global', desc: 'reputação Global', type: 'rep', at: 4 },
+  { id: 'm_hand25', cat: 'market', name: 'Mão na Graxa', desc: 'faça 25 manutenções à mão', type: 'career', key: 'cleanedByHand', at: 25 },
+  { id: 'm_repair10', cat: 'market', name: 'Pronto-Socorro', desc: 'conserte 10 quebras pagando', type: 'career', key: 'repairs', at: 10 },
   { id: 'c_daily1', cat: 'challenges', name: 'Bom Dia', desc: 'complete uma semente do dia', type: 'dailies', at: 1 },
   { id: 'c_daily7', cat: 'challenges', name: 'Hábito', desc: '7 sementes do dia completas', type: 'dailies', at: 7 },
   { id: 'c_daily30', cat: 'challenges', name: 'Ritual', desc: '30 sementes do dia completas', type: 'dailies', at: 30 },

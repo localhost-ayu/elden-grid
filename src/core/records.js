@@ -17,12 +17,15 @@ export function newStats() {
     cranks: 0, crankBurst: 0,
     purchases: 0, bulkPurchases: 0, autoBought: 0, labsBought: 0,
     upgrades: 0, milestones: 0, techs: 0, cooling: 0, transformers: 0,
+    batteryIn: 0, batteryOut: 0, batteryMoney: 0, banks: 0,
+    contractsDone: 0, contractsFailed: 0, contractMoney: 0, contractRp: 0,
+    cleaned: 0, cleanedByHand: 0, maintenancePaid: 0, crewWages: 0, breakdowns: 0, repairs: 0,
     bought: perGen(), produced: perGen(), shutdowns: perGen(),
     events: Object.fromEntries(EVENTS.map((e) => [e.id, 0])),
     crises: { won: 0, lost: 0, crew: 0, timeout: 0 },
     crewPaid: 0, rewards: 0, streak: 0, bestStreak: 0,
     // Menor tempo (s) de vitória em cada minijogo; null = nunca venceu.
-    bestWin: { timing: null, mash: null, sequence: null },
+    bestWin: { timing: null, mash: null, sequence: null, balance: null, shield: null },
     // Só fazem sentido na carreira, mas o formato igual simplifica tudo.
     fastestRun: null, bestGain: 0,
   };
@@ -41,9 +44,9 @@ export function peak(s, key, v) {
   for (const st of sheets(s)) if (v > st[key]) st[key] = v;
 }
 
-// Menor é melhor (tempos); null conta como "sem recorde".
+// Menor é melhor (tempos); null (ou ausente) conta como "sem recorde".
 export function best(s, key, sub, v) {
-  for (const st of sheets(s)) if (st[key][sub] === null || v < st[key][sub]) st[key][sub] = v;
+  for (const st of sheets(s)) if (st[key][sub] == null || v < st[key][sub]) st[key][sub] = v;
 }
 
 // Giros por segundo: janela de 1 s de jogo, guardada fora das fichas (é transitória).

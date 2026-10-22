@@ -10,6 +10,62 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [1.5.0] - 2026-10-22
+
+Operação: mercado vivo, baterias, contratos, previsão, manutenção e reputação.
+
+### Adicionado
+- Aba **Mercado** (tecla `K`), entre Rede e Legado. Em 80 colunas a barra de abas mostra
+  só o raio no lugar do título para caber.
+- **Preço vivo**: além da oscilação de sempre, a demanda passeia entre 85% e 120% e às
+  vezes vem um **surto** (kWh x1.6 por alguns segundos, com aviso). Vender muito de uma
+  vez derruba o preço por um tempo (o impacto cai à metade a cada 20 s). A aba Mercado
+  mostra demanda, surto, impacto e o gráfico do preço. Offline o mercado fica neutro.
+  Save **v12** (`state.market`), migrado sem perda.
+- **Baterias** na aba Mercado: bancos (`B`, até 10) que guardam 20 s da capacidade da rede
+  cada e carregam sozinhos com o excedente. `V` vende a carga ao preço do momento (vender
+  muito de uma vez rende menos e derruba o preço); `A` liga a venda automática (no surto
+  ou com o preço alto, a 80% do valor); `C` liga a carga barata (guarda metade da
+  produção quando o preço está abaixo da média).
+- **Contratos de fornecimento** na aba Mercado: até três ofertas por vez (uma nova a cada
+  45 s, somem em 2:30) e um contrato ativo, aceito com `1`–`3` (`D` desiste, sem multa).
+  Tipos: Entrega (produzir X kWh no prazo), Venda (faturar $X; baterias e surtos ajudam),
+  Verde (manter N% da produção renovável) e Firme (nenhum reator desliga). Pagam minutos
+  de renda ou de pesquisa. Ficam parados offline e com o jogo disfarçado.
+- **Previsão**, quinta visão da aba Rede: as próximas 24 h de jogo de vento, sol, maré,
+  Vácuo e preço, com o pico de cada um. O erro cresce com a distância (até ±30%); a
+  pesquisa nova Satélites Meteorológicos o reduz a um terço. Surtos não se preveem.
+- **Desgaste e manutenção**: cada fonte perde eficiência com o tempo, do jeito dela
+  (poeira na solar, rolamentos na eólica, cracas na maremotriz...), até no máximo 30%.
+  Visão nova **Manutenção** na aba Rede: `F` paga a revisão na hora, `J` faz à mão
+  (quatro setas na ordem, grátis) e `A` contrata a equipe, que fica com 5% da receita e
+  segura o desgaste em 10% para todas as fontes. O cabeçalho avisa quando as usinas
+  passam a render menos de 95%. Offline nada se desgasta.
+- **Quebras**: de vez em quando uma unidade para (no máximo duas abertas). A revisão paga
+  ou à mão conserta; com a equipe, o conserto sai sozinho em 30 s.
+- **Reputação** da companhia (Desconhecida, Local, Regional, Nacional, Global): sobe com
+  contratos cumpridos e com as usinas em dia, cai com contratos perdidos e quebras
+  esquecidas. Cada faixa paga +15% nos contratos e +2% no kWh. Zera na ascensão.
+- Desafio novo **Mercado Volátil**: a demanda oscila até 3.2x mais e, na média, paga menos;
+  vender pesa mais no preço. Recompensa: Corretora de Energia (+25% nos bancos de bateria
+  por nível). Com seis desafios, o perfil completo vale x1.1^30 (~x17.4).
+- Loja do legado: **Equipe Herdada** (a equipe de manutenção começa contratada e cobra
+  4%, 3% e depois 2%) e **Baterias Herdadas** (1, 3 ou 5 bancos no começo).
+- Nove conquistas novas (111 no total), na categoria nova Mercado e manutenção e no desafio
+  novo. Mestre dos Desafios passou a pedir os 30 níveis.
+- Aba Estatísticas: seção Mercado e manutenção (contratos, baterias, manutenções, quebras
+  e o que foi pago) e os melhores tempos das crises da Fronteira.
+- Simulador: `--play=active|idle`. O ativo usa baterias, contratos e manutenção à mão; o
+  ocioso só contrata a equipe. Ocioso: o mesmo ritmo da 1.4 (1ª ascensão ~1 h, loja em
+  ~16 h, desafios V em 2h40–3h50). Ativo: partidas 15–30% mais curtas e loja em ~12 h
+  (o bot joga de forma perfeita; é o teto, não o esperado).
+
+### Corrigido
+- A segunda linha do cabeçalho passava de 80 colunas com o legado muito alto: o bônus
+  do legado usa o formato curto (+1.23M%) e, sem espaço, os selos menos importantes saem.
+- O recorde de tempo das crises da Fronteira (contenção e tempestade solar) não era
+  gravado, e as conquistas Mão Firme e Escudo Vivo nunca eram liberadas.
+
 ## [1.4.0] - 2026-10-22
 
 Fronteira: três fontes depois da antimatéria, duas crises novas e partidas que fecham na
@@ -190,7 +246,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.4.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.1.0...v1.2.0

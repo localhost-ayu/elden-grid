@@ -1,7 +1,7 @@
 // Roteador de telas. Não toca o terminal: recebe nomes de tecla (input.js) e devolve
 // linhas (para o screen.js), por isso dá para testar sem TTY.
 import { newState } from '../core/state.js';
-import { tick, power, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
+import { tick, power, genPower, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
 import { autoStep, autoCrankStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
@@ -28,6 +28,12 @@ import * as slots from './screens/slots.js';
 import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
+import * as market from './screens/market.js';
+import { surging, rand as marketRand, repTier, repName } from '../core/market.js';
+import { breakdownStep, wearFactor } from '../core/wear.js';
+import { contractsStep, holdContracts } from '../core/contracts.js';
+import { contractTitle, rewardTitle } from './screens/market.js';
+import { MARKET, REPUTATION } from '../data/market.js';
 import { ROMAN, rewardText } from './screens/challenges.js';
 import { newProfile, completeChallenge, recordDaily } from '../core/profile.js';
 import { applyRunStart, challengeDef, goalReached, runGoal, localDate, dailySeed, dailyChallenges, dailyCode } from '../core/challenges.js';
@@ -37,14 +43,17 @@ import { DEFAULT_SETTINGS } from '../storage/settings.js';
 import { compareVersions, CHECK_EVERY_MS, RELEASES_URL } from '../storage/update.js';
 import { tooSmall, renderTooSmall } from './screens/too-small.js';
 
-// A 1ª letra do rótulo é a tecla direta, e é sublinhada na barra de abas.
+// `key` é a tecla direta, sublinhada na barra de abas quando é a 1ª letra do rótulo. O
+// Mercado usa K (M é o menu, e as outras iniciais já são teclas das telas). `short` é o
+// rótulo na barra apertada.
 export const TABS = [
-  { id: 'gens', key: 'g', label: 'Geradores', screen: generators },
-  { id: 'research', key: 'p', label: 'Pesquisa', screen: research },
-  { id: 'grid', key: 'r', label: 'Rede', screen: grid },
-  { id: 'legacy', key: 'l', label: 'Legado', screen: legacy },
-  { id: 'stats', key: 'e', label: 'Estatísticas', screen: stats },
-  { id: 'options', key: 'o', label: 'Opções', screen: options },
+  { id: 'gens', key: 'g', label: 'Geradores', short: 'Gerad.', screen: generators },
+  { id: 'research', key: 'p', label: 'Pesquisa', short: 'Pesq.', screen: research },
+  { id: 'grid', key: 'r', label: 'Rede', short: 'Rede', screen: grid },
+  { id: 'market', key: 'k', label: 'Mercado', short: 'Merc.', screen: market },
+  { id: 'legacy', key: 'l', label: 'Legado', short: 'Leg.', screen: legacy },
+  { id: 'stats', key: 'e', label: 'Estatísticas', short: 'Estat.', screen: stats },
+  { id: 'options', key: 'o', label: 'Opções', short: 'Opç.', screen: options },
 ];
 
 const MAX_MESSAGES = 3;
@@ -280,7 +289,9 @@ export function createApp({
     open(n, r.state);
     if (r.status === 'recovered') say(`Save do slot ${n} estava corrompido: recuperado do backup.`, 'info', 8000);
     // Progresso offline só ao abrir um save do disco (eventos/calor não rodam offline).
+    const t0 = app.state.t;
     app.offline = r.savedAt != null ? applyOffline(app.state, (app.now - r.savedAt) / 1000) : null;
+    holdContracts(app.state, app.state.t - t0); // contratos não correm offline
     app.mode = app.offline ? 'offline' : 'game';
   }
 
@@ -428,6 +439,19 @@ export function createApp({
     }
   }
 
+  function announceWear(note) {
+    const g = GENERATORS.find((x) => x.id === note.gen);
+    if (note.type === 'broke') say(`${glyphs().warn} Uma unidade de ${g.name} quebrou e parou. Conserte na aba Rede (Manutenção).`, 'err', 8000);
+    else say(`A equipe consertou a unidade de ${g.name}.`, 'info', 4000);
+  }
+
+  function announceContract(note) {
+    const c = note.contract ?? note.offer;
+    if (note.type === 'offer') say(`Nova oferta de contrato: ${contractTitle(c)} (aba Mercado).`, 'info', 4000);
+    else if (note.type === 'won') say(`Contrato cumprido! ${contractTitle(c)}: ${rewardTitle(c.reward)}.`, 'ok', 8000);
+    else say(`Contrato perdido: ${contractTitle(c)}. Sem multa; outra oferta virá.`, 'err', 6000);
+  }
+
   // Esconder salva na hora (se o jogador fechar a janela depois, nada se perde) e não
   // deixa rastro: sem mensagens, partículas ou alerta piscando por baixo do disfarce.
   function toggleStealth() {
@@ -464,8 +488,28 @@ export function createApp({
       const shutdowns = tick(app.state, dt);
       autoStep(app.state, dt);
       autoCrankStep(app.state, dt);
-      if (app.stealth) holdEvents(app.state, dt);
-      else eventsStep(app.state, dt).forEach(announce);
+      if (app.stealth) { holdEvents(app.state, dt); holdContracts(app.state, dt); }
+      else {
+        eventsStep(app.state, dt).forEach(announce);
+        contractsStep(app.state).forEach(announceContract);
+        breakdownStep(app.state, dt, () => marketRand(app.state)).forEach(announceWear);
+      }
+      // Surto de demanda: avisa uma vez quando começa (escondido, não interrompe).
+      const surge = surging(app.state);
+      if (surge && !app.surging && !app.stealth) {
+        const left = Math.round(app.state.market.surgeUntil - app.state.t);
+        say(`⚡ Surto de demanda! O kWh vale x${MARKET.surge.mult} por ${left} s. Bom momento para vender (aba Mercado).`, 'ok', 6000);
+      }
+      app.surging = surge;
+      // Reputação mudou de faixa (contrato, cuidado com as usinas ou descuido).
+      const tier = repTier(app.state);
+      if (app.repTier !== undefined && tier !== app.repTier && !app.stealth) {
+        const { rewardPerTier, pricePerTier } = REPUTATION;
+        say(tier > app.repTier
+          ? `Reputação: ${repName(app.state)}! Contratos +${Math.round(rewardPerTier * tier * 100)}%, kWh +${Math.round(pricePerTier * tier * 100)}%.`
+          : `Reputação caiu para ${repName(app.state)}.`, tier > app.repTier ? 'ok' : 'err', 6000);
+      }
+      app.repTier = tier;
       if (!app.state.events.crisis) app.crisisOpen = false;
       celebrate(checkAchievements(app.state));
       if (goalReached(app.state)) finishChallenge();
@@ -525,31 +569,52 @@ export function createApp({
     return paint(C.dim, ' ──') + paint(color, ` ${text} `) + paint(C.dim, '─'.repeat(rest));
   }
 
-  function tabBar() {
-    const parts = TABS.map((t, i) => {
-      const label = paint(C.underline, t.label[0]) + t.label.slice(1);
-      // Avisa de qualquer aba que a ascensão ficou disponível.
-      const badge = t.id === 'legacy' && canAscend(app.state) ? paint(C.yellow + C.bold, glyphs().legacy) : '';
-      return i === app.tab ? paint(C.inverse + C.bold, ` ${t.label} `) + badge : ` ${label}${badge} `;
-    });
-    return paint(C.bold + C.yellow, ' ⚡ ELDEN GRID') + '  ' + parts.join(paint(C.dim, '│'));
+  // Sem largura para tudo: primeiro o título vira só o raio, depois os rótulos encurtam
+  // (a aba aberta mantém o nome inteiro).
+  function tabBar(cols) {
+    const bar = (title, short) => {
+      const parts = TABS.map((t, i) => {
+        const text = short && i !== app.tab ? t.short : t.label;
+        const label = text[0].toLowerCase() === t.key ? paint(C.underline, text[0]) + text.slice(1) : text;
+        // Avisa de qualquer aba que a ascensão ficou disponível.
+        const badge = t.id === 'legacy' && canAscend(app.state) ? paint(C.yellow + C.bold, glyphs().legacy) : '';
+        return i === app.tab ? paint(C.inverse + C.bold, ` ${text} `) + badge : ` ${label}${badge} `;
+      });
+      return paint(C.bold + C.yellow, title) + '  ' + parts.join(paint(C.dim, '│'));
+    };
+    for (const [title, short] of [[' ⚡ ELDEN GRID', false], [' ⚡', false], [' ⚡', true]]) {
+      const line = bar(title, short);
+      if (visibleLength(line) <= cols) return line;
+    }
+    return bar(' ⚡', true);
   }
 
-  function statsLines() {
+  // Porcentagem inteira até 999; acima, no formato curto (+1.23M%).
+  const bigPct = (v) => (v < 1000 ? String(Math.round(v)) : fmt(v));
+
+  // A 2ª linha junta selos opcionais; sem largura, os menos importantes saem primeiro
+  // (auto-compra, depois o bônus do legado, depois o aviso das usinas).
+  function statsLines(cols = 80) {
     const s = app.state;
+    const base = ` Renda ${paint(C.green, '$' + fmt(income(s)) + '/s')}  ` +
+      `PP ${paint(C.mag, fmt(s.rp))} ${paint(C.dim, '(+' + fmt(rpRate(s)) + '/s)')}  ` +
+      gridText(s) + '  ' +
+      // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
+      paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`);
+    const badges = [
+      wearText(s),
+      s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${bigPct((legacyMult(s) - 1) * 100)}%`) : '',
+      s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : '',
+    ];
+    const badge = challengeBadge(s);
+    let line = base + badges.join('') + badge;
+    for (let drop = badges.length; visibleLength(line) > cols && drop > 0; drop--) line = base + badges.slice(0, drop - 1).join('') + badge;
     return [
       ` Dinheiro ${paint(C.green, '$' + fmt(app.shown.money))}  ` +
       `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}  ` +
       `Total ${paint(C.cyan, fmt(app.shown.energy) + ' kWh')}  ` +
       priceText(s),
-      ` Renda ${paint(C.green, '$' + fmt(income(s)) + '/s')}  ` +
-      `PP ${paint(C.mag, fmt(s.rp))} ${paint(C.dim, '(+' + fmt(rpRate(s)) + '/s)')}  ` +
-      gridText(s) + '  ' +
-      // Relógio do jogo (1 s real = 1 h): ☼ de dia, ☾ à noite — o jogador entende o solar.
-      paint(isDay(s) ? C.yellow : C.dim, `${isDay(s) ? '☼' : '☾'} ${String(Math.floor(hourOfDay(s))).padStart(2, '0')}h`) +
-      (s.auto.buy ? '  ' + paint(C.cyan, '⟳ auto') : '') +
-      (s.legacy.points ? '  ' + paint(C.yellow, `${glyphs().legacy} +${Math.round((legacyMult(s) - 1) * 100)}%`) : '') +
-      challengeBadge(s),
+      line,
     ];
   }
 
@@ -575,7 +640,25 @@ export function createApp({
   function priceText(s) {
     const p = price(s);
     const color = p >= priceBase(s) ? C.green : C.yellow;
-    return `Preço ${paint(color, '$' + p.toFixed(2) + '/kWh ' + (priceRising(s) ? glyphs().up : glyphs().down))}`;
+    const surge = surging(s) ? paint(C.yellow + C.bold, ' surto') : '';
+    return `Preço ${paint(color, '$' + p.toFixed(2) + '/kWh ' + (priceRising(s) ? glyphs().up : glyphs().down))}${surge}`;
+  }
+
+  // Eficiência média das usinas (desgaste e quebras, pesada pela produção): aparece só
+  // quando a manutenção começa a pesar.
+  function wearText(s) {
+    let raw = 0;
+    let real = 0;
+    for (const g of GENERATORS) {
+      if (!s.owned[g.id]) continue;
+      const kw = genPower(s, g);
+      const f = wearFactor(s, g);
+      real += kw;
+      raw += f > 0 ? kw / f : 0;
+    }
+    const eff = raw > 0 ? real / raw : 1;
+    if (eff >= 0.95 && !s.wear.broken.length) return '';
+    return '  ' + paint(eff < 0.85 || s.wear.broken.length ? C.red : C.yellow, `Usinas ${Math.round(eff * 100)}%`);
   }
 
   // Uso da rede: verde folgada, amarelo perto do limite, vermelho saturada (vendendo
@@ -620,7 +703,7 @@ export function createApp({
       help = helpOf(menu, c);
       body = menu.render(c, room(header), cols);
     } else if (app.mode === 'game') {
-      header = [tabBar(), ...statsLines(), banner(cols)];
+      header = [tabBar(cols), ...statsLines(cols), banner(cols)];
       const tab = app.crisisOpen ? { id: 'crisis', screen: crisis } : TABS[app.tab];
       help = helpOf(tab.screen, ctx(tab.id));
       body = tab.screen.render(ctx(tab.id), room(header), cols);

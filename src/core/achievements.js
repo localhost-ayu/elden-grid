@@ -12,6 +12,7 @@ import { shopLevel } from './prestige.js';
 import { activeProfile, totalTiers } from './rewards.js';
 import { challengeTier } from './profile.js';
 import { CHALLENGES } from '../data/challenges.js';
+import { repTier } from './market.js';
 
 const get = (obj, path) => path.split('.').reduce((o, k) => o?.[k], obj) ?? 0;
 const ratio = (v, at) => (at > 0 ? v / at : 0);
@@ -38,6 +39,7 @@ const PROGRESS = {
   legacy: (s, a) => ratio(s.legacy[a.key], a.at),
   shopMax: (s, a) => ratio(SHOP.filter((it) => shopLevel(s, it) >= it.costs.length).length, a.at),
   fastest: (s, a) => under(s.career.fastestRun, a.at),
+  rep: (s, a) => ratio(repTier(s), a.at),
   fastWin: (s, a) => under(s.career.bestWin[a.game], a.at),
   without: (s, a) => (get(s.stats, a.key) === 0 ? ratio(s.stats.moneyEarned, a.at) : 0),
   count: (s, a) => ratio(Object.keys(s.achievements).length, a.at),

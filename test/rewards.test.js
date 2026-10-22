@@ -26,7 +26,7 @@ test('sem perfil (ou perfil vazio), tudo neutro', () => {
   for (const c of CHALLENGES) assert.equal(reward(s, c.reward.type), 0);
 });
 
-test('cada nível completo multiplica a produção por TIER_MULT; com tudo, x10.8', () => {
+test('cada nível completo multiplica a produção por TIER_MULT; com tudo, x17.4', () => {
   const s = newState();
   s.owned.wind = 10;
   const base = power(s);
@@ -34,8 +34,8 @@ test('cada nível completo multiplica a produção por TIER_MULT; com tudo, x10.
   assert.equal(totalTiers(), 3);
   assert.ok(Math.abs(power(s) / base - TIER_MULT ** 3) < 1e-9);
   useProfile(profileWith(Object.fromEntries(CHALLENGES.map((c) => [c.id, 5]))));
-  assert.ok(Math.abs(rewardMult(s) - TIER_MULT ** 25) < 1e-9);
-  assert.ok(rewardMult(s) > 10.8);
+  assert.ok(Math.abs(rewardMult(s) - TIER_MULT ** (5 * CHALLENGES.length)) < 1e-9);
+  assert.ok(rewardMult(s) > 17.4);
 });
 
 test('vantagens temáticas: prazo das crises, solar, rede, preço e operação', () => {

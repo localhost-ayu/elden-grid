@@ -113,6 +113,8 @@ function startRun(s) {
   for (const id of [...shopValue(s, 'techs', []), ...(shopPerk(s, 'start').techs ?? [])]) s.techs[id] = true;
   for (const id of Object.keys(s.cooling)) s.cooling[id] = shopValue(s, 'cooling', 0);
   s.transformers = shopValue(s, 'transformers', 0);
+  s.market.battery.banks = shopValue(s, 'banks', 0);
+  if (shopValue(s, 'crew') !== null) s.wear.crew = true;
   rewardStart(s);
   const autoTech = TECHS.some((t) => t.type === 'auto' && s.techs[t.id]);
   if (autoTech || shopValue(s, 'auto') !== null) s.auto.buy = true;

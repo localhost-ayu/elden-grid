@@ -35,6 +35,9 @@ export function describeRule(r) {
   if (r.noReward) parts.push('sem bônus por vitória');
   if (r.output) parts.push(`usinas a combustível x${Object.values(r.output)[0]}`);
   if (r.heat) parts.push(`calor x${r.heat}`);
+  if (r.volatility) parts.push(`demanda x${r.volatility} mais instável`);
+  if (r.demandShift) parts.push(`${Math.round(r.demandShift * 100)}% na média`);
+  if (r.impact) parts.push(`vendas pesam x${r.impact}`);
   return parts.join(', ');
 }
 
@@ -45,10 +48,11 @@ const REWARD_VALUE = {
   capacity: (v) => `+${Math.round(v * 100)}%`,
   price: (v) => `+${Math.round(v * 100)}%`,
   upkeep: (v) => `-${Math.round(v * 100)}%`,
+  battery: (v) => `+${Math.round(v * 100)}%`,
 };
 const REWARD_LABEL = {
   crisisTime: 'de prazo nas crises', solar: 'na solar (já pesquisada)', capacity: 'na capacidade da rede',
-  price: 'no preço do kWh', upkeep: 'no custo de operação',
+  price: 'no preço do kWh', upkeep: 'no custo de operação', battery: 'nos bancos de bateria',
 };
 const rewardValue = (c, n) => REWARD_VALUE[c.reward.type](+(c.reward.per * n).toFixed(2));
 export const rewardText = (c, n) => `${rewardValue(c, n)} ${REWARD_LABEL[c.reward.type]}`;

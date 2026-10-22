@@ -9,15 +9,19 @@ import { GRID } from '../../data/grid.js';
 import { HEAT } from '../../data/heat.js';
 import {
   power, genPower, genEnv, capacity, sales, gridLoad, price, income, upkeep, transformerCost,
-  genModMult, excessRate,
+  genModMult, excessRate, crewCut,
 } from '../../core/engine.js';
 import {
   HOT_GENERATORS, heatLevel, heatTarget, efficiency, isShutdown, shutdownLeft, coolingLevel, nextCooling,
 } from '../../core/heat.js';
-import { buyCooling, buyTransformer } from '../../core/actions.js';
+import { buyCooling, buyTransformer, cleanCost, fixCost, payClean, payFix, handClean, toggleCrew } from '../../core/actions.js';
 import { HISTORY_LEN } from '../../core/stats.js';
 import { COOLING } from '../../data/heat.js';
 import { C, paint, glyphs, GEN_COLOR } from '../theme.js';
+import { forecast, STEP } from '../../core/forecast.js';
+import { WEAR, WEAR_BY_GEN } from '../../data/wear.js';
+import { wearLevel, brokenCount, efficiency as wearEfficiency } from '../../core/wear.js';
+import { rand as marketRand } from '../../core/market.js';
 import { fmt, fmtPct, bar, sparkline, padVisible } from '../format.js';
 
 const VIEWS = [
@@ -25,9 +29,18 @@ const VIEWS = [
   { id: 'flow', label: 'Fluxo' },
   { id: 'chart', label: 'Gráfico' },
   { id: 'heat', label: 'Calor' },
+  { id: 'forecast', label: 'Previsão' },
+  { id: 'wear', label: 'Manutenção' },
 ];
+const WEAR_VIEW = VIEWS.findIndex((v) => v.id === 'wear');
+const HEAT_VIEW = VIEWS.findIndex((v) => v.id === 'heat');
 
-export const help = 'V muda visão  T transformador  ↑↓ C resfriar  espaço gira  M menu  Q sair';
+export const help = (ctx) => {
+  if (ctx.ui.hand) return 'setas na ordem para consertar  J cancela  M menu  Q sair';
+  return VIEWS[ctx.ui.view ?? 0].id === 'wear'
+    ? 'V visão  ↑↓ fonte  F paga  J faz à mão  A equipe  espaço gira  M menu  Q sair'
+    : 'V muda visão  T transformador  ↑↓ C resfriar  espaço gira  M menu  Q sair';
+};
 
 const owned = (s) => GENERATORS.filter((g) => s.owned[g.id] > 0);
 const loadColor = (load) => (load > 1 ? C.red + C.bold : load > 0.85 ? C.yellow : C.green);
@@ -212,6 +225,63 @@ function chartView(s, height, history) {
   return out;
 }
 
+// ---------- 5. previsão ----------
+const FORECAST_COLOR = { wind: C.cyan, sun: C.yellow, tide: C.blue, vacuum: C.mag, price: C.green };
+function forecastView(s, height) {
+  const { err, series } = forecast(s);
+  const out = [
+    `  ${paint(C.bold, 'Próximas 24 h de jogo')} ${paint(C.dim, `(24 s) · erro até ±${Math.round(err * 100)}% no fim · surtos não se preveem`)}`,
+    '',
+  ];
+  for (const { id, label, values } of series) {
+    if (out.length + 2 > height) break;
+    const now = values[0];
+    const hi = Math.max(...values);
+    const peak = Math.round(values.indexOf(hi) * STEP);
+    const unit = id === 'price' ? `$${now.toFixed(2)}` : `${now.toFixed(2)}x`;
+    const when = peak === 0 ? 'no máximo' : `pico em ${peak}h`;
+    out.push(`  ${paint(C.bold, label.padEnd(6))} ${paint(FORECAST_COLOR[id], sparkline(values, values.length))}  ${paint(C.dim, `${unit} → ${when}`)}`);
+  }
+  if (out.length <= 3) out.push(paint(C.dim, '   Compre eólicas, solares ou maremotrizes para ver o clima delas.'));
+  return out;
+}
+
+// ---------- 6. manutenção ----------
+const wearColor = (w) => (w > 0.66 ? C.red : w > 0.33 ? C.yellow : C.green);
+function wearView(s, height, ui) {
+  const list = owned(s);
+  const crew = s.wear.crew
+    ? paint(C.green, 'equipe contratada') + paint(C.dim, ` (-${Math.round(crewCut(s) * 100)}% da receita, desgaste até ${Math.round(WEAR.crewCap * 100)}%)  [A] dispensa`)
+    : paint(C.dim, `sem equipe  ·  [A] contrata: -${Math.round(WEAR.crewShare * 100)}% da receita, cuida de tudo`);
+  const out = ['  ' + crew, ''];
+  if (!list.length) return [...out, paint(C.dim, '   Nenhuma usina ainda.')];
+  ui.wearSel = Math.max(0, Math.min(ui.wearSel ?? 0, list.length - 1));
+  const room = Math.max(1, height - out.length - 3);
+  const top = Math.max(0, Math.min(ui.wearSel - Math.floor(room / 2), list.length - room));
+  list.slice(top, top + room).forEach((g, k) => {
+    const idx = top + k;
+    const w = wearLevel(s, g);
+    const broken = brokenCount(s, g);
+    const state = broken ? paint(C.red + C.bold, `${broken} parada${broken > 1 ? 's' : ''}`) : paint(C.dim, WEAR_BY_GEN[g.id].what);
+    const row = `${idx === ui.wearSel ? '›' : ' '} ${g.short.padEnd(12)} ${paint(wearColor(w), bar(w, 10))} ` +
+      `${paint(C.dim, 'eficiência')} ${String(Math.round(wearEfficiency(w) * 100)).padStart(3)}%  ${state}`;
+    out.push(' ' + (idx === ui.wearSel ? paint(C.bold, row) : row));
+  });
+  const g = list[ui.wearSel];
+  const cost = cleanCost(s, g) + (brokenCount(s, g) ? fixCost(s, g) : 0);
+  out.push('');
+  if (ui.hand) {
+    const seq = ui.hand.seq.map((d, i) => (i < ui.hand.idx ? paint(C.green, glyphs().arrow[d]) : i === ui.hand.idx ? paint(C.bold + C.yellow + C.inverse, glyphs().arrow[d]) : paint(C.dim, glyphs().arrow[d])));
+    out.push(`  ${paint(C.bold, `Consertando ${g.name} à mão:`)} ${seq.join(' ')}` + paint(C.dim, `   erros ${ui.hand.errors}/2`));
+  } else if (cost > 0) {
+    out.push(`  ${paint(C.yellow, `[F] pagar $${fmt(cost)}`)}${paint(C.dim, '  ou  ')}${paint(C.cyan, '[J] fazer à mão (grátis)')}` +
+      paint(C.dim, `  ·  ${g.name}`));
+  } else {
+    out.push(paint(C.dim, `  ${g.name} em dia.`));
+  }
+  return out;
+}
+
 // ---------- 4. calor ----------
 const hotOwned = (s) => HOT_GENERATORS.filter((g) => s.owned[g.id] > 0);
 
@@ -270,14 +340,72 @@ export function render(ctx, height) {
   const body = view === 'map' ? mapView(s, room)
     : view === 'flow' ? flowView(s, room, ctx.anim)
     : view === 'chart' ? chartView(s, room, ctx.history)
+    : view === 'forecast' ? forecastView(s, room)
+    : view === 'wear' ? wearView(s, room, ui)
     : heatView(s, room, ctx.anim, ui);
   return [...top, ...body];
+}
+
+// Minijogo de manutenção à mão: as setas na ordem; 2 erros cancelam (sem custo).
+function handKey(ctx, k) {
+  const ui = ctx.ui;
+  const h = ui.hand;
+  if (k === 'j' || k === 'J') { ui.hand = null; ctx.say('Conserto à mão cancelado.', 'info', 2000); return true; }
+  if (!['up', 'down', 'left', 'right'].includes(k)) return true; // nada mais vaza no meio do conserto
+  if (k === h.seq[h.idx]) {
+    if (++h.idx >= h.seq.length) {
+      handClean(ctx.state, h.gen);
+      ui.hand = null;
+      ctx.say(`${GENERATORS.find((g) => g.id === h.gen).name} revisada à mão: novinha.`, 'ok');
+    }
+  } else if (++h.errors >= 2) {
+    ui.hand = null;
+    ctx.say('Errou a sequência: o conserto ficou para depois.', 'err');
+  }
+  return true;
+}
+
+const ARROWS = ['up', 'right', 'down', 'left'];
+
+function wearKey(ctx, k) {
+  const ui = ctx.ui;
+  const s = ctx.state;
+  const list = owned(s);
+  const g = list[ui.wearSel ?? 0];
+  if (k === 'up' || k === 'down') {
+    ui.wearSel = Math.max(0, Math.min(list.length - 1, (ui.wearSel ?? 0) + (k === 'up' ? -1 : 1)));
+    return true;
+  }
+  if (k === 'a' || k === 'A') {
+    ctx.say(toggleCrew(s) ? 'Equipe de manutenção contratada.' : 'Equipe de manutenção dispensada.', 'info');
+    return true;
+  }
+  if (!g) return false;
+  if (k === 'f' || k === 'F') {
+    const cost = cleanCost(s, g) + (brokenCount(s, g) ? fixCost(s, g) : 0);
+    if (cost <= 0) ctx.say(`${g.name} já está em dia.`, 'info');
+    else if (s.money < cost) ctx.say(`Faltam $${fmt(cost - s.money)} para a manutenção de ${g.name}.`, 'err');
+    else {
+      payClean(s, g.id);
+      while (brokenCount(s, g) && payFix(s, g.id));
+      ctx.say(`Manutenção de ${g.name} feita por $${fmt(cost)}.`, 'ok');
+    }
+    return true;
+  }
+  if (k === 'j' || k === 'J') {
+    if (wearLevel(s, g) <= 0 && !brokenCount(s, g)) { ctx.say(`${g.name} já está em dia.`, 'info'); return true; }
+    ui.hand = { gen: g.id, seq: Array.from({ length: WEAR.handArrows }, () => ARROWS[Math.floor(marketRand(s) * 4)]), idx: 0, errors: 0 };
+    return true;
+  }
+  return false;
 }
 
 export function key(ctx, k) {
   const ui = ctx.ui;
   const s = ctx.state;
+  if (ui.hand) return handKey(ctx, k);
   if (k === 'v' || k === 'V') { ui.view = ((ui.view ?? 0) + 1) % VIEWS.length; return true; }
+  if (VIEWS[ui.view ?? 0].id === 'wear' && wearKey(ctx, k)) return true;
   if (k === 't' || k === 'T') {
     const cost = transformerCost(s);
     if (buyTransformer(s)) ctx.say(`Transformador instalado: capacidade ${fmt(capacity(s))} kW.`, 'ok');
@@ -286,7 +414,7 @@ export function key(ctx, k) {
   }
   const list = hotOwned(s);
   if (k === 'up' || k === 'down') {
-    ui.view = 3; // setas e C só fazem sentido na visão de calor: vai direto para ela
+    ui.view = HEAT_VIEW; // setas e C só fazem sentido na visão de calor: vai direto para ela
     ui.heatSel = Math.max(0, Math.min(list.length - 1, (ui.heatSel ?? 0) + (k === 'up' ? -1 : 1)));
     return true;
   }
@@ -297,7 +425,7 @@ export function key(ctx, k) {
     if (!c) ctx.say(`${g.name}: resfriamento completo.`, 'info');
     else if (buyCooling(s, g.id)) ctx.say(`Resfriamento: ${c.name} (${g.name}).`, 'ok');
     else ctx.say(`Faltam $${fmt(c.cost - s.money)} para ${c.name}.`, 'err');
-    ui.view = 3;
+    ui.view = HEAT_VIEW;
     return true;
   }
   return false;

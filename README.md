@@ -37,8 +37,8 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
   de 45 techs: novas fontes, multiplicadores, capacidade da rede, armazenamento e
   auto-compra.
 - **A rede é o gargalo.** Acima da capacidade de transmissão, o excedente vale só 25% do
-  preço (mais com as pesquisas de armazenamento). A aba Rede mostra a rede em quatro
-  visões (mapa, fluxo, gráfico e calor).
+  preço (mais com as pesquisas de armazenamento). A aba Rede mostra a rede em cinco
+  visões (mapa, fluxo, gráfico, calor e previsão do tempo e do preço).
 - **Upgrades e marcos.** Cada fonte tem 5 upgrades e dobra a produção ao chegar a 25, 50
   e 100 unidades. Compras em lote x1, x10, x100 ou MAX.
 - **Eventos e crises.** Tempestades, picos de demanda e descobertas mudam o jogo por um
@@ -51,26 +51,38 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Legado.** A ascensão fecha uma partida completa: pede $25B ganhos nela **e** uma usina
   de antimatéria (nas três primeiras) ou a Energia do Vácuo (da 4ª em diante), ou então
   todas as pesquisas concluídas. Quanto mais a partida rende, mais pontos ela dá (raiz
-  cúbica do total ganho). Ao ascender, a partida recomeça e você recebe pontos (+10% de produção
-  cada ponto guardado) que podem ser trocados por vantagens permanentes na loja do
-  legado: começar com usinas, pesquisas, laboratórios, resfriamento e transformadores,
-  construir mais barato, marcos antecipados, seguro contra crises, mais tempo offline e
-  uma manivela que rende mais (e gira sozinha). A rede cresce junto com o legado, então
-  uma partida nova nunca começa saturada. Quando a loja acaba, o **Monumento** (x1.1 de
-  produção por nível, sem teto) dá destino aos pontos que sobram.
+  cúbica do total ganho). Ao ascender, a partida recomeça e você recebe pontos (+10% de
+  produção cada ponto guardado) que podem ser trocados por vantagens permanentes na loja
+  do legado: começar com usinas, pesquisas, laboratórios, resfriamento, transformadores,
+  baterias e a equipe de manutenção, construir mais barato, marcos antecipados, seguro
+  contra crises, mais tempo offline e uma manivela que rende mais (e gira sozinha). A
+  rede cresce junto com o legado, então uma partida nova nunca começa saturada. Quando a
+  loja acaba, o **Monumento** (x1.1 de produção por nível, sem teto) dá destino aos
+  pontos que sobram.
+- **Mercado** (aba `K`). O preço do kWh oscila, a demanda passeia e às vezes vem um
+  **surto** (kWh x1.6 por alguns segundos); vender muito de uma vez derruba o preço. Bancos
+  de **baterias** guardam o excedente da rede para vender na hora boa (à mão ou no
+  automático). **Contratos de fornecimento** (entregar, faturar, manter a produção verde,
+  não deixar reator desligar) pagam minutos de renda ou de pesquisa, e a **reputação** da
+  companhia sobe com eles e com as usinas em dia: contratos maiores e kWh mais caro.
+- **Manutenção.** As usinas se desgastam (até 30% de perda) e de vez em quando uma unidade
+  quebra. Na aba Rede, visão Manutenção: pagar a revisão, fazer à mão (um minijogo de
+  setas, grátis) ou contratar a equipe, que cuida de tudo por 5% da receita. A visão
+  Previsão mostra o tempo e o preço das próximas 24 h de jogo.
 - **Modo disfarce.** Apareceu alguém? `\` (barra invertida) troca a tela inteira, de
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
   continua produzindo e pausa eventos e crises; `\` de novo volta e mostra quanto rendeu.
-- **Desafios.** Cinco partidas com regras que mudam o jogo (crises sem parar, sem vento,
-  rede velha, mercado em queda, combustível caro), cada uma com 5 níveis de meta. Ficam
+- **Desafios.** Seis partidas com regras que mudam o jogo (crises sem parar, sem vento,
+  rede velha, mercado em queda, combustível caro, mercado volátil), cada uma com 5 níveis
+  de meta. Ficam
   num slot separado (D), começam do zero sem legado e não tocam nos saves 1–3; o
   progresso e os recordes vão para um perfil compartilhado, e cada nível completo deixa
   os slots 1–3 mais fortes (x1.1 de produção e uma vantagem temática por nível).
 - **Semente do dia.** Uma partida por dia igual para todo mundo (mesma seed, mesmas
   regras sorteadas): quem chega a $25B mais rápido? Ao terminar, o jogo mostra um código
   com o tempo para mandar aos amigos.
-- **Conquistas.** 102 metas em nove categorias (algumas secretas), da primeira faísca a
+- **Conquistas.** 111 metas em dez categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%
@@ -95,18 +107,20 @@ cada marco (primeira solar, nuclear, fusão, cada ascensão), as crises (o bot e
 nas de nível alto, como um humano), quanto tempo a rede
 passou saturada, quando a loja do legado ficou completa e o nível do Monumento. Com
 `--challenge=<id> --tier=N` (ou `--daily=AAAA-MM-DD`), joga um desafio e mostra o tempo
-até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off`.
+até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off --play=active|idle`
+(`active` usa mercado, contratos e manutenção à mão; `idle` só contrata a equipe).
 
 ## Controles
 
 | Onde | Teclas |
 |---|---|
 | Em qualquer tela | `\` disfarça o jogo (e volta) |
-| Em qualquer aba | `G` `P` `R` `L` `E` `O` (ou `Tab`/`Shift+Tab`) trocam de aba · `espaço` gira a manivela · `X` abre o manual de crise · `M`/`Esc` menu (salva) · `Q` sai (salva) |
+| Em qualquer aba | `G` `P` `R` `K` `L` `E` `O` (ou `Tab`/`Shift+Tab`) trocam de aba (`K` é o Mercado) · `espaço` gira a manivela · `X` abre o manual de crise · `M`/`Esc` menu (salva) · `Q` sai (salva) |
 | Geradores | `↑↓` + `Enter` ou `0`–`9` compram · `←→` troca de página (10 fontes por página) · `B` lote · `U` upgrade · `A` auto-compra · `V` cena das usinas |
 | Pesquisa | `↑↓` `PgUp` `PgDn` + `Enter` pesquisa |
 | Desafios | `↑↓` desafio · `←→` nível · `Enter` joga · `C` continua a partida do slot D |
-| Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento |
+| Rede | `V` muda a visão · `T` transformador · `↑↓` + `C` resfriamento · na Manutenção: `↑↓` fonte, `F` paga, `J` à mão, `A` equipe |
+| Mercado | `B` banco de baterias · `V` vende a carga · `A` venda automática · `C` carga barata · `1`–`3` aceita contrato · `D` desiste |
 | Legado | `↑↓` + `Enter` ascende ou compra na loja (com confirmação `S`/`N`) |
 | Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` · `V` conquistas |
 | Opções | `↑↓` escolhe, `←→`/`Enter` muda |
