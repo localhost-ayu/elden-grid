@@ -21,8 +21,8 @@ const inRun = (challenge, tier = 1) => {
   return s;
 };
 
-test('dados: 5 desafios, 5 níveis cada, regra descrita e válida', () => {
-  assert.equal(CHALLENGES.length, 5);
+test('dados: 6 desafios, 5 níveis cada, regra descrita e válida', () => {
+  assert.equal(CHALLENGES.length, 6);
   assert.equal(GOALS.length, 5);
   for (const c of CHALLENGES) {
     assert.equal(c.rules.length, 5, c.id);

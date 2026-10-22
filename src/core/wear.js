@@ -2,6 +2,7 @@
 // daqui, e quem paga a manutenção calcula a receita e passa o custo.
 import { WEAR, WEAR_BY_GEN } from '../data/wear.js';
 import { GENERATORS } from '../data/generators.js';
+import { add } from './records.js';
 
 export const newWear = () => ({
   level: Object.fromEntries(GENERATORS.map((g) => [g.id, 0])),
@@ -46,6 +47,7 @@ export function breakdownStep(s, dt, rand) {
   if (s.wear.broken.length < WEAR.maxBroken && candidates.length && rand() < WEAR.breakChance * dt) {
     const g = candidates[Math.floor(rand() * candidates.length)];
     s.wear.broken.push({ gen: g.id, at: s.t });
+    add(s, 'breakdowns');
     notes.push({ type: 'broke', gen: g.id });
   }
   return notes;

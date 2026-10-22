@@ -19,6 +19,9 @@
 //   output         x na produção de fontes específicas ({ gerador: x })
 //   heat           x no alvo de calor dos reatores
 //   crisisLevel    nível fixo das crises (sem a regra: CRISIS.runLevel, em data/events.js)
+//   volatility     x na largura da faixa da demanda e na chance de surto (data/market.js)
+//   demandShift    desloca o centro da demanda (negativo = o mercado paga menos na média)
+//   impact         x no impacto das vendas no preço
 // 1.4: metas III–V subiram (eram 5e11, 2.5e12, 1e13): com a Fronteira, o nível V caía
 // para ~1h30–2h20. Bot: I ~40 min, III ~1h20, IV ~2h10, V 2h45–3h55.
 export const GOALS = [2.5e10, 1e11, 1e12, 3e13, 1e15];
@@ -31,6 +34,7 @@ export const GOALS = [2.5e10, 1e11, 1e12, 3e13, 1e15];
 //   capacity     +fração de capacidade da rede
 //   price        +fração no preço do kWh
 //   upkeep       -fração no custo de operação
+//   battery      +fração na capacidade dos bancos de bateria
 export const TIER_MULT = 1.1;
 
 const tiers = (make) => [1, 2, 3, 4, 5].map(make);
@@ -78,6 +82,15 @@ export const CHALLENGES = [
     rules: tiers((n) => ({
       upkeep: [2, 3, 4, 5, 6][n - 1],
       output: Object.fromEntries(FUEL.map((id) => [id, [0.6, 0.5, 0.42, 0.36, 0.32][n - 1]])),
+    })),
+  },
+  {
+    id: 'volatile', name: 'Mercado Volátil', icon: '%',
+    desc: 'o preço dispara e despenca; na média, paga menos',
+    reward: { type: 'battery', per: 0.25, name: 'Corretora de Energia' },
+    rules: tiers((n) => ({
+      volatility: [1.6, 2, 2.4, 2.8, 3.2][n - 1], demandShift: [-0.1, -0.15, -0.2, -0.25, -0.3][n - 1],
+      impact: [1.5, 2, 2.5, 3, 3.5][n - 1],
     })),
   },
 ];

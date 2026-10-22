@@ -28,6 +28,8 @@ const EFFECT = {
   damage: (v) => `crises perdidas custam ${pct(v)}`,
   milestones: (v) => `marcos com ${pct(v).replace('-', '')} menos unidades`,
   transformers: (v) => `começa com ${v} ${v === 1 ? 'transformador' : 'transformadores'}`,
+  crew: (v) => `equipe de manutenção já contratada, a ${Math.round(v * 100)}%`,
+  banks: (v) => `começa com ${v} ${v === 1 ? 'banco' : 'bancos'} de bateria`,
 };
 
 const LAST = SHOP.length + 1; // índice do Monumento

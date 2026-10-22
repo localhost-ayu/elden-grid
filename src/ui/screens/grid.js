@@ -9,7 +9,7 @@ import { GRID } from '../../data/grid.js';
 import { HEAT } from '../../data/heat.js';
 import {
   power, genPower, genEnv, capacity, sales, gridLoad, price, income, upkeep, transformerCost,
-  genModMult, excessRate,
+  genModMult, excessRate, crewCut,
 } from '../../core/engine.js';
 import {
   HOT_GENERATORS, heatLevel, heatTarget, efficiency, isShutdown, shutdownLeft, coolingLevel, nextCooling,
@@ -251,7 +251,7 @@ const wearColor = (w) => (w > 0.66 ? C.red : w > 0.33 ? C.yellow : C.green);
 function wearView(s, height, ui) {
   const list = owned(s);
   const crew = s.wear.crew
-    ? paint(C.green, 'equipe contratada') + paint(C.dim, ` (-${Math.round(WEAR.crewShare * 100)}% da receita, desgaste até ${Math.round(WEAR.crewCap * 100)}%)  [A] dispensa`)
+    ? paint(C.green, 'equipe contratada') + paint(C.dim, ` (-${Math.round(crewCut(s) * 100)}% da receita, desgaste até ${Math.round(WEAR.crewCap * 100)}%)  [A] dispensa`)
     : paint(C.dim, `sem equipe  ·  [A] contrata: -${Math.round(WEAR.crewShare * 100)}% da receita, cuida de tudo`);
   const out = ['  ' + crew, ''];
   if (!list.length) return [...out, paint(C.dim, '   Nenhuma usina ainda.')];

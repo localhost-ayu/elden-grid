@@ -141,7 +141,8 @@ export function sales(s, kw, average = false) {
 export const gridLoad = (s) => power(s) / capacity(s);
 
 // Equipe de manutenção (core/wear.js): fica com uma fração fixa da receita bruta.
-export const crewCut = (s) => (s.wear.crew ? WEAR.crewShare : 0);
+// Equipe Herdada (Legado) cobra menos.
+export const crewCut = (s) => (s.wear.crew ? shopValue(s, 'crew', WEAR.crewShare) : 0);
 
 // Centralizada aqui para a UI não refazer a conta por conta própria.
 export const income = (s) => sales(s, power(s)).perSecond * (1 - crewCut(s)) - upkeep(s);

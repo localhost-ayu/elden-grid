@@ -51,26 +51,28 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Legado.** A ascensão fecha uma partida completa: pede $25B ganhos nela **e** uma usina
   de antimatéria (nas três primeiras) ou a Energia do Vácuo (da 4ª em diante), ou então
   todas as pesquisas concluídas. Quanto mais a partida rende, mais pontos ela dá (raiz
-  cúbica do total ganho). Ao ascender, a partida recomeça e você recebe pontos (+10% de produção
-  cada ponto guardado) que podem ser trocados por vantagens permanentes na loja do
-  legado: começar com usinas, pesquisas, laboratórios, resfriamento e transformadores,
-  construir mais barato, marcos antecipados, seguro contra crises, mais tempo offline e
-  uma manivela que rende mais (e gira sozinha). A rede cresce junto com o legado, então
-  uma partida nova nunca começa saturada. Quando a loja acaba, o **Monumento** (x1.1 de
-  produção por nível, sem teto) dá destino aos pontos que sobram.
+  cúbica do total ganho). Ao ascender, a partida recomeça e você recebe pontos (+10% de
+  produção cada ponto guardado) que podem ser trocados por vantagens permanentes na loja
+  do legado: começar com usinas, pesquisas, laboratórios, resfriamento, transformadores,
+  baterias e a equipe de manutenção, construir mais barato, marcos antecipados, seguro
+  contra crises, mais tempo offline e uma manivela que rende mais (e gira sozinha). A
+  rede cresce junto com o legado, então uma partida nova nunca começa saturada. Quando a
+  loja acaba, o **Monumento** (x1.1 de produção por nível, sem teto) dá destino aos
+  pontos que sobram.
 - **Modo disfarce.** Apareceu alguém? `\` (barra invertida) troca a tela inteira, de
   qualquer lugar do jogo, por algo que parece trabalho: testes rodando em modo watch, o
   log de um servidor ou um terminal vazio que aceita digitação. O jogo salva na hora,
   continua produzindo e pausa eventos e crises; `\` de novo volta e mostra quanto rendeu.
-- **Desafios.** Cinco partidas com regras que mudam o jogo (crises sem parar, sem vento,
-  rede velha, mercado em queda, combustível caro), cada uma com 5 níveis de meta. Ficam
+- **Desafios.** Seis partidas com regras que mudam o jogo (crises sem parar, sem vento,
+  rede velha, mercado em queda, combustível caro, mercado volátil), cada uma com 5 níveis
+  de meta. Ficam
   num slot separado (D), começam do zero sem legado e não tocam nos saves 1–3; o
   progresso e os recordes vão para um perfil compartilhado, e cada nível completo deixa
   os slots 1–3 mais fortes (x1.1 de produção e uma vantagem temática por nível).
 - **Semente do dia.** Uma partida por dia igual para todo mundo (mesma seed, mesmas
   regras sorteadas): quem chega a $25B mais rápido? Ao terminar, o jogo mostra um código
   com o tempo para mandar aos amigos.
-- **Conquistas.** 102 metas em nove categorias (algumas secretas), da primeira faísca a
+- **Conquistas.** 111 metas em dez categorias (algumas secretas), da primeira faísca a
   um quintilhão de dólares. Cada uma vale +1% de produção para sempre e sobrevive à
   ascensão; a lista com o progresso de cada uma fica na aba Estatísticas (`V`).
 - **Progresso offline.** Ao voltar, o jogo credita até 1 h fora (mais com o legado) a 50%

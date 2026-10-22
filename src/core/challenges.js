@@ -7,7 +7,7 @@ import { GENERATORS } from '../data/generators.js';
 export const NEUTRAL = Object.freeze({
   eventGap: 1, crisisWeight: 1, disabled: [], noCrank: false, start: {}, techs: [],
   capacityExp: 1, priceHalfLife: null, priceFloor: 0, upkeep: 1, noReward: false, cost: {}, output: {}, heat: 1,
-  crisisLevel: null, volatility: 1, surge: 1,
+  crisisLevel: null, volatility: 1, surge: 1, demandShift: 0, impact: 1,
 });
 
 export const challengeDef = (id) => CHALLENGES.find((c) => c.id === id) ?? null;

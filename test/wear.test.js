@@ -113,3 +113,30 @@ test('aba Rede, Manutenção: ↑↓ escolhe, F paga, J conserta à mão com as 
   assert.equal(s.wear.crew, true);
   assert.match(text(), /equipe contratada/);
 });
+
+test('legado: Equipe Herdada começa contratada e cobra menos; Baterias Herdadas trazem bancos', async () => {
+  const { ascend } = await import('../src/core/prestige.js');
+  const { crewCut } = await import('../src/core/engine.js');
+  const { LEGACY } = await import('../src/data/legacy.js');
+  const s = newState();
+  s.earned = LEGACY.minRunEarned;
+  s.owned.antimatter = 1;
+  s.legacy.shop.heircrew = 2;
+  s.legacy.shop.heirbanks = 3;
+  assert.ok(ascend(s) > 0);
+  assert.equal(s.wear.crew, true);
+  assert.equal(crewCut(s), 0.03);
+  assert.equal(s.market.battery.banks, 5);
+});
+
+test('conquistas de mercado: contratos, reputação e manutenção à mão', async () => {
+  const { checkAchievements } = await import('../src/core/achievements.js');
+  const { addRep } = await import('../src/core/market.js');
+  const s = newState();
+  s.career.contractsDone = 1;
+  s.career.cleanedByHand = 25;
+  addRep(s, 30);
+  const got = checkAchievements(s).map((a) => a.id);
+  for (const id of ['m_contract1', 'm_hand25', 'm_rep2']) assert.ok(got.includes(id), id);
+  assert.ok(!got.includes('m_rep4'));
+});

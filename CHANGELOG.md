@@ -46,6 +46,13 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 - **Reputação** da companhia (Desconhecida, Local, Regional, Nacional, Global): sobe com
   contratos cumpridos e com as usinas em dia, cai com contratos perdidos e quebras
   esquecidas. Cada faixa paga +15% nos contratos e +2% no kWh. Zera na ascensão.
+- Desafio novo **Mercado Volátil**: a demanda oscila até 3.2x mais e, na média, paga menos;
+  vender pesa mais no preço. Recompensa: Corretora de Energia (+25% nos bancos de bateria
+  por nível). Com seis desafios, o perfil completo vale x1.1^30 (~x17.4).
+- Loja do legado: **Equipe Herdada** (a equipe de manutenção começa contratada e cobra
+  4%, 3% e depois 2%) e **Baterias Herdadas** (1, 3 ou 5 bancos no começo).
+- Nove conquistas novas (111 no total), na categoria nova Mercado e manutenção e no desafio
+  novo. Mestre dos Desafios passou a pedir os 30 níveis.
 
 ## [1.4.0] - 2026-10-22
 

@@ -4,6 +4,7 @@ import { MARKET, BATTERY, REPUTATION } from '../data/market.js';
 import { GENERATORS } from '../data/generators.js';
 import { wearFactor } from './wear.js';
 import { rules } from './challenges.js';
+import { reward } from './rewards.js';
 
 // mulberry32 com o estado em s.market.rng (separado da sorte dos eventos). Exportada
 // para os contratos usarem a mesma sorte.
@@ -69,9 +70,9 @@ export function marketStep(s, dt) {
   if (m.impact < 1e-6) m.impact = 0;
   if (s.t >= m.retarget) {
     // Mercado Volátil (desafio) abre a faixa da demanda e torna os surtos mais comuns.
-    const vol = rules(s).volatility;
+    const { volatility: vol, demandShift } = rules(s);
     const mid = (D.min + D.max) / 2;
-    m.target = mid + (between(s, [D.min, D.max]) - mid) * vol;
+    m.target = Math.max(0.2, mid + demandShift + (between(s, [D.min, D.max]) - mid) * vol);
     m.retarget = s.t + between(s, D.every);
     if (rand(s) < MARKET.surge.chance * vol) {
       m.surgeUntil = s.t + between(s, MARKET.surge.duration);
@@ -87,10 +88,12 @@ export function marketStep(s, dt) {
 // Registra uma venda de `kwh` num mercado de profundidade `depthKwh` (a capacidade da
 // rede vezes depthSeconds, calculada por quem vende).
 export function addImpact(s, kwh, depthKwh) {
-  if (depthKwh > 0) s.market.impact += kwh / depthKwh;
+  if (depthKwh > 0) s.market.impact += (kwh / depthKwh) * rules(s).impact;
 }
 
 // ---- baterias ----
-export const batteryCap = (s, capacityKw) => s.market.battery.banks * BATTERY.bankSeconds * capacityKw;
+// Corretora de Energia (recompensa do Mercado Volátil) aumenta cada banco.
+export const batteryCap = (s, capacityKw) =>
+  s.market.battery.banks * BATTERY.bankSeconds * capacityKw * (1 + reward(s, 'battery'));
 export const bankCost = (s) => Math.ceil(BATTERY.baseCost * BATTERY.growth ** s.market.battery.banks);
 export const canBuyBank = (s) => s.market.battery.banks < BATTERY.maxBanks;
