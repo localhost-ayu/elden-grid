@@ -26,3 +26,18 @@ export const BATTERY = {
   bankSeconds: 20, baseCost: 5000, growth: 6, maxBanks: 10,
   cheapShare: 0.5, manualRate: 0.95, autoRate: 0.8, autoAbove: 1.12, autoShare: 0.25,
 };
+
+// Reputação da companhia: sobe com contratos cumpridos e usinas bem cuidadas, cai com
+// contratos perdidos e quebras esquecidas. Cada faixa acima da primeira paga
+// `rewardPerTier` a mais nos contratos e `pricePerTier` a mais no kWh. Zera na ascensão.
+//   care      a cada `careEvery` s: eficiência média das usinas >= `careAt` dá +care;
+//             uma quebra aberta há mais de `neglectAfter` s dá -neglect
+export const REPUTATION = {
+  tiers: [
+    { name: 'Desconhecida', at: 0 }, { name: 'Local', at: 10 }, { name: 'Regional', at: 30 },
+    { name: 'Nacional', at: 60 }, { name: 'Global', at: 100 },
+  ],
+  max: 150, contractWon: 5, contractLost: 3,
+  careEvery: 60, careAt: 0.93, care: 1, neglectAfter: 60, neglect: 2,
+  rewardPerTier: 0.15, pricePerTier: 0.02,
+};

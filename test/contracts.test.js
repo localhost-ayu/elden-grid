@@ -134,3 +134,35 @@ test('aba Mercado: 1–3 aceitam, D desiste; tudo cabe em 80×24', async () => {
   assert.equal(s.market.contracts.active, null);
   assert.match(text(), /Contrato abandonado/);
 });
+
+test('reputação: sobe com contratos e usinas em dia, cai com perdas e quebras esquecidas', async () => {
+  const { addRep, repTier, repName, contractBonus } = await import('../src/core/market.js');
+  const { REPUTATION } = await import('../src/data/market.js');
+  const { marketStep } = await import('../src/core/market.js');
+  const { price } = await import('../src/core/engine.js');
+  const s = base();
+  assert.equal(repName(s), 'Desconhecida');
+  const p0 = price(s);
+  assert.equal(addRep(s, REPUTATION.tiers[2].at), 2, 'subiu duas faixas');
+  assert.equal(repName(s), 'Regional');
+  assert.ok(Math.abs(contractBonus(s) - (1 + 2 * REPUTATION.rewardPerTier)) < 1e-12);
+  assert.ok(Math.abs(price(s) / p0 - (1 + 2 * REPUTATION.pricePerTier)) < 1e-9);
+  // Cuidado: usinas novas a cada avaliação somam; uma quebra esquecida tira.
+  const rep = s.market.rep;
+  s.market.retarget = Infinity;
+  marketStep(s, REPUTATION.careEvery);
+  assert.equal(s.market.rep, rep + REPUTATION.care);
+  s.wear.broken.push({ gen: 'wind', at: s.t - REPUTATION.neglectAfter - 1 });
+  marketStep(s, REPUTATION.careEvery);
+  // Com a unidade parada a eficiência média também cai: sem o ponto de cuidado.
+  assert.equal(s.market.rep, rep + REPUTATION.care - REPUTATION.neglect);
+  // Contrato cumprido dá reputação; abandonar tira.
+  const i = offer(s, 'sales');
+  accept(s, i);
+  const before = s.market.rep;
+  abandon(s);
+  assert.equal(s.market.rep, before - REPUTATION.contractLost);
+  addRep(s, -1e9);
+  assert.equal(s.market.rep, 0, 'nunca negativa');
+  assert.equal(repTier(s), 0);
+});

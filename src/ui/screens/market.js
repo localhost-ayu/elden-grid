@@ -1,8 +1,8 @@
 // Aba Mercado: preço da energia (demanda, surtos e o impacto das vendas), baterias e
 // contratos de fornecimento (1.5). As peças entram uma por etapa.
-import { MARKET, BATTERY } from '../../data/market.js';
+import { MARKET, BATTERY, REPUTATION } from '../../data/market.js';
 import { price, priceBase, priceRising, capacity, batteryValue, sellBattery } from '../../core/engine.js';
-import { surging, batteryCap, bankCost, canBuyBank } from '../../core/market.js';
+import { surging, batteryCap, bankCost, canBuyBank, repTier, repName, nextTier } from '../../core/market.js';
 import { buyBank } from '../../core/actions.js';
 import { CONTRACTS } from '../../data/contracts.js';
 import { accept, abandon, progress, greenShare } from '../../core/contracts.js';
@@ -69,7 +69,12 @@ function batteryBlock(s) {
 
 function contractBlock(s) {
   const c = s.market.contracts;
-  const head = '   ' + paint(C.bold, 'Contratos') + paint(C.dim, `  cumpridos ${c.done} · perdidos ${c.failed}`);
+  const tier = repTier(s);
+  const next = nextTier(s);
+  const rep = paint(C.cyan, `reputação ${repName(s)}`) +
+    paint(C.dim, `${tier ? ` (+${Math.round(REPUTATION.rewardPerTier * tier * 100)}% contratos, +${Math.round(REPUTATION.pricePerTier * tier * 100)}% kWh)` : ''}` +
+      (next ? ` · ${Math.floor(s.market.rep)}/${next.at}` : ''));
+  const head = '   ' + paint(C.bold, 'Contratos') + paint(C.dim, `  ${c.done} cumpridos · `) + rep;
   const lines = [head];
   const a = c.active;
   if (a) {

@@ -164,6 +164,7 @@ export function isValidState(s) {
   const m = s.market;
   if (!m || !Number.isInteger(m.rng) || m.rng < 0 || m.rng > 0xffffffff) return false;
   if (![m.demand, m.target, m.retarget, m.surgeUntil, m.impact].every(finite) || m.impact < 0 || m.demand <= 0) return false;
+  if (!finite(m.rep) || m.rep < 0 || !finite(m.careClock)) return false;
   const b = m.battery;
   if (!b || !finite(b.kwh) || b.kwh < 0 || !count(b.banks) || typeof b.cheap !== 'boolean' || typeof b.auto !== 'boolean') return false;
   const k = m.contracts;

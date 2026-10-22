@@ -29,11 +29,11 @@ import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
 import * as market from './screens/market.js';
-import { surging, rand as marketRand } from '../core/market.js';
+import { surging, rand as marketRand, repTier, repName } from '../core/market.js';
 import { breakdownStep, wearFactor } from '../core/wear.js';
 import { contractsStep, holdContracts } from '../core/contracts.js';
 import { contractTitle, rewardTitle } from './screens/market.js';
-import { MARKET } from '../data/market.js';
+import { MARKET, REPUTATION } from '../data/market.js';
 import { ROMAN, rewardText } from './screens/challenges.js';
 import { newProfile, completeChallenge, recordDaily } from '../core/profile.js';
 import { applyRunStart, challengeDef, goalReached, runGoal, localDate, dailySeed, dailyChallenges, dailyCode } from '../core/challenges.js';
@@ -501,6 +501,15 @@ export function createApp({
         say(`⚡ Surto de demanda! O kWh vale x${MARKET.surge.mult} por ${left} s. Bom momento para vender (aba Mercado).`, 'ok', 6000);
       }
       app.surging = surge;
+      // Reputação mudou de faixa (contrato, cuidado com as usinas ou descuido).
+      const tier = repTier(app.state);
+      if (app.repTier !== undefined && tier !== app.repTier && !app.stealth) {
+        const { rewardPerTier, pricePerTier } = REPUTATION;
+        say(tier > app.repTier
+          ? `Reputação: ${repName(app.state)}! Contratos +${Math.round(rewardPerTier * tier * 100)}%, kWh +${Math.round(pricePerTier * tier * 100)}%.`
+          : `Reputação caiu para ${repName(app.state)}.`, tier > app.repTier ? 'ok' : 'err', 6000);
+      }
+      app.repTier = tier;
       if (!app.state.events.crisis) app.crisisOpen = false;
       celebrate(checkAchievements(app.state));
       if (goalReached(app.state)) finishChallenge();

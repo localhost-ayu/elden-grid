@@ -43,6 +43,9 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   passam a render menos de 95%. Offline nada se desgasta.
 - **Quebras**: de vez em quando uma unidade para (no máximo duas abertas). A revisão paga
   ou à mão conserta; com a equipe, o conserto sai sozinho em 30 s.
+- **Reputação** da companhia (Desconhecida, Local, Regional, Nacional, Global): sobe com
+  contratos cumpridos e com as usinas em dia, cai com contratos perdidos e quebras
+  esquecidas. Cada faixa paga +15% nos contratos e +2% no kWh. Zera na ascensão.
 
 ## [1.4.0] - 2026-10-22
 

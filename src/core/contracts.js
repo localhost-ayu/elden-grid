@@ -5,7 +5,8 @@ import { CONTRACTS, CONTRACT_RULES, CONTRACT_REWARD, GREEN } from '../data/contr
 import { GENERATORS } from '../data/generators.js';
 import { power, genPower, income, rpRate } from './engine.js';
 import { HOT_GENERATORS, heatLevel } from './heat.js';
-import { rand, between } from './market.js';
+import { rand, between, addRep, contractBonus } from './market.js';
+import { REPUTATION } from '../data/market.js';
 import { add } from './records.js';
 
 const book = (s) => s.market.contracts;
@@ -40,10 +41,12 @@ function makeOffer(s) {
   if (type === 'delivery') offer.target = power(s) * duration * between(s, def.goal);
   if (type === 'sales') offer.target = income(s) * duration * between(s, def.goal);
   if (type === 'green') offer.target = Math.min(def.cap, greenShare(s) + def.gap);
+  // A reputação aumenta o prêmio (fixado na oferta).
   const rp = rpRate(s) > 0 && rand(s) < CONTRACT_REWARD.rpChance;
+  const bonus = def.bonus * contractBonus(s);
   offer.reward = rp
-    ? { rp: rpRate(s) * between(s, CONTRACT_REWARD.rp) * def.bonus }
-    : { money: Math.max(1, income(s)) * between(s, CONTRACT_REWARD.money) * def.bonus };
+    ? { rp: rpRate(s) * between(s, CONTRACT_REWARD.rp) * bonus }
+    : { money: Math.max(1, income(s)) * between(s, CONTRACT_REWARD.money) * bonus };
   return offer;
 }
 
@@ -73,6 +76,7 @@ export function abandon(s) {
   c.active = null;
   c.failed++;
   add(s, 'contractsFailed');
+  addRep(s, -REPUTATION.contractLost);
   return true;
 }
 
@@ -104,11 +108,13 @@ export function contractsStep(s) {
     c.active = null;
     c.done++;
     add(s, 'contractsDone');
-    notes.push({ type: 'won', contract: a });
+    const up = addRep(s, REPUTATION.contractWon);
+    notes.push({ type: 'won', contract: a, up });
   } else if (failed || s.t >= a.deadline) {
     c.active = null;
     c.failed++;
     add(s, 'contractsFailed');
+    addRep(s, -REPUTATION.contractLost);
     notes.push({ type: 'lost', contract: a });
   }
   return notes;
