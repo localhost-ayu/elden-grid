@@ -5,18 +5,24 @@ import { TECHS } from '../../data/research.js';
 import { GENERATORS } from '../../data/generators.js';
 import { offlineMax, chapterTechs } from '../../core/engine.js';
 import {
-  ascend, buyMonument, buyShop, canAscend, minRunEarned, resolvePerk, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
+  ascend, buyMonument, buyShop, canAscend, canVisit, visitBonus, minRunEarned, resolvePerk, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
 } from '../../core/prestige.js';
 import { C, paint, glyphs } from '../theme.js';
 import * as empire from './empire.js';
 import { fmt, bar } from '../format.js';
+import { chapterDef } from '../../data/chapters.js';
 
 export const confirmHelp = 'S confirmar  N/Esc cancelar';
 export const help = (ctx) => {
   if (ctx.ui.confirm) return confirmHelp;
-  return ctx.ui.empire ? empire.help : '↑↓ escolher  Enter ascender/comprar  I império  espaço gira  M menu  Q sair';
+  if (ctx.ui.empire) return empire.help;
+  // Com a visita disponível, os lembretes da manivela e do Q saem para caber em 80 colunas.
+  if (canVisit(ctx.state)) return '↑↓ escolher  Enter ascender/comprar  T visitar a Terra  I império  M menu';
+  return '↑↓ escolher  Enter ascender/comprar  I império  espaço gira  M menu  Q sair';
 };
 
+// "ao Sistema Solar", "à Galáxia".
+const toChapter = (id) => `${id === 'galaxy' ? 'à' : 'ao'} ${chapterDef(id).name}`;
 const pct = (m) => `${Math.round((m - 1) * 100)}%`;
 
 const EFFECT = {
@@ -48,13 +54,24 @@ function ascendBlock(s, selected) {
       paint(C.dim, '     Desafios e semente do dia começam e terminam sem legado. A meta está no topo.'),
     ];
   }
+  const visit = s.empire.visit;
+  if (visit && canAscend(s)) {
+    return [
+      ' ' + paint(C.bold + C.yellow, `${mark} ${star} Concluir a visita: +${visit.bonus} pontos e voltar ${toChapter(visit.home)}`),
+      paint(C.dim, '     A Terra foi concluída de novo. A próxima partida recomeça no capítulo de origem.'),
+    ];
+  }
   if (canAscend(s)) {
     const gain = legacyGain(s);
-    return [
+    const lines = [
       ' ' + paint(C.bold + C.yellow, `${mark} ${star} Ascender agora: +${gain} ${gain === 1 ? 'ponto' : 'pontos'}`) +
         paint(C.dim, `   próximo ponto em +$${fmt(nextPointIn(s))}`),
       paint(C.dim, '     Zera dinheiro, usinas, upgrades, pesquisas e calor; mantém Legado e loja.'),
     ];
+    if (canVisit(s)) {
+      lines.push(paint(C.dim, `     ou [T] ascender e visitar a Terra: concluí-la vale +${visitBonus(s)} pontos extras.`));
+    }
+    return lines;
   }
   const need = minRunEarned(s);
   const gl = glyphs();
@@ -62,8 +79,9 @@ function ascendBlock(s, selected) {
   const all = chapterTechs(s);
   const techs = all.filter((t) => s.techs[t.id]).length;
   const gate = gateStatus(s).map((c) => `${check(c.done)} ${paint(c.done ? C.green : C.dim, c.type === 'techs' ? `${c.label} (${techs}/${all.length})` : c.label)}`);
+  const title = visit ? `Visita à Terra: +${visit.bonus} pontos ao concluir` : 'Ascender';
   return [
-    ' ' + paint(selected ? C.bold : '', `${mark} ${star} Ascender`) +
+    ' ' + paint(selected ? C.bold : '', `${mark} ${star} ${title}`) +
       paint(C.dim, '   fecha a partida: as duas condições abaixo'),
     '     ' + check(s.earned >= need) + ' ' + paint(C.yellow, bar(s.earned / need, 20)) + paint(C.dim, `  $${fmt(s.earned)} / $${fmt(need)} ganhos`),
     '     ' + paint(C.dim, 'e') + ' ' + gate.join(paint(C.dim, '  ou  ')),
@@ -144,12 +162,17 @@ function choose(ctx) {
       return;
     }
     const gain = legacyGain(s);
+    const visit = s.empire.visit;
     ui.confirm = {
-      text: `Ascender por +${gain} ${gain === 1 ? 'ponto' : 'pontos'}? A partida atual recomeça do zero.`,
+      text: visit
+        ? `Concluir a visita por +${gain} pontos e voltar ${toChapter(visit.home)}?`
+        : `Ascender por +${gain} ${gain === 1 ? 'ponto' : 'pontos'}? A partida atual recomeça do zero.`,
       run: () => {
         const got = ascend(s);
         ctx.ascended();
-        ctx.say(`Ascensão ${s.legacy.ascensions}! +${got} pontos de legado (produção +${pct(legacyMult(s))}).`, 'ok', 8000);
+        ctx.say(visit
+          ? `Visita concluída: +${got} pontos de legado. De volta ${toChapter(s.chapter)}.`
+          : `Ascensão ${s.legacy.ascensions}! +${got} pontos de legado (produção +${pct(legacyMult(s))}).`, 'ok', 8000);
       },
     };
     return;
@@ -170,6 +193,23 @@ function choose(ctx) {
   }
 }
 
+// Ascender e levar a próxima partida à Terra (core/prestige.js ascend com `visit`).
+function visitPrompt(ctx) {
+  const s = ctx.state;
+  if (s.chapter === 'earth') { ctx.say(s.empire.visit ? 'Você já está visitando a Terra: conclua-a para voltar.' : 'A visita à Terra é para quem já colonizou outro capítulo.', 'info'); return; }
+  if (!canVisit(s)) { ctx.say(missing(s) ? `Para ascender e visitar a Terra: ${missing(s)}.` : 'Nada novo a ganhar ainda: o próximo ponto vem com mais dinheiro.', 'info'); return; }
+  const gain = legacyGain(s);
+  const bonus = visitBonus(s);
+  ctx.ui.confirm = {
+    text: `Ascender por +${gain} e visitar a Terra? Concluí-la vale +${bonus} e traz você de volta.`,
+    run: () => {
+      const got = ascend(s, { visit: true });
+      ctx.ascended();
+      ctx.say(`Ascensão ${s.legacy.ascensions}! +${got} pontos. Bem-vindo de volta à Terra: conclua-a por +${bonus}.`, 'ok', 8000);
+    },
+  };
+}
+
 export function key(ctx, k) {
   const ui = ctx.ui;
   if (ui.confirm) {
@@ -180,6 +220,7 @@ export function key(ctx, k) {
   }
   if (k === 'i' || k === 'I') { ui.empire = !ui.empire; return true; }
   if (ui.empire) return empire.key(ctx, k);
+  if (k === 't' || k === 'T') { visitPrompt(ctx); return true; }
   if (k === 'up') { ui.sel = Math.max(0, (ui.sel ?? 0) - 1); return true; }
   if (k === 'down') { ui.sel = Math.min(LAST, (ui.sel ?? 0) + 1); return true; }
   if (k === 'enter') { clampSel(ui); choose(ctx); return true; }

@@ -68,7 +68,10 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Colonização.** Com a última região do capítulo atendida e legado suficiente, a visão
   **Império** da aba Legado (`I`) coloniza o próximo capítulo: o legado recomeça, você
   ganha **Patentes** (para uma árvore que vale em todos os capítulos) e o capítulo
-  deixado vira colônia, com x2 na produção e Patentes por hora.
+  deixado vira colônia, com x1.5 na produção e Patentes por hora.
+- **Visita à Terra.** Depois de colonizar, `T` na aba Legado ascende e leva a próxima
+  partida de volta à Terra, com o legado de onde você está. Concluir a Terra de novo vale
+  +50% dos pontos daquela ascensão e traz você de volta ao capítulo.
 - **Mercado** (aba `K`). O preço do kWh oscila, a demanda passeia e às vezes vem um
   **surto** (kWh x1.6 por alguns segundos); vender muito de uma vez derruba o preço. Bancos
   de **baterias** guardam o excedente da rede para vender na hora boa (à mão ou no
@@ -190,7 +193,7 @@ até a meta. Opções: `[minutos] --seeds=N --runs=N --crises=play|idle|off --pl
 | Desafios | `↑↓` desafio · `←→` nível · `Enter` joga · `C` continua a partida do slot D |
 | Rede | `V` muda a visão · `N` expande a região · `T` transformador · `↑↓` + `C` resfriamento · na Manutenção: `↑↓` fonte, `F` paga, `J` à mão, `A` equipe |
 | Mercado | `B` banco de baterias · `V` vende a carga · `A` venda automática · `C` carga barata · `1`–`3` aceita contrato · `D` desiste |
-| Legado | `↑↓` + `Enter` ascende ou compra na loja (com confirmação `S`/`N`) · `I` Império: `C` coloniza, `↑↓` + `Enter` compra Patentes |
+| Legado | `↑↓` + `Enter` ascende ou compra na loja (com confirmação `S`/`N`) · `T` ascende e visita a Terra (depois de colonizar) · `I` Império: `C` coloniza, `↑↓` + `Enter` compra Patentes |
 | Estatísticas | `↑↓` `PgUp` `PgDn` `Home` `End` · `V` conquistas |
 | Opções | `↑↓` escolhe, `←→`/`Enter` muda |
 

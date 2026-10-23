@@ -11,7 +11,7 @@ const HOT = GENERATORS.filter((g) => g.traits.some((tr) => tr.type === 'heat')).
 const hotDefaults = (make) => Object.fromEntries(HOT.map((id) => [id, make()]));
 
 // `seed` alimenta o sorteio dos eventos (core/events.js).
-export const newEmpire = () => ({ patents: 0, colonies: [], tree: {}, frontierStash: null });
+export const newEmpire = () => ({ patents: 0, colonies: [], tree: {}, frontierStash: null, visit: null });
 
 export function newState(seed = 1) {
   return {
@@ -215,6 +215,7 @@ export function isValidState(s) {
   if (!count(s.region) || s.region >= REGIONS[s.chapter].length) return false;
   const e = s.empire;
   if (!e || !finite(e.patents) || e.patents < 0 || !Array.isArray(e.colonies) || !e.tree || typeof e.tree !== 'object') return false;
+  if (e.visit != null && !(CHAPTERS.some((c) => c.id === e.visit.home) && count(e.visit.bonus) && s.chapter === 'earth')) return false;
   const m = s.market;
   if (!m || !Number.isInteger(m.rng) || m.rng < 0 || m.rng > 0xffffffff) return false;
   if (![m.demand, m.target, m.retarget, m.surgeUntil, m.impact].every(finite) || m.impact < 0 || m.demand <= 0) return false;

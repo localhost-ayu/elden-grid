@@ -37,13 +37,18 @@ um fim de jogo no Tipo III.
   ao atender a última região do capítulo com pontos de legado suficientes nele, `C`
   coloniza o próximo. O legado (pontos, loja, Monumento, ascensões) e a partida
   recomeçam; conquistas, desafios e a carreira ficam. Rende **Patentes**, e o capítulo
-  deixado vira **colônia**: x2 na produção para sempre e 1 Patente por hora de jogo.
+  deixado vira **colônia**: x1.5 na produção para sempre e 1 Patente por hora de jogo.
+- **Visita à Terra**: fora da Terra, `T` na aba Legado ascende e leva a próxima partida de
+  volta ao 1º capítulo, com o legado e a loja do capítulo de origem. Concluir a Terra de
+  novo (a condição de ascensão dela) paga +50% dos pontos daquela ascensão e devolve a
+  civilização ao capítulo de origem. Sem isso, quem colonizou nunca mais via a Terra.
+  Simulado: a partir do meio do Sistema Solar, a visita leva de 4 a 8 min.
 - **Árvore de Patentes**: Capital Inicial, Legado Fundador, Arquivo de Pesquisa (pesquisas
   mais baratas), Concessões Imediatas e Produção Imperial.
 - Pontos de legado e o mínimo da partida acompanham a escala de dinheiro do capítulo.
 - Veteranos da 1.x (estoque da Fronteira ou a conquista Ponto Zero) podem colonizar o
   Sistema Solar direto, e a Herança da Fronteira devolve unidades, upgrades e pesquisas.
-- Dez conquistas novas (121 no total), na categoria Regiões e Kardashev: da Cidade ao
+- Onze conquistas novas (122 no total), na categoria Regiões e Kardashev: da Cidade ao
   Núcleo Galáctico, colonizar, Kardashev 1.5 e Patentes.
 - **Fim do jogo**: Kardashev 3.0 (uma civilização Tipo III) dá a conquista Escala Completa
   e uma mensagem de fechamento; o jogo segue em modo livre.

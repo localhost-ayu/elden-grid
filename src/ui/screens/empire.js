@@ -37,7 +37,10 @@ export function render(ctx) {
     '',
   ];
   const next = nextChapter(s);
-  if (!next) {
+  if (e.visit) {
+    lines.push('   ' + paint(C.bold, 'Visita à Terra') + paint(C.dim, `  vinda ${e.visit.home === 'galaxy' ? 'da' : 'do'} ${chapterDef(e.visit.home).name}`));
+    lines.push('     ' + paint(C.dim, `Conclua a Terra na aba Legado: +${e.visit.bonus} pontos e a volta ao capítulo de origem.`));
+  } else if (!next) {
     lines.push('   ' + paint(C.green, 'Último capítulo: chegue ao Núcleo Galáctico e ao Tipo III.'));
   } else {
     lines.push('   ' + paint(C.bold, `Colonizar: ${next.name}`) + paint(C.dim, `  (Kardashev ${next.from} → ${next.to})`));
@@ -80,6 +83,7 @@ export function key(ctx, k) {
   if (k === 'c' || k === 'C') {
     const next = nextChapter(s);
     if (!next) { ctx.say('Este é o último capítulo.', 'info'); return true; }
+    if (s.empire.visit) { ctx.say('Durante a visita à Terra não há colonização: conclua-a na aba Legado.', 'info'); return true; }
     if (!canColonize(s)) { ctx.say(`Para colonizar ${next.name}: ${colonizeStatus(s).filter((c) => !c.done).map((c) => c.label).join(' e ')}.`, 'info'); return true; }
     ui.confirm = {
       text: `Colonizar ${next.name}? Legado e partida recomeçam.`,

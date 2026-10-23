@@ -32,3 +32,9 @@ export const PATENT_TREE = [
   { id: 'autoregion', name: 'Concessões Imediatas', type: 'autoregion', costs: [4], values: [true] },
   { id: 'imperial', name: 'Produção Imperial', type: 'imperial', costs: [5, 12, 30], values: [1.25, 1.6, 2] },
 ];
+
+// Visita à Terra: fora da Terra, a ascensão pode levar a próxima partida de volta ao 1º
+// capítulo, com o legado e a loja do capítulo de origem. A Terra de novo não rende pontos
+// pelo dinheiro: concluí-la (a condição de ascensão dela) paga `bonus` × os pontos da
+// ascensão que começou a visita e devolve a civilização ao capítulo de origem.
+export const VISIT = { bonus: 0.5 };

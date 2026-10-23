@@ -6,7 +6,8 @@ import { GENERATORS } from '../data/generators.js';
 import { rewardStart } from './rewards.js';
 import { newState } from './state.js';
 import { peak } from './records.js';
-import { chapterScale } from '../data/chapters.js';
+import { chapterScale, chapterDef } from '../data/chapters.js';
+import { VISIT } from '../data/empire.js';
 import { patentValue } from './patents.js';
 
 // Pontos = (dinheiro / divisor)^exponent, arredondado para baixo. A conta em ponto
@@ -22,7 +23,9 @@ export function pointsFor(money, scale = 1) {
 }
 export const pointsThreshold = threshold;
 export const lifetimeEarned = (s) => s.legacy.lifetime + s.earned;
-export const legacyGain = (s) => Math.max(0, pointsFor(lifetimeEarned(s), chapterScale(s)) - s.legacy.earned);
+// Na visita à Terra, o dinheiro não vira ponto: concluí-la paga o bônus combinado.
+export const legacyGain = (s) => (s.empire.visit ? s.empire.visit.bonus
+  : Math.max(0, pointsFor(lifetimeEarned(s), chapterScale(s)) - s.legacy.earned));
 export const minRunEarned = (s) => LEGACY.minRunEarned * chapterScale(s);
 
 // Condições de fim de partida (fase atual de LEGACY.gate): basta uma. Cada uma com o
@@ -41,6 +44,7 @@ export const canAscend = (s) => !s.run && s.earned >= minRunEarned(s) && gateMet
 
 // Quanto falta ganhar nesta partida para a prévia subir mais 1 ponto.
 export function nextPointIn(s) {
+  if (s.empire.visit) return Infinity;
   const total = s.legacy.earned + legacyGain(s);
   return threshold(total + 1, chapterScale(s)) - lifetimeEarned(s);
 }
@@ -94,18 +98,33 @@ export function buyShop(s, id) {
   return true;
 }
 
+// Visita à Terra (data/empire.js VISIT): só fora da Terra e fora de uma visita.
+export const canVisit = (s) => s.chapter !== 'earth' && !s.empire.visit && canAscend(s);
+export const visitBonus = (s) => Math.max(1, Math.ceil(legacyGain(s) * VISIT.bonus));
+
 // Reinicia a partida mantendo só o legado. Muta `s` no lugar porque a UI e o storage
 // seguram a mesma referência. Retorna os pontos ganhos (0 = não podia ascender).
-export function ascend(s) {
-  if (!canAscend(s)) return 0;
+// `visit`: a próxima partida é a visita à Terra. Ao concluir uma visita, a partida
+// seguinte volta ao capítulo de origem.
+export function ascend(s, { visit = false } = {}) {
+  if (!canAscend(s) || (visit && !canVisit(s))) return 0;
   const gain = legacyGain(s);
   const run = s.stats.playTime;
   if (s.career.fastestRun === null || run < s.career.fastestRun) s.career.fastestRun = run;
   peak(s, 'bestGain', gain);
-  const { career, achievements, chapter, empire } = s;
+  const { career, achievements, empire } = s;
+  const from = empire.visit;
+  let chapter = s.chapter;
+  // O bônus da visita entra como o dinheiro que o renderia no capítulo de origem: sem
+  // isso, a próxima ascensão de lá descontaria os pontos já pagos.
+  const lifetime = from
+    ? Math.max(s.legacy.lifetime, threshold(s.legacy.earned + gain, chapterDef(from.home).scale))
+    : lifetimeEarned(s);
+  if (from) { chapter = from.home; empire.visit = null; }
+  if (visit) { empire.visit = { home: chapter, bonus: visitBonus(s) }; chapter = 'earth'; }
   const legacy = {
     ...s.legacy,
-    lifetime: lifetimeEarned(s),
+    lifetime,
     earned: s.legacy.earned + gain,
     points: s.legacy.points + gain,
     ascensions: s.legacy.ascensions + 1,

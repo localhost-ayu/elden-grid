@@ -23,7 +23,7 @@ export const veteran = (s) => s.chapter === 'earth' && (!!s.empire.frontierStash
 // O que falta para colonizar, como checklist (texto + feito).
 export function colonizeStatus(s) {
   const need = COLONIZE[s.chapter];
-  if (!need || s.run) return [];
+  if (!need || s.run || s.empire.visit) return [];
   if (veteran(s)) return [{ label: 'veterano da Fronteira (1.x)', done: true }];
   const region = REGIONS[s.chapter].at(-1).name;
   return [

@@ -51,7 +51,7 @@ test('colonizar pede a última região e os pontos do capítulo; reinicia o lega
   assert.equal(colonize(s), null);
 });
 
-test('colônias: x2 na produção cada e Patentes por hora; Patentes compram a árvore', () => {
+test('colônias: x1.5 na produção cada e Patentes por hora; Patentes compram a árvore', () => {
   const s = ready();
   colonize(s);
   const base = power(s);
@@ -168,4 +168,70 @@ test('fim do jogo: Kardashev 3.0 avisa uma vez e o jogo segue', async () => {
   assert.equal(s.empire.ended, true);
   assert.ok(s.achievements.k_k3);
   assert.ok(isValidState(s));
+});
+
+test('visita à Terra: ascende fora da Terra, conclui a Terra pelo bônus e volta ao capítulo', async () => {
+  const P = await import('../src/core/prestige.js');
+  const { VISIT } = await import('../src/data/empire.js');
+  const { chapterScale } = await import('../src/data/chapters.js');
+  const s = newState();
+  s.chapter = 'solar';
+  s.empire.colonies.push({ chapter: 'earth', at: 0, kw: 1e12 });
+  s.legacy.ascensions = 4;
+  s.region = REGIONS.solar.length - 1;
+  s.earned = P.minRunEarned(s) * 1e6;
+  assert.ok(P.canVisit(s));
+  const gain = P.legacyGain(s);
+  const bonus = P.visitBonus(s);
+  assert.equal(bonus, Math.ceil(gain * VISIT.bonus));
+  assert.equal(P.ascend(s, { visit: true }), gain);
+  assert.equal(s.chapter, 'earth');
+  assert.deepEqual(s.empire.visit, { home: 'solar', bonus });
+  assert.ok(isValidState(fromSave(JSON.parse(JSON.stringify(s)))));
+  assert.equal(P.canVisit(s), false, 'sem visita dentro da visita');
+  assert.deepEqual(colonizeStatus(s), [], 'nem colonização');
+  assert.equal(P.legacyGain(s), bonus, 'o dinheiro da Terra não vira ponto');
+  // Concluir: a condição da Terra e o mínimo dela.
+  s.earned = P.minRunEarned(s);
+  assert.equal(P.canAscend(s), false);
+  s.region = REGIONS.earth.length - 1;
+  const earned = s.legacy.earned;
+  assert.equal(P.ascend(s), bonus);
+  assert.equal(s.chapter, 'solar');
+  assert.equal(s.empire.visit, null);
+  assert.equal(s.legacy.earned, earned + bonus);
+  // A próxima ascensão no Sistema Solar não desconta o bônus já pago.
+  s.earned = 0;
+  assert.equal(P.legacyGain(s), 0);
+  assert.ok(P.pointsFor(s.legacy.lifetime, chapterScale(s)) >= s.legacy.earned);
+  assert.equal(isValidState({ ...s, empire: { ...s.empire, visit: { home: 'solar', bonus: 3 } } }), false, 'visita fora da Terra');
+});
+
+test('aba Legado: T ascende e visita a Terra com S/N; a Terra mostra o bônus', async () => {
+  const { createApp } = await import('../src/ui/app.js');
+  const { stripAnsi, visibleLength } = await import('../src/ui/format.js');
+  const P = await import('../src/core/prestige.js');
+  const s = newState();
+  s.chapter = 'solar';
+  s.legacy.ascensions = 1;
+  s.region = 2;
+  s.earned = P.minRunEarned(s) * 1e3;
+  s.events.next = 1e9;
+  const slots = { 1: { status: 'ok', savedAt: null, state: s } };
+  const store = { list: () => [1, 2, 3].map((n) => ({ slot: n, ...(slots[n] ?? { status: 'empty' }) })), load: (n) => slots[n], save: () => true, remove() {} };
+  const app = createApp({ store, now: 0 });
+  app.key('1');
+  app.key('l');
+  const text = () => app.lines(80, 24).map(stripAnsi).join('\n');
+  assert.match(text(), /\[T\] ascender e visitar a Terra/);
+  for (const l of app.lines(80, 24)) assert.ok(visibleLength(l) <= 80, stripAnsi(l));
+  const bonus = P.visitBonus(s);
+  app.key('t');
+  assert.match(text(), /visitar a Terra\?/);
+  app.key('s');
+  assert.equal(s.chapter, 'earth');
+  app.key('l');
+  assert.match(text(), new RegExp(`Visita à Terra: \\+${bonus} pontos ao concluir`));
+  app.key('i');
+  assert.match(text(), /vinda do Sistema Solar/);
 });
