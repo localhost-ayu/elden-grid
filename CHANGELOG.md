@@ -42,7 +42,7 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 ### Adicionado
 - **Sistema Solar** (do Tipo I ao Tipo II): sete fontes — Enxame Orbital (janelas de
   lançamento), **Hélio-3 Lunar** (só minera no dia lunar, um mês de 708 h de jogo),
-  **Coletor de Mercúrio** (calor alto), **Mineração de Asteroides** (cargas chegam em
+  **Usina em Mercúrio** (calor alto), **Mina de Asteroides** (cargas chegam em
   ondas, x3), Kugelblitz (alimentação), **Dínamo de Júpiter** (ciclo longo) e **Star
   Lifting** (calor no limite) —, com arte, upgrades e 17 pesquisas. Regiões: Órbita Baixa,
   Lua, Marte, Cinturão, Júpiter e Sol. Cada partida do capítulo começa com 1 Enxame;
@@ -50,7 +50,7 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   dia lunar e Júpiter.
 - **Galáxia** (do Tipo II ao Tipo III): seis fontes — Energia do Vácuo (flutuação),
   **Motor de Penrose** (a rotação gasta rápido: manutenção é a recarga), **Fazenda de
-  Pulsares** (pulsos x4), **Esferas de Dyson** (janelas de lançamento grandes), **Coletor
+  Pulsar** (pulsos x4), **Esferas de Dyson** (janelas de lançamento grandes), **Coletor
   de Quasar** (calor) e **Energia Escura** (rende mais quanto mais longa a partida, até
   x5) —, com arte, upgrades e 15 pesquisas. Regiões: Estrelas Vizinhas, Bolha Local, Braço
   de Órion, Disco e Núcleo Galáctico (Tipo III).

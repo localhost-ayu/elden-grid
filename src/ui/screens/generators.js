@@ -33,7 +33,7 @@ const TRAIT_LABEL = {
   wind: (s, g) => `vento ${x(genEnv(s, g))}`,
   daylight: (s, g) => `${isDay(s) ? '☼ dia' : '☾ noite'} ${x(genEnv(s, g))}`,
   reservoir: (s, g, tr) => `reserv. ${Math.round(reservoirLevel(s, tr) * 100)}% ${x(genEnv(s, g))}`,
-  tide: (s, g, tr) => `maré ${tideRising(s, tr) ? '▲' : '▼'} ${x(genEnv(s, g))}`,
+  tide: (s, g, tr) => `${g.id === 'jupiter' ? 'magnetosfera' : 'maré'} ${tideRising(s, tr) ? '▲' : '▼'} ${x(genEnv(s, g))}`,
   // Por unidade, já com desconto de upgrades de eficiência.
   upkeep: (s, g, tr) => `-$${fmt(tr.money * genModMult(s, g, 'upkeep'))}/s`,
   heat: (s, g) => `calor ${Math.round(heatLevel(s, g) * 100)}%`,
