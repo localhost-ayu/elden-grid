@@ -100,6 +100,63 @@ nenhuma relação com a FromSoftware ou a Bandai Namco. Ele nasceu como um clone
 - **Novidades e créditos.** No menu, Novidades mostra o histórico de versões (da 1.0 até a
   atual) e Créditos, quem fez o jogo e de onde ele veio.
 
+## Fontes de energia
+
+São 23 fontes, divididas pelos três capítulos. Cada uma é uma ideia real (ou teórica) de
+gerar energia, com um comportamento próprio no jogo. Todas têm 5 upgrades, dobram a
+produção com 25, 50 e 100 unidades e se desgastam com o tempo (até 30%, reparado na
+visão Manutenção da aba Rede).
+
+### Terra (de um bairro ao planeta inteiro)
+
+| Fonte | O que é | No jogo |
+|---|---|---|
+| Turbina Eólica | O vento gira as pás de um gerador. | A primeira e mais barata; segue o vento (0,6x a 1,4x). |
+| Painel Solar | Células fotovoltaicas convertem luz em eletricidade. | Rende de dia e quase nada à noite; baterias sobem o piso noturno. |
+| Hidrelétrica | Água represada passando por turbinas. | Estável, com o reservatório oscilando entre estações (0,9x a 1,2x). |
+| Usina de Biomassa | Queima de bagaço, cavaco e resíduos orgânicos. | Constante, sem surpresas. |
+| Termelétrica a Gás | Gás natural queimado numa turbina. | Forte, mas com custo de operação (combustível). |
+| Geotérmica | Vapor do calor interno da Terra. | Constante e sem custo de operação. |
+| Reator Nuclear | Fissão de urânio aquecendo água. | Grande salto, mas esquenta: acima de 80% perde eficiência, em 100% desliga. |
+| Maremotriz | Turbinas movidas pela maré. | Sobe e desce com a maré (±50%) num ciclo de 12,4 h de jogo. |
+| Reator de Fusão | Núcleos leves se unindo, como no Sol. | Muito forte, com custo de operação e calor. |
+| Antimatéria | Matéria e antimatéria se aniquilando. | A mais forte da Terra; superaquece mesmo sem upgrades. |
+
+### Sistema Solar (do Tipo I ao Tipo II)
+
+| Fonte | O que é | No jogo |
+|---|---|---|
+| Enxame Orbital | Espelhos e coletores em órbita, sem noite. | Produção fixa, mas só se compra na janela de lançamento. |
+| Hélio-3 Lunar | Hélio-3 minerado na Lua para fusão limpa. | Só minera no dia lunar (um mês de 708 h de jogo); à noite cai a 10%. |
+| Usina em Mercúrio | Coletores no planeta mais perto do Sol. | Luz intensa, mas esquenta como um reator. |
+| Mina de Asteroides | Rebocadores trazendo minério do cinturão. | Rende em cargas: x3 nos últimos 6 s de cada 30 s. |
+| Kugelblitz | Buraco negro artificial que emite radiação Hawking. | Precisa ser alimentado pelas outras fontes; crescer rápido demais o deixa com fome. |
+| Dínamo de Júpiter | Corrente da magnetosfera de Júpiter. | Ciclo longo de ±40%. |
+| Star Lifting | Puxar matéria da coroa do Sol com campos magnéticos. | A fonte final do capítulo, com calor no limite. |
+
+### Galáxia (do Tipo II ao Tipo III)
+
+| Fonte | O que é | No jogo |
+|---|---|---|
+| Energia do Vácuo | Energia de ponto zero das flutuações quânticas. | Instável, entre 0,2x e 5x; Volantes de Inércia seguram o piso em 1x. |
+| Motor de Penrose | Energia tirada da rotação de um buraco negro. | A rotação gasta rápido: a manutenção é a recarga. |
+| Fazenda de Pulsar | Antenas captando os feixes de estrelas de nêutrons. | Pulsos de x4 nos últimos 2 s de cada 12 s. |
+| Esferas de Dyson | Cascas em volta de estrelas inteiras. | Como o Enxame, só se compram em janelas (maiores). |
+| Coletor de Quasar | O disco e os jatos de um buraco negro supermassivo. | Produção enorme e calor alto. |
+| Energia Escura | O que acelera a expansão do universo. | A fonte final: rende mais quanto mais longa a partida (até x5). |
+
+### Para que serve cada tipo
+
+- **Estáveis** (biomassa, geotérmica): base segura, sem pedir atenção.
+- **Variáveis** (vento, sol, maré, dia lunar, Júpiter, Vácuo, pulsares, cargas): rendem bem
+  na média e oscilam; valorizam a Previsão (aba Rede) e as baterias (aba Mercado).
+- **Quentes** (nuclear, fusão, antimatéria, Mercúrio, Star Lifting, Quasar): os maiores
+  saltos, com risco de desligar; pedem resfriamento.
+- **Com custo de operação** (gás, fusão): lucram sempre, mas gastam combustível.
+- **Com regra de compra** (Enxame, Dyson): pedem atenção ao momento de comprar.
+- **Que dependem das outras** (Kugelblitz): obrigam a crescer de forma equilibrada.
+- **Que premiam o tempo** (Energia Escura): mudam o fim de jogo para partidas longas.
+
 ## Requisitos
 
 Nenhuma dependência: só módulos nativos do Node. Precisa de **Node.js 18+** ou
