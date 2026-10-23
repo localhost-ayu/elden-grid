@@ -8,6 +8,7 @@ import { REGIONS } from '../data/regions.js';
 import { newState } from './state.js';
 import { startRun } from './prestige.js';
 import { add } from './records.js';
+import { power } from './engine.js';
 import { patentValue } from './patents.js';
 
 export { treeLevel, nextTreeCost, patentValue, buyPatent } from './patents.js';
@@ -60,7 +61,7 @@ export function colonize(s) {
   const patents = patentGain(s);
   const { career, achievements, empire } = s;
   empire.patents += patents;
-  empire.colonies = [...empire.colonies, { chapter: from, at: career.playTime }];
+  empire.colonies = [...empire.colonies, { chapter: from, at: career.playTime, kw: power(s) }];
   const legacy = { points: patentValue(s, 'founder', 0), earned: 0, lifetime: 0, ascensions: 0, shop: {}, monument: 0 };
   const rng = s.events.rng;
   for (const k of Object.keys(s)) delete s[k];

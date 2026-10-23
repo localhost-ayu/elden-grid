@@ -155,6 +155,10 @@ export function sales(s, kw, average = false) {
 // 1 MW o número fica negativo; a UI só mostra a partir de K 0.
 export const kardashev = (kw) => (kw > 0 ? (Math.log10(kw * 1000) - 6) / 10 : -Infinity);
 
+// Potência da civilização (2.0): a do capítulo atual mais a que cada colônia tinha ao ser
+// deixada (ela segue produzindo). É o que a escala de Kardashev mede.
+export const civPower = (s) => power(s) + s.empire.colonies.reduce((sum, c) => sum + (c.kw ?? 0), 0);
+
 // Fração da capacidade em uso (1 = no limite; > 1 = saturada).
 export const gridLoad = (s) => power(s) / capacity(s);
 

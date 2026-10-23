@@ -68,6 +68,13 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   Núcleo Galáctico, colonizar, Kardashev 1.5 e Patentes.
 - **Fim do jogo**: Kardashev 3.0 (uma civilização Tipo III) dá a conquista Escala Completa
   e uma mensagem de fechamento; o jogo segue em modo livre.
+- Simulador: `--career` joga os capítulos em sequência (ascende, coloniza, compra
+  Patentes) e marca o Tipo I, II e III. Bot ocioso, sem legado: Terra colonizada em
+  ~13h20, Sistema Solar em ~20h40 e Tipo III em ~39–41 h. Colônias valem x1.5 e a
+  Produção Imperial vai até x2 (com mais, os capítulos seguintes passavam rápido demais).
+- O Kardashev mede a civilização: a produção do capítulo mais a das colônias. Cada
+  capítulo começa pequeno (Sistema Solar ~3×10^7 kW, Galáxia ~3×10^16 kW) e sobe ~16–18
+  ordens de grandeza.
 - Menu: **Novidades** mostra este changelog, da 1.0 até aqui (↑↓ PgUp PgDn rolam, ←→
   pulam de versão), e **Créditos** traz quem fez, as inspirações e um obrigado por jogar.
 

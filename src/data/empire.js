@@ -3,18 +3,20 @@
 // partida, e dá Patentes. O capítulo deixado vira colônia.
 //
 // COLONIZE[capítulo]: o que é preciso para colonizar o próximo, além de atender a última
-// região na partida: `points` pontos de legado recebidos no capítulo (controla a duração
-// dele; calibrado com scripts/simulate.js --career).
+// região na partida: `points` pontos de legado recebidos no capítulo. Calibrado com
+// scripts/simulate.js --career (bot ocioso, sem legado): Terra até ~13h20, Sistema Solar
+// até ~20h40, Tipo III em ~39–41 h.
 export const COLONIZE = {
   earth: { points: 400 },
-  solar: { points: 400 },
+  solar: { points: 8000 },
 };
 
 // Patentes ganhas = floor(sqrt(pontos de legado recebidos no capítulo / divisor)).
 export const PATENTS = { divisor: 4 };
 
 // Cada colônia: x`mult` na produção, para sempre, e `perHour` Patentes por hora de jogo.
-export const COLONY = { mult: 2, perHour: 1 };
+// (Calibrado: x2 deixava os capítulos seguintes rápidos demais.)
+export const COLONY = { mult: 1.5, perHour: 1 };
 
 // Árvore de Patentes (vale em todos os capítulos). `costs[i]` em Patentes; `values[i]` o
 // efeito no nível i+1.
@@ -28,5 +30,5 @@ export const PATENT_TREE = [
   { id: 'founder', name: 'Legado Fundador', type: 'founder', costs: [3, 10], values: [20, 80] },
   { id: 'archive', name: 'Arquivo de Pesquisa', type: 'archive', costs: [3, 8, 20], values: [0.8, 0.6, 0.4] },
   { id: 'autoregion', name: 'Concessões Imediatas', type: 'autoregion', costs: [4], values: [true] },
-  { id: 'imperial', name: 'Produção Imperial', type: 'imperial', costs: [5, 12, 30], values: [1.5, 2.25, 3.4] },
+  { id: 'imperial', name: 'Produção Imperial', type: 'imperial', costs: [5, 12, 30], values: [1.25, 1.6, 2] },
 ];

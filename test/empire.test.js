@@ -155,7 +155,7 @@ test('fim do jogo: Kardashev 3.0 avisa uma vez e o jogo segue', async () => {
   const { stripAnsi } = await import('../src/ui/format.js');
   const s = newState();
   s.chapter = 'galaxy';
-  s.owned.darkenergy = 50000; // muito acima de 4×10^34 kW
+  s.owned.darkenergy = 1e13; // muito acima de 4×10^34 kW
   s.events.next = 1e9;
   const slots = { 1: { status: 'ok', savedAt: null, state: s } };
   const store = { list: () => [1, 2, 3].map((n) => ({ slot: n, ...(slots[n] ?? { status: 'empty' }) })), load: (n) => slots[n], save: () => true, remove() {} };

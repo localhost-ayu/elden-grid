@@ -38,6 +38,8 @@ import { contractsStep, accept } from '../src/core/contracts.js';
 import { breakdownStep, wearLevel, brokenCount } from '../src/core/wear.js';
 import { rand as marketRand, surging, bankCost, canBuyBank } from '../src/core/market.js';
 import { BATTERY } from '../src/data/market.js';
+import * as EM from '../src/core/empire.js';
+import { PATENT_TREE } from '../src/data/empire.js';
 
 const DT = 0.1;
 const FAIL_PER_LEVEL = 0.03;
@@ -151,7 +153,18 @@ function botStep(s, crises, play, bot) {
   }
 }
 
-export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active', onStep = null, chapter = 'earth' } = {}) {
+// Patentes: compra o item mais barato da árvore enquanto der.
+function patentShop(s) {
+  for (;;) {
+    const opts = PATENT_TREE.map((it) => ({ it, c: EM.nextTreeCost(s, it) })).filter((o) => o.c != null && o.c <= s.empire.patents).sort((a, b) => a.c - b.c);
+    if (!opts.length) return;
+    EM.buyPatent(s, opts[0].it.id);
+  }
+}
+
+// `career`: joga os capítulos em sequência (ascende, coloniza quando der, compra Patentes)
+// e marca quando a produção passa de Kardashev 1, 2 e 3.
+export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active', onStep = null, chapter = 'earth', career = false } = {}) {
   const bot = { hand: 0 };
   botSeed = seed;
   const s = newState(daily ? dailySeed(daily) : seed);
@@ -178,6 +191,19 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, ch
     if (!('shop' in marks) && shopDone(s)) marks.shop = min;
     if (!('monument' in marks) && s.legacy.monument > 0) marks.monument = min;
     if (goalReached(s)) { s.run.done = true; marks.goal = min; break; }
+    if (career) {
+      const k = E.kardashev(E.civPower(s));
+      for (const n of [1, 2, 3]) if (k >= n && !(`K${n}` in marks)) marks[`K${n}`] = min;
+      if (EM.canColonize(s)) {
+        const r = EM.colonize(s);
+        marks[`colonize:${s.chapter}`] = min;
+        ascensions.push({ at: min, took: min - runStart, gain: 0, n: 0, colonized: r.chapter });
+        runStart = min;
+        patentShop(s);
+        shop(s);
+      }
+      if (s.empire.patents >= 1) patentShop(s);
+    }
     if (P.canAscend(s) && P.legacyGain(s) >= Math.max(1, s.legacy.earned / 2) && ascensions.length < runs) {
       const gain = P.ascend(s);
       ascensions.push({ at: min, took: min - runStart, gain, n: s.legacy.ascensions, sat: runSat / runSteps });
@@ -206,7 +232,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const seeds = Number(args.seeds ?? 5);
   const crises = args.crises ?? 'play';
   const runs = Number(args.runs ?? 1);
-  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null, play: args.play ?? 'active', chapter: args.chapter ?? 'earth' };
+  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null, play: args.play ?? 'active', chapter: args.chapter ?? 'earth', career: 'career' in args };
   const what = special.challenge ? ` · desafio ${special.challenge} ${special.tier}` : special.daily ? ` · semente ${special.daily}` : '';
   console.log(`Simulação: ${minutes} min, ${seeds} seeds, crises=${crises}, jogo ${special.play}, até ${runs} ascensão(ões)${what}\n`);
   for (let seed = 1; seed <= seeds; seed++) {

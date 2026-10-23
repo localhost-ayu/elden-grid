@@ -1,7 +1,7 @@
 // Roteador de telas. Não toca o terminal: recebe nomes de tecla (input.js) e devolve
 // linhas (para o screen.js), por isso dá para testar sem TTY.
 import { newState } from '../core/state.js';
-import { tick, power, genPower, kardashev, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
+import { tick, power, civPower, genPower, kardashev, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
 import { autoStep, autoCrankStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
@@ -525,7 +525,7 @@ export function createApp({
       }
       app.repTier = tier;
       // Fim do jogo: Kardashev 3.0, uma vez. O jogo segue em modo livre.
-      if (!app.state.empire.ended && !app.state.run && kardashev(power(app.state)) >= 3) {
+      if (!app.state.empire.ended && !app.state.run && kardashev(civPower(app.state)) >= 3) {
         app.state.empire.ended = true;
         say('Kardashev 3.0: uma civilização Tipo III. A galáxia inteira acende com a sua rede.', 'ok', 20000);
         say('Do primeiro giro da manivela até aqui: obrigado por jogar! O jogo continua em modo livre.', 'ok', 20000);
@@ -630,7 +630,7 @@ export function createApp({
     let line = base + badges.join('') + badge;
     for (let drop = badges.length; visibleLength(line) > cols && drop > 0; drop--) line = base + badges.slice(0, drop - 1).join('') + badge;
     // 1ª linha: o total de energia sai primeiro quando falta largura.
-    const k = kardashev(power(s));
+    const k = kardashev(civPower(s));
     const scale = k >= 0 ? paint(C.mag, ` K${k.toFixed(2)}`) : '';
     const head = ` Dinheiro ${paint(C.green, '$' + fmt(app.shown.money))}  ` + `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}${scale}  `;
     const total = `Total ${paint(C.cyan, fmt(app.shown.energy) + ' kWh')}  `;

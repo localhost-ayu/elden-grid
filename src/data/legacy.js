@@ -6,7 +6,8 @@
 // Ascender pede minRunEarned na partida E uma das condições da fase atual de `gate` do
 // capítulo (2.0: uma região atendida): a ascensão fecha uma partida completa. Ficar mais
 // tempo rende mais pontos pela raiz. A fase é a última com `from` <= ascensões feitas: as
-// primeiras partidas da Terra fecham no País; depois, só no Planeta (Tipo I).
+// primeiras partidas de cada capítulo fecham numa região do meio (País, Marte, Disco);
+// depois, só na última (Planeta, Sol, Núcleo).
 // Tipos de condição (avaliadas em core/prestige.js):
 //   region at     atender a região de índice `at` (data/regions.js) nesta partida
 //   owned  gen    ter ao menos 1 unidade de `gen` nesta partida
@@ -22,8 +23,14 @@ export const LEGACY = {
       { from: 0, any: [{ type: 'region', at: 4, label: 'atender o País', short: 'atender o País' }, ALL_TECHS] },
       { from: 3, any: [{ type: 'region', at: 6, label: 'atender o Planeta', short: 'atender o Planeta' }, ALL_TECHS] },
     ],
-    solar: [{ from: 0, any: [{ type: 'region', at: 5, label: 'atender o Sol', short: 'atender o Sol' }, ALL_TECHS] }],
-    galaxy: [{ from: 0, any: [{ type: 'region', at: 4, label: 'atender o Núcleo Galáctico', short: 'atender o Núcleo' }, ALL_TECHS] }],
+    solar: [
+      { from: 0, any: [{ type: 'region', at: 2, label: 'atender Marte', short: 'atender Marte' }, ALL_TECHS] },
+      { from: 3, any: [{ type: 'region', at: 5, label: 'atender o Sol', short: 'atender o Sol' }, ALL_TECHS] },
+    ],
+    galaxy: [
+      { from: 0, any: [{ type: 'region', at: 3, label: 'atender o Disco Galáctico', short: 'atender o Disco' }, ALL_TECHS] },
+      { from: 3, any: [{ type: 'region', at: 4, label: 'atender o Núcleo Galáctico', short: 'atender o Núcleo' }, ALL_TECHS] },
+    ],
   },
   bonusPerPoint: 0.1,
 };

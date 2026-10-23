@@ -4,7 +4,7 @@
 import { PATENT_TREE, COLONY } from '../../data/empire.js';
 import { chapterDef } from '../../data/chapters.js';
 import { colonizeStatus, canColonize, colonize, nextChapter, patentGain, treeLevel, nextTreeCost, buyPatent } from '../../core/empire.js';
-import { kardashev, power } from '../../core/engine.js';
+import { kardashev, civPower } from '../../core/engine.js';
 import { C, paint, glyphs } from '../theme.js';
 import { fmt } from '../format.js';
 
@@ -25,7 +25,7 @@ export function render(ctx) {
   const ui = ctx.ui;
   const e = s.empire;
   const ch = chapterDef(s.chapter);
-  const k = kardashev(power(s));
+  const k = kardashev(civPower(s));
   const colonies = e.colonies.length
     ? e.colonies.map((c) => chapterDef(c.chapter).name).join(', ') + paint(C.dim, ` (x${COLONY.mult ** e.colonies.length}, +${e.colonies.length * COLONY.perHour} Patente/h)`)
     : paint(C.dim, 'nenhuma ainda');

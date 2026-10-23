@@ -129,7 +129,7 @@ test('capítulos: fontes e pesquisas só existem no seu capítulo; a ascensão m
   assert.ok(!chapterTechs(s).some((t) => t.id === 't_solar'), 'as da Terra não');
   s.region = 5;
   s.earned = minRunEarned(s);
-  assert.ok(minRunEarned(s) > 1e20, 'o mínimo acompanha a escala do capítulo');
+  assert.ok(minRunEarned(s) > 1e15, 'o mínimo acompanha a escala do capítulo');
   assert.ok(ascend(s) > 0);
   assert.equal(s.chapter, 'solar');
   assert.equal(s.region, 0);

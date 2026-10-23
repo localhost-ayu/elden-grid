@@ -20,21 +20,23 @@ export const REGIONS = {
     { name: 'Continente', base: 1e11, need: 1e10 },
     { name: 'Planeta', base: 1e12, need: 1e13 },
   ],
-  // Do Tipo I (10^13 kW, o 1º Enxame) ao Tipo II (4×10^23 kW, o Sol inteiro).
+  // Do Tipo I ao Tipo II (4×10^23 kW, o Sol inteiro). O capítulo começa pequeno (1 Enxame
+  // = 3×10^7 kW) e sobe ~16 ordens de grandeza; o Kardashev do cabeçalho soma as colônias
+  // (a Terra segue produzindo), então a civilização já está no Tipo I.
   solar: [
-    { name: 'Órbita Baixa', base: 1e14, need: 0 },
-    { name: 'Lua', base: 1e16, need: 1e16 },
-    { name: 'Marte', base: 1e17, need: 1e18 },
-    { name: 'Cinturão de Asteroides', short: 'Cinturão', base: 1e19, need: 1e19 },
-    { name: 'Júpiter', base: 4e21, need: 1e21 },
+    { name: 'Órbita Baixa', base: 1e10, need: 0 },
+    { name: 'Lua', base: 1e13, need: 1e12 },
+    { name: 'Marte', base: 1e16, need: 1e15 },
+    { name: 'Cinturão de Asteroides', short: 'Cinturão', base: 1e18, need: 1e18 },
+    { name: 'Júpiter', base: 4e21, need: 1e20 },
     { name: 'Sol', base: 4e24, need: 4e23 },
   ],
-  // Do Tipo II ao Tipo III (4×10^34 kW, a galáxia inteira).
+  // Do Tipo II ao Tipo III (4×10^34 kW, a galáxia inteira); começa em 3×10^16 kW.
   galaxy: [
-    { name: 'Estrelas Vizinhas', short: 'Vizinhas', base: 1e25, need: 0 },
-    { name: 'Bolha Local', short: 'Bolha', base: 1e27, need: 1e27 },
-    { name: 'Braço de Órion', short: 'Órion', base: 1e29, need: 1e29 },
-    { name: 'Disco Galáctico', short: 'Disco', base: 4e32, need: 1e31 },
+    { name: 'Estrelas Vizinhas', short: 'Vizinhas', base: 1e19, need: 0 },
+    { name: 'Bolha Local', short: 'Bolha', base: 1e23, need: 1e21 },
+    { name: 'Braço de Órion', short: 'Órion', base: 1e27, need: 1e24 },
+    { name: 'Disco Galáctico', short: 'Disco', base: 4e32, need: 1e29 },
     { name: 'Núcleo Galáctico', short: 'Núcleo', base: 4e35, need: 4e34 },
   ],
 };

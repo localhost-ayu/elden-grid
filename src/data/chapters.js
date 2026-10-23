@@ -7,8 +7,8 @@
 // do laboratório, do transformador e das baterias).
 export const CHAPTERS = [
   { id: 'earth', name: 'Terra', from: 0, to: 1, scale: 1 },
-  { id: 'solar', name: 'Sistema Solar', from: 1, to: 2, scale: 1e13 },
-  { id: 'galaxy', name: 'Galáxia', from: 2, to: 3, scale: 1e24 },
+  { id: 'solar', name: 'Sistema Solar', from: 1, to: 2, scale: 3e7 },
+  { id: 'galaxy', name: 'Galáxia', from: 2, to: 3, scale: 3e16 },
 ];
 export const chapterDef = (id) => CHAPTERS.find((c) => c.id === id);
 export const chapterIndex = (id) => CHAPTERS.findIndex((c) => c.id === id);
