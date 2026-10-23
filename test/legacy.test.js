@@ -246,17 +246,20 @@ test('loja do legado rola sob o cabeçalho fixo e mantém a seleção à vista',
   assert.match(plain(10)[3], /› ✦ Ascender/);
 });
 
-test('loja 1.1: listas de Pesquisa Herdada incluem seus pré-requisitos e crescem por nível', () => {
-  const item = SHOP.find((x) => x.type === 'techs');
-  let prev = [];
-  for (const list of item.values) {
+test('loja: listas de Pesquisa Herdada e Começo Rápido por capítulo, com pré-requisitos e só pesquisas dele', async () => {
+  const { RESEARCH_TIERS, START_PERKS } = await import('../src/data/legacy.js');
+  const lists = Object.entries(RESEARCH_TIERS).flatMap(([ch, tiers]) => tiers.map((l) => [ch, l]))
+    .concat(Object.entries(START_PERKS).flatMap(([ch, perks]) => perks.map((p) => [ch, p.techs])));
+  for (const [ch, list] of lists) {
     for (const id of list) {
       const t = TECHS.find((x) => x.id === id);
       assert.ok(t, id);
-      for (const r of t.req) assert.ok(list.includes(r), `${id} precisa de ${r}`);
+      assert.ok(!t.chapter || t.chapter === ch, `${ch}: ${id} é de ${t.chapter}`);
+      for (const r of t.req) assert.ok(list.includes(r), `${ch}: ${id} precisa de ${r}`);
     }
-    assert.ok(prev.every((id) => list.includes(id)));
-    prev = list;
+  }
+  for (const tiers of Object.values(RESEARCH_TIERS)) {
+    tiers.forEach((l, i) => assert.ok(i === 0 || tiers[i - 1].every((id) => l.includes(id)), 'cada nível inclui o anterior'));
   }
   for (const it of SHOP) {
     assert.equal(it.costs.length, it.values.length, it.id);
@@ -418,4 +421,20 @@ test('save v10 migra para v11: pontos recebidos mantidos, total reajustado à ra
   assert.equal(legacyGain(back), 1, 'o próximo ponto está logo ali, não centenas de vezes longe');
   const fresh = migrate({ saveVersion: 10, savedAt: 1, state: JSON.parse(JSON.stringify(newState())) });
   assert.equal(fresh.state.legacy.lifetime, 0);
+});
+
+test('loja no Sistema Solar: Começo Rápido e Pesquisa Herdada usam as fontes do capítulo, sem eólicas', async () => {
+  const legacyScreen = await import('../src/ui/screens/legacy.js');
+  const s = newState();
+  s.chapter = 'solar';
+  s.region = 2; // Marte
+  s.earned = 1e30;
+  s.legacy.shop = { start: 5, research: 2 };
+  ascend(s);
+  for (const id of ['t_hv', 't_helium3', 't_mercury', 't_asteroids', 't_kugel', 't_helium3b', 't_launch']) assert.equal(s.techs[id], true, id);
+  assert.equal(s.techs.t_solar, undefined, 'nada da Terra');
+  assert.equal(s.owned.swarm, 50);
+  const text = legacyScreen.render({ state: s, ui: {}, say() {} }, Infinity).map(stripAnsi).join('\n');
+  assert.doesNotMatch(text, /eólica/i);
+  assert.match(text, /Asteroides e Kugelblitz liberados|completo/);
 });

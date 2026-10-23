@@ -5,6 +5,7 @@ import { PATENT_TREE, COLONY } from '../../data/empire.js';
 import { chapterDef } from '../../data/chapters.js';
 import { colonizeStatus, canColonize, colonize, nextChapter, patentGain, treeLevel, nextTreeCost, buyPatent } from '../../core/empire.js';
 import { kardashev, civPower } from '../../core/engine.js';
+import { gateStatus } from '../../core/prestige.js';
 import { C, paint, glyphs } from '../theme.js';
 import { fmt } from '../format.js';
 
@@ -87,6 +88,9 @@ export function key(ctx, k) {
         ctx.ascended();
         ctx.say(`Colonização: ${r.chapter}! +${r.patents} Patentes. Uma nova escala começa.`, 'ok', 10000);
         if (r.inherited) ctx.say('Herança da Fronteira: o que você tinha do Enxame e do Kugelblitz voltou.', 'ok', 10000);
+        // O legado zera a cada capítulo: sem ascender, a partida fica lenta (relato de teste).
+        const first = gateStatus(s).find((c) => c.type === 'region');
+        ctx.say(`Novo capítulo, legado zerado: ascenda ao ${first.label}.`, 'info', 15000);
       },
     };
     return true;

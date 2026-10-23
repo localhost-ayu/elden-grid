@@ -58,6 +58,11 @@ um fim de jogo no Tipo III.
   pulam de versão), e **Créditos** traz quem fez, as inspirações e um obrigado por jogar.
 
 ### Mudado
+- Loja do legado por capítulo: Começo Rápido 3–5 e Pesquisa Herdada liberam as fontes e
+  pesquisas do capítulo atual (no Sistema Solar, Hélio-3, Mercúrio, Asteroides e
+  Kugelblitz; na Galáxia, Penrose, Pulsar, Dyson e Quasar), e os textos acompanham.
+- Ao colonizar, um aviso lembra que o legado zerou e qual região fecha a 1ª partida do
+  capítulo.
 - Válvulas de alívio: a faixa verde (a meta) agora anda em todos os níveis de crise, devagar
   no nível 0 e rápido e longe no 10. Antes ela só se movia do nível 6 em diante, e abaixo
   disso bastava apertar no ritmo para segurar a pressão parada.

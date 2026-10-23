@@ -1,6 +1,6 @@
 // Só lê e escreve `s.legacy` e reinicia a partida: não importa o engine, que é quem
 // consulta os efeitos daqui (engine -> prestige, sem ciclo de imports).
-import { LEGACY, SHOP, MONUMENT } from '../data/legacy.js';
+import { LEGACY, SHOP, MONUMENT, RESEARCH_TIERS, START_PERKS } from '../data/legacy.js';
 import { TECHS } from '../data/research.js';
 import { GENERATORS } from '../data/generators.js';
 import { rewardStart } from './rewards.js';
@@ -67,11 +67,18 @@ export function shopValue(s, type, fallback = null) {
 }
 export const nextShopCost = (s, item) => item.costs[shopLevel(s, item)] ?? null;
 // Vantagem extra do nível comprado de um tipo (`perks` em data/legacy.js), ou {}.
+// Começo Rápido 3–5 aponta para START_PERKS do capítulo (`chapter` = índice da lista).
+export const resolvePerk = (perk, chapter) => (perk && perk.chapter !== undefined ? START_PERKS[chapter][perk.chapter] : perk);
 export function shopPerk(s, type) {
   const item = SHOP.find((x) => x.type === type);
   const lvl = item ? shopLevel(s, item) : 0;
-  return (lvl && item.perks?.[lvl - 1]) || {};
+  return (lvl && resolvePerk(item.perks?.[lvl - 1], s.chapter)) || {};
 }
+// Pesquisas prontas da Pesquisa Herdada no capítulo atual.
+export const inheritedTechs = (s) => {
+  const tier = shopValue(s, 'techs', 0);
+  return tier ? RESEARCH_TIERS[s.chapter][tier - 1] : [];
+};
 
 // Desconto dos Contratos de Obra para outras compras ('cooling', 'transformers'): só
 // nos níveis cujo perk as inclui. Geradores e laboratórios usam shopValue direto.
@@ -122,7 +129,7 @@ export function startRun(s) {
   // Capital Inicial (Patentes): a renda de segundos de 1 unidade da 1ª fonte.
   s.money += patentValue(s, 'capital', 0) * first.output;
   s.labs = shopPerk(s, 'lab').labs ?? 0;
-  for (const id of [...shopValue(s, 'techs', []), ...(shopPerk(s, 'start').techs ?? [])]) s.techs[id] = true;
+  for (const id of [...inheritedTechs(s), ...(shopPerk(s, 'start').techs ?? [])]) s.techs[id] = true;
   for (const id of Object.keys(s.cooling)) s.cooling[id] = shopValue(s, 'cooling', 0);
   s.transformers = shopValue(s, 'transformers', 0);
   s.market.battery.banks = shopValue(s, 'banks', 0);

@@ -1,11 +1,11 @@
 // Item 0 é a ascensão; depois a loja e, por último, o Monumento (sem teto). A ascensão apaga a partida, então só acontece
 // depois de uma prévia do que se ganha e do que se perde, com confirmação S/N.
-import { LEGACY, SHOP, MONUMENT } from '../../data/legacy.js';
+import { LEGACY, SHOP, MONUMENT, RESEARCH_TIERS } from '../../data/legacy.js';
 import { TECHS } from '../../data/research.js';
 import { GENERATORS } from '../../data/generators.js';
 import { offlineMax, chapterTechs } from '../../core/engine.js';
 import {
-  ascend, buyMonument, buyShop, canAscend, minRunEarned, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
+  ascend, buyMonument, buyShop, canAscend, minRunEarned, resolvePerk, gateMet, gateStatus, legacyGain, legacyMult, monumentCost, monumentMult, nextPointIn, nextShopCost, shopLevel,
 } from '../../core/prestige.js';
 import { C, paint, glyphs } from '../theme.js';
 import * as empire from './empire.js';
@@ -26,7 +26,7 @@ const EFFECT = {
   offline: (v) => `offline até ${v.hours} h a ${Math.round(v.rate * 100)}%`,
   auto: (v) => `auto-compra já no início (1 a cada ${v} s)`,
   crank: (v) => `manivela rende ${v} s de produção`,
-  techs: (v) => `começa com ${v.length} pesquisas prontas`,
+  techs: (v, s) => `começa com ${RESEARCH_TIERS[s.chapter][v - 1].length} pesquisas prontas`,
   cooling: (v) => `reatores começam com ${v} ${v === 1 ? 'resfriamento' : 'resfriamentos'}`,
   damage: (v) => `crises perdidas custam ${pct(v)}`,
   milestones: (v) => `marcos com ${pct(v).replace('-', '')} menos unidades`,
@@ -83,7 +83,7 @@ function shopRow(s, item, selected) {
   const cost = nextShopCost(s, item);
   const max = item.costs.length;
   const i = cost == null ? max - 1 : lvl;
-  const effect = item.perks?.[i]?.desc ?? EFFECT[item.type](item.values[i], s);
+  const effect = resolvePerk(item.perks?.[i], s.chapter)?.desc ?? EFFECT[item.type](item.values[i], s);
   const price = cost == null ? 'completo ✓' : `${cost} ${glyphs().legacy}`;
   const text = `${selected ? '›' : ' '} ${item.name.padEnd(19)} ${`${lvl}/${max}`.padStart(3)}  ${effect.padEnd(40)} ${price.padStart(10)}`;
   const style = cost == null ? C.dim + C.green : s.legacy.points >= cost ? C.yellow : C.dim;

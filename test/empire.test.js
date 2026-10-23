@@ -126,6 +126,7 @@ test('aba Legado, Império: I abre, C coloniza com S/N, Enter compra na árvore;
   app.key('s');
   assert.equal(app.state.chapter, 'solar');
   assert.match(text(), /Colonização: Sistema Solar!/);
+  assert.match(text(), /Novo capítulo, legado zerado: ascenda ao atender Marte\./);
   assert.match(text(), /Império · Sistema Solar/);
   app.state.empire.patents = 10;
   app.key('enter');
