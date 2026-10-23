@@ -8,6 +8,7 @@
 //   heat      alvo de calor dos reatores
 // `article`: o/a, para as mensagens concordarem ("o blecaute", "a sobrecarga").
 // `requires`: condição para o evento poder ser sorteado (ver core/incidents.js).
+// `rpSeconds`: entrega na hora os PP desses segundos de laboratório (a faixa não tem relógio).
 export const EVENTS = [
   {
     id: 'storm', name: 'Tempestade', weight: 3, duration: 45,
@@ -21,7 +22,7 @@ export const EVENTS = [
   },
   {
     id: 'discovery', name: 'Descoberta', weight: 2, duration: 8,
-    desc: 'o laboratório ganha 2 min de pesquisa',
+    desc: 'o laboratório ganhou na hora a pesquisa de 2 min',
     effects: [], rpSeconds: 120, requires: 'lab',
   },
   // Sem reator, a onda de calor só encarece a energia; com reator, vira crise.

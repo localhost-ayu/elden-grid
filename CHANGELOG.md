@@ -58,6 +58,10 @@ um fim de jogo no Tipo III.
   pulam de versão), e **Créditos** traz quem fez, as inspirações e um obrigado por jogar.
 
 ### Mudado
+- Evento Descoberta: o texto deixa claro que os 2 min de pesquisa chegam na hora, e a
+  faixa no topo não mostra mais um relógio (que fazia parecer um bônus de 2 min).
+- Crise com o minijogo em andamento: a faixa e o manual mostram o tempo do minijogo, em
+  vez de "equipe em 0:00" parado.
 - Loja do legado por capítulo: Começo Rápido 3–5 e Pesquisa Herdada liberam as fontes e
   pesquisas do capítulo atual (no Sistema Solar, Hélio-3, Mercúrio, Asteroides e
   Kugelblitz; na Galáxia, Penrose, Pulsar, Dyson e Quasar), e os textos acompanham.

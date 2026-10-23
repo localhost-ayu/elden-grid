@@ -147,7 +147,9 @@ export function render(ctx) {
   const cost = damage(s);
   const lines = [
     ' ' + paint(C.red + (blink ? C.bold : ''), `${glyphs().warn} ${ev.name.toUpperCase()}`) + paint(C.dim, `  ·  ${ev.desc}`),
-    paint(C.dim, `   Sem ação, a equipe assume em ${fmtClock(Math.max(0, c.deadline - s.t))} e cobra os danos.`),
+    c.game?.status === 'playing'
+      ? paint(C.dim, '   Minijogo em andamento: a equipe espera o resultado.')
+      : paint(C.dim, `   Sem ação, a equipe assume em ${fmtClock(Math.max(0, c.deadline - s.t))} e cobra os danos.`),
     '',
     '   ' + paint(C.bold, `Manual de crise · ${manual.title}`) + paint(C.dim, `   ·  crise nível ${crisisLevel(s)}/${CRISIS.maxLevel}`),
     ...manual.steps.map((step, i) => paint(C.dim, `   ${i + 1}. ${step}`)),

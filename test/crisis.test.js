@@ -113,3 +113,17 @@ test('evento passivo aparece no banner com contagem regressiva', () => {
   app.state.events.effects.push({ id: 'storm', until: app.state.t + 45 });
   assert.match(text(), /── Tempestade · eólica x2, solar x0\.5 · 0:45/);
 });
+
+test('faixa: Descoberta sem relógio; crise com minijogo mostra o tempo dele, não "equipe em 0:00"', () => {
+  const { app, press, text } = make('blackout');
+  app.state.events.effects.push({ id: 'discovery', until: app.state.t + 8 });
+  app.state.events.crisis = null;
+  app.state.events.effects = app.state.events.effects.filter((a) => a.id !== 'blackout');
+  assert.match(text(), /Descoberta · o laboratório ganhou na hora a pesquisa de 2 min ─/);
+  const b = make('blackout');
+  b.press('x', 'enter');
+  b.app.state.t = 1e4; // muito depois do prazo da equipe
+  assert.match(b.text(), /BLECAUTE REGIONAL · resolvendo · \d+ s no minijogo/);
+  assert.match(b.text(), /Minijogo em andamento/);
+  assert.doesNotMatch(b.text(), /equipe em 0:00/);
+});

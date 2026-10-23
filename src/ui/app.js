@@ -573,11 +573,16 @@ export function createApp({
       const def = eventDef(ev.crisis.id);
       const blink = Math.floor(animClock() / 500) % 2 === 0;
       // Sem a descrição: o relógio é o que não pode ser cortado.
-      text = `${glyphs().warn} ${def.name.toUpperCase()} · [X] manual de crise · equipe em ${fmtClock(Math.max(0, ev.crisis.deadline - s.t))}`;
+      // Com o minijogo rodando, o prazo da equipe não vale: mostra o tempo do minijogo.
+      const game = ev.crisis.game;
+      text = game?.status === 'playing'
+        ? `${glyphs().warn} ${def.name.toUpperCase()} · resolvendo · ${game.timeLeft.toFixed(0)} s no minijogo`
+        : `${glyphs().warn} ${def.name.toUpperCase()} · [X] manual de crise · equipe em ${fmtClock(Math.max(0, ev.crisis.deadline - s.t))}`;
       color = C.red + (blink ? C.bold : '');
     } else if (cur) {
       const def = eventDef(cur.id);
-      text = `${def.name} · ${def.desc} · ${fmtClock(cur.until - s.t)}`;
+      // Evento instantâneo (Descoberta): sem relógio, que faria parecer um bônus com duração.
+      text = def.rpSeconds ? `${def.name} · ${def.desc}` : `${def.name} · ${def.desc} · ${fmtClock(cur.until - s.t)}`;
       color = C.yellow;
     } else {
       text = `${REWARD.name} · produção x${REWARD.effects[0].mult} · ${fmtClock(reward.until - s.t)}`;
