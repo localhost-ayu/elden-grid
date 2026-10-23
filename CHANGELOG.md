@@ -10,36 +10,15 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [2.0.0] - 2026-10-23
+
+Kardashev: do bairro à galáxia. A versão final: regiões, três capítulos, colonização e
+um fim de jogo no Tipo III.
+
 ### Adicionado
 - **Escala de Kardashev** (fórmula de Sagan, com os watts reais): o cabeçalho mostra o K da
   produção a partir de 1 MW (K 0), e as estatísticas guardam o recorde com o marco
   passado (bairro, cidade, país, humanidade, Tipo I, II e III).
-
-### Mudado
-- **Regiões atendidas**: a rede passa a ser a concessão da região (Bairro, Cidade, Região
-  Metropolitana, Estado, País, Continente, Planeta). Para assumir a próxima (aba Rede,
-  tecla `N`) é preciso produzir o que ela pede, na escala real (Cidade 10 MW, País 1 TW,
-  Planeta 10 PW = Kardashev Tipo I), e pagar a concessão (90 s dessa renda). Cada região
-  traz a capacidade-base da rede e +5% no kWh. O cabeçalho mostra a região no lugar de
-  "Rede" ("Estado 87%"). A pesquisa nova Concessões Automáticas expande sozinha, e a
-  auto-compra guarda o dinheiro de uma concessão disponível.
-- Pesquisas de capacidade valem x1.5 cada (antes x20 a x1000): o salto vem das regiões. A
-  Rede Velha (desafio) passa a valer para as regiões também. Save **v13**: a partida em
-  andamento recebe a região que cobre a capacidade que tinha.
-- **Capítulos**: Terra, Sistema Solar e Galáxia, em sequência. Cada fonte e cada pesquisa
-  de fonte pertence a um capítulo (a aba Geradores mostra só as do capítulo atual); as
-  pesquisas gerais (laboratório, automação, rede, mercado) valem em todos. Enxame e
-  Kugelblitz passam para o Sistema Solar; o Vácuo, para a Galáxia.
-- Desafios e semente do dia são partidas da Terra; metas dos níveis IV e V recalibradas
-  para $3T e $30T (com as regiões e sem as fontes dos outros capítulos).
-- O marco de ascensão passa a ser uma região: na Terra, atender o País (e, da 4ª ascensão
-  em diante, o Planeta), ou a árvore do capítulo completa.
-- Saves com Enxame, Kugelblitz ou Vácuo na Terra: unidades, upgrades e pesquisas deles
-  ficam guardados (aviso uma vez ao carregar) e voltam como Herança da Fronteira ao
-  colonizar o Sistema Solar. Conquistas de "todas as fontes/upgrades/pesquisas" contam as
-  do capítulo.
-
-### Adicionado
 - **Sistema Solar** (do Tipo I ao Tipo II): sete fontes — Enxame Orbital (janelas de
   lançamento), **Hélio-3 Lunar** (só minera no dia lunar, um mês de 708 h de jogo),
   **Usina em Mercúrio** (calor alto), **Mina de Asteroides** (cargas chegam em
@@ -77,6 +56,30 @@ número e data. Mudanças de save registram a nova `saveVersion`.
   ordens de grandeza.
 - Menu: **Novidades** mostra este changelog, da 1.0 até aqui (↑↓ PgUp PgDn rolam, ←→
   pulam de versão), e **Créditos** traz quem fez, as inspirações e um obrigado por jogar.
+
+### Mudado
+- **Regiões atendidas**: a rede passa a ser a concessão da região (Bairro, Cidade, Região
+  Metropolitana, Estado, País, Continente, Planeta). Para assumir a próxima (aba Rede,
+  tecla `N`) é preciso produzir o que ela pede, na escala real (Cidade 10 MW, País 1 TW,
+  Planeta 10 PW = Kardashev Tipo I), e pagar a concessão (90 s dessa renda). Cada região
+  traz a capacidade-base da rede e +5% no kWh. O cabeçalho mostra a região no lugar de
+  "Rede" ("Estado 87%"). A pesquisa nova Concessões Automáticas expande sozinha, e a
+  auto-compra guarda o dinheiro de uma concessão disponível.
+- Pesquisas de capacidade valem x1.5 cada (antes x20 a x1000): o salto vem das regiões. A
+  Rede Velha (desafio) passa a valer para as regiões também. Save **v13**: a partida em
+  andamento recebe a região que cobre a capacidade que tinha.
+- **Capítulos**: Terra, Sistema Solar e Galáxia, em sequência. Cada fonte e cada pesquisa
+  de fonte pertence a um capítulo (a aba Geradores mostra só as do capítulo atual); as
+  pesquisas gerais (laboratório, automação, rede, mercado) valem em todos. Enxame e
+  Kugelblitz passam para o Sistema Solar; o Vácuo, para a Galáxia.
+- Desafios e semente do dia são partidas da Terra; metas dos níveis IV e V recalibradas
+  para $3T e $30T (com as regiões e sem as fontes dos outros capítulos).
+- O marco de ascensão passa a ser uma região: na Terra, atender o País (e, da 4ª ascensão
+  em diante, o Planeta), ou a árvore do capítulo completa.
+- Saves com Enxame, Kugelblitz ou Vácuo na Terra: unidades, upgrades e pesquisas deles
+  ficam guardados (aviso uma vez ao carregar) e voltam como Herança da Fronteira ao
+  colonizar o Sistema Solar. Conquistas de "todas as fontes/upgrades/pesquisas" contam as
+  do capítulo.
 
 ## [1.5.0] - 2026-10-22
 
@@ -314,7 +317,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.5.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...v1.3.0
