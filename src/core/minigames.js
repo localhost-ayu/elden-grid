@@ -57,7 +57,7 @@ const timing = {
 // Válvula de pressão: alternar ← → sobe a pressão, que vaza sozinha. Resolve quem segura
 // o ponteiro na faixa por `hold` s (somados); chegar a 1 estoura a válvula (erro) e a
 // pressão cai. Repetir a mesma seta não conta (segurar a tecla não resolve), e martelar
-// as setas estoura: o que vale é o ritmo. Nos níveis altos a faixa oscila.
+// as setas estoura: o que vale é o ritmo. A faixa oscila sempre, mais nos níveis altos.
 const BURST_FILL = 0.3;
 const CENTER = 0.6;
 const mash = {
@@ -66,14 +66,14 @@ const mash = {
     return {
       kind: 'mash', status: 'playing', time: 0, last: null, prev: null,
       fill: 0, gain: lerp(D.gain, level), leak: lerp(D.leak, level),
-      band: lerp(D.band, level), center: CENTER, drift: from(D.drift, level) ?? 0,
+      band: lerp(D.band, level), center: CENTER, drift: lerp(D.drift, level), driftSpeed: lerp(D.driftSpeed, level),
       held: 0, hold: lerp(D.hold, level), bursts: 0, maxBursts: int(D.maxBursts, level), timeLeft: lerp(D.timeLeft, level),
     };
   },
   step(g, dt) {
     g.time += dt;
     g.fill = Math.max(0, g.fill - g.leak * dt);
-    g.center = CENTER + g.drift * Math.sin(g.time * 0.9);
+    g.center = CENTER + g.drift * Math.sin(g.time * (g.driftSpeed ?? 0.9));
     if (g.status === 'playing' && inBand(g)) {
       g.held += dt;
       if (g.held >= g.hold) g.status = 'won';

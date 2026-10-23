@@ -58,6 +58,9 @@ um fim de jogo no Tipo III.
   pulam de versão), e **Créditos** traz quem fez, as inspirações e um obrigado por jogar.
 
 ### Mudado
+- Válvulas de alívio: a faixa verde (a meta) agora anda em todos os níveis de crise, devagar
+  no nível 0 e rápido e longe no 10. Antes ela só se movia do nível 6 em diante, e abaixo
+  disso bastava apertar no ritmo para segurar a pressão parada.
 - **Regiões atendidas**: a rede passa a ser a concessão da região (Bairro, Cidade, Região
   Metropolitana, Estado, País, Continente, Planeta). Para assumir a próxima (aba Rede,
   tecla `N`) é preciso produzir o que ela pede, na escala real (Cidade 10 MW, País 1 TW,
