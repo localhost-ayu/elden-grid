@@ -10,7 +10,7 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
-## [2.0.0] - 2026-10-23
+## [2.0.0] - 2026-10-27
 
 Kardashev: do bairro à galáxia. A versão final: regiões, três capítulos, colonização e
 um fim de jogo no Tipo III.
