@@ -4,7 +4,7 @@ import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import {
   power, price, genUnlocked, genBuyable, labUnlocked, techVisible, genBulk, labBulk, nextUpgrade, transformerCost, milestones,
-  genRevenue,
+  genRevenue, capacity, priceBase, gridLoad, techCost,
 } from './engine.js';
 import { isHot, nextCooling } from './heat.js';
 import { shopValue } from './prestige.js';
@@ -13,6 +13,8 @@ import { rules } from './challenges.js';
 import { bankCost, canBuyBank } from './market.js';
 import { wearLevel, clean, fix, brokenCount } from './wear.js';
 import { WEAR } from '../data/wear.js';
+import { REGION_RULES } from '../data/regions.js';
+import { nextRegion } from './regions.js';
 
 // Rende uma fração da produção de 1 s (mínimo 1 kWh): continua útil a partida toda.
 // Retorna 0 se a manivela está desligada (desafio Sem Vento).
@@ -78,11 +80,12 @@ export function buyUpgrade(s, id) {
 
 export function buyTech(s, id) {
   const t = TECHS.find((x) => x.id === id);
-  if (!t || !techVisible(t, s) || s.rp < t.cost) return false;
-  s.rp -= t.cost;
+  const cost = t && techCost(s, t);
+  if (!t || !techVisible(t, s) || s.rp < cost) return false;
+  s.rp -= cost;
   s.techs[id] = true;
   add(s, 'techs');
-  add(s, 'rpSpent', t.cost);
+  add(s, 'rpSpent', cost);
   // Quem pesquisa automação quer usá-la: já começa ligada (A desliga na aba Geradores).
   if (t.type === 'auto') s.auto.buy = true;
   return true;
@@ -160,4 +163,21 @@ export function payFix(s, id) {
 export function toggleCrew(s) {
   s.wear.crew = !s.wear.crew;
   return s.wear.crew;
+}
+
+// ---- regiões (aba Rede, tecla N) ----
+// Custo: costSeconds s da renda de quem produz o que a próxima região pede (exigência ×
+// preço médio): acompanha a partida sem depender de quanta rede sobra.
+export const expandCost = (s) => (nextRegion(s)?.need ?? 0) * priceBase(s) * REGION_RULES.costSeconds;
+// A próxima região só aceita quem já produz o que ela consome.
+export const canExpand = (s) => !!nextRegion(s) && power(s) >= nextRegion(s).need;
+export function expandRegion(s) {
+  if (!canExpand(s)) return false;
+  const c = expandCost(s);
+  if (s.money < c) return false;
+  s.money -= c;
+  s.region++;
+  add(s, 'expansions');
+  add(s, 'moneySpent', c);
+  return true;
 }

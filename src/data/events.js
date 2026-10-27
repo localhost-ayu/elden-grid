@@ -8,6 +8,7 @@
 //   heat      alvo de calor dos reatores
 // `article`: o/a, para as mensagens concordarem ("o blecaute", "a sobrecarga").
 // `requires`: condição para o evento poder ser sorteado (ver core/incidents.js).
+// `rpSeconds`: entrega na hora os PP desses segundos de laboratório (a faixa não tem relógio).
 export const EVENTS = [
   {
     id: 'storm', name: 'Tempestade', weight: 3, duration: 45,
@@ -21,7 +22,7 @@ export const EVENTS = [
   },
   {
     id: 'discovery', name: 'Descoberta', weight: 2, duration: 8,
-    desc: 'o laboratório ganha 2 min de pesquisa',
+    desc: 'o laboratório ganhou na hora a pesquisa de 2 min',
     effects: [], rpSeconds: 120, requires: 'lab',
   },
   // Sem reator, a onda de calor só encarece a energia; com reator, vira crise.
@@ -68,7 +69,7 @@ export const CRISES = {
     title: 'Abrir as válvulas de alívio', game: 'mash',
     steps: [
       'Alterne ← e → para subir a pressão; ela vaza sozinha.',
-      'Segure a pressão na faixa verde até o alívio encher: no ritmo, sem pressa.',
+      'Siga a faixa verde, que anda, até o alívio encher: no ritmo, sem pressa.',
       'Chegar a 100% estoura a válvula. Estouros demais e a crise está perdida.',
     ],
   },
@@ -111,10 +112,11 @@ export const DIFFICULTY = {
   // Pressão: cada seta alternada soma `gain`, e ela vaza `leak` por s. Ficar `hold` s
   // (somados) dentro da faixa de largura `band` resolve; chegar a 1 estoura. O ritmo
   // necessário é leak/gain apertos por s, então martelar as setas estoura a válvula.
-  // A partir do nível `drift.from`, a faixa oscila com amplitude `drift.value`.
+  // A faixa (a meta) oscila em todos os níveis: amplitude `drift` e velocidade `driftSpeed`
+  // (rad/s), pequenas e lentas no nível 0, maiores e rápidas no máximo.
   mash: {
     band: [0.35, 0.14], hold: [2.5, 6], gain: [0.1, 0.07], leak: [0.12, 0.3], maxBursts: [3, 2], timeLeft: [15, 15],
-    drift: { from: 6, value: [0.08, 0.16] },
+    drift: [0.07, 0.18], driftSpeed: [0.6, 1.4],
   },
   // Contenção: o ponteiro (-1 a 1) é empurrado por uma força que muda a cada 0.5 s, de
   // até `force`; cada seta dá `push` de velocidade. `zone`: meia-largura da faixa central.

@@ -65,7 +65,7 @@ test('baterias: carregam com o excedente, a carga barata desvia produção e ven
   const { BATTERY } = await import('../src/data/market.js');
   const { batteryCap } = await import('../src/core/market.js');
   const s = newState();
-  s.owned.wind = 60; // acima da capacidade da rede sem pesquisas
+  s.owned.wind = 400; // acima da capacidade da rede do Bairro, sem pesquisas
   s.market.retarget = Infinity;
   tick(s, 1);
   assert.equal(s.market.battery.kwh, 0, 'sem banco não guarda nada');

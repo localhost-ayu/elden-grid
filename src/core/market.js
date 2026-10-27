@@ -2,6 +2,7 @@
 // consulta marketFactor daqui), e quem vende passa a profundidade do mercado.
 import { MARKET, BATTERY, REPUTATION } from '../data/market.js';
 import { GENERATORS } from '../data/generators.js';
+import { chapterScale } from '../data/chapters.js';
 import { wearFactor } from './wear.js';
 import { rules } from './challenges.js';
 import { reward } from './rewards.js';
@@ -95,5 +96,5 @@ export function addImpact(s, kwh, depthKwh) {
 // Corretora de Energia (recompensa do Mercado Volátil) aumenta cada banco.
 export const batteryCap = (s, capacityKw) =>
   s.market.battery.banks * BATTERY.bankSeconds * capacityKw * (1 + reward(s, 'battery'));
-export const bankCost = (s) => Math.ceil(BATTERY.baseCost * BATTERY.growth ** s.market.battery.banks);
+export const bankCost = (s) => Math.ceil(BATTERY.baseCost * chapterScale(s) * BATTERY.growth ** s.market.battery.banks);
 export const canBuyBank = (s) => s.market.battery.banks < BATTERY.maxBanks;

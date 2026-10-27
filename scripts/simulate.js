@@ -2,7 +2,8 @@
 // chega a cada marco. Serve para ajustar as curvas em src/data/ com números, não no olho.
 //
 //   bun scripts/simulate.js [minutos=90] [--seeds=5] [--crises=play|idle|off] [--runs=1]
-//                           [--play=active|idle] [--challenge=<id> --tier=1..5 | --daily=AAAA-MM-DD]
+//                           [--play=active|idle] [--chapter=earth|solar|galaxy]
+//                           [--challenge=<id> --tier=1..5 | --daily=AAAA-MM-DD]
 // Com desafio ou semente do dia, o bot joga a partida especial (sem legado) e mostra
 // quanto tempo levou até a meta.
 //
@@ -37,10 +38,13 @@ import { contractsStep, accept } from '../src/core/contracts.js';
 import { breakdownStep, wearLevel, brokenCount } from '../src/core/wear.js';
 import { rand as marketRand, surging, bankCost, canBuyBank } from '../src/core/market.js';
 import { BATTERY } from '../src/data/market.js';
+import * as EM from '../src/core/empire.js';
+import { PATENT_TREE } from '../src/data/empire.js';
 
 const DT = 0.1;
 const FAIL_PER_LEVEL = 0.03;
 const HAND_EVERY = 5;
+const SAVE_FOR = 300;
 
 // Sorte do próprio bot (erros nas crises), separada da sorte do jogo para não mudar a
 // sequência de eventos da partida.
@@ -98,10 +102,9 @@ function marketBot(s, play, bot) {
   }
 }
 
-function botStep(s, crises, play, bot) {
-  // Com a manivela automática o bot para de girar: um humano também pararia.
-  if (s.stats.playTime < 300 && !P.shopPerk(s, 'crank').autoCrank && Math.round(s.t / DT) % 3 === 0) A.crank(s);
-  for (const t of TECHS) if (E.techVisible(t, s) && s.rp >= t.cost) A.buyTech(s, t.id);
+// Compras com dinheiro: laboratório, upgrades, resfriamento, transformador e a fonte com
+// mais kW médio por $.
+function shopping(s) {
   if (E.labUnlocked(s) && E.labCost(s) < s.money * 0.2) A.buyLab(s);
   for (const g of GENERATORS) {
     if (s.owned[g.id] < 1) continue;
@@ -123,6 +126,17 @@ function botStep(s, crises, play, bot) {
     if (v > bestV) { bestV = v; best = g; }
   }
   if (best) A.buyGenBulk(s, best.id, 'max');
+}
+
+function botStep(s, crises, play, bot) {
+  // Com a manivela automática o bot para de girar: um humano também pararia.
+  if (s.stats.playTime < 300 && !P.shopPerk(s, 'crank').autoCrank && Math.round(s.t / DT) % 3 === 0) A.crank(s);
+  for (const t of TECHS) if (E.techVisible(t, s) && s.rp >= E.techCost(s, t)) A.buyTech(s, t.id);
+  // Região: com a rede cheia, junta dinheiro para a concessão (sem comprar nada) se ela
+  // couber em até SAVE_FOR s de renda; senão segue comprando e expande quando der.
+  const saving = A.canExpand(s) && A.expandCost(s) <= E.income(s) * SAVE_FOR;
+  if (A.canExpand(s) && s.money >= A.expandCost(s)) A.expandRegion(s);
+  if (!saving) shopping(s);
   E.tick(s, DT);
   marketBot(s, play, bot);
   autoStep(s, DT);
@@ -139,13 +153,26 @@ function botStep(s, crises, play, bot) {
   }
 }
 
-export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active' } = {}) {
+// Patentes: compra o item mais barato da árvore enquanto der.
+function patentShop(s) {
+  for (;;) {
+    const opts = PATENT_TREE.map((it) => ({ it, c: EM.nextTreeCost(s, it) })).filter((o) => o.c != null && o.c <= s.empire.patents).sort((a, b) => a.c - b.c);
+    if (!opts.length) return;
+    EM.buyPatent(s, opts[0].it.id);
+  }
+}
+
+// `career`: joga os capítulos em sequência (ascende, coloniza quando der, compra Patentes)
+// e marca quando a produção passa de Kardashev 1, 2 e 3.
+export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, challenge = null, tier = 1, daily = null, play = 'active', onStep = null, chapter = 'earth', career = false } = {}) {
   const bot = { hand: 0 };
   botSeed = seed;
   const s = newState(daily ? dailySeed(daily) : seed);
   if (challenge) s.run = { challenge, tier };
   if (daily) s.run = { daily };
   if (s.run) applyRunStart(s);
+  // Capítulo direto (calibragem): a partida começa como depois da colonização.
+  if (chapter !== 'earth') { s.chapter = chapter; P.startRun(s); }
   if (crises === 'off') s.events.next = Infinity;
   const marks = {};
   const ascensions = [];
@@ -158,11 +185,25 @@ export function simulate({ minutes = 90, seed = 1, crises = 'play', runs = 1, ch
     if (E.gridLoad(s) > 1) { saturated++; runSat++; }
     runSteps++;
     const min = (step * DT) / 60;
+    onStep?.(s, min);
     for (const g of GENERATORS) if (s.owned[g.id] > 0 && !(g.id in marks)) marks[g.id] = min;
     if (s.labs > 0 && !('lab' in marks)) marks.lab = min;
     if (!('shop' in marks) && shopDone(s)) marks.shop = min;
     if (!('monument' in marks) && s.legacy.monument > 0) marks.monument = min;
     if (goalReached(s)) { s.run.done = true; marks.goal = min; break; }
+    if (career) {
+      const k = E.kardashev(E.civPower(s));
+      for (const n of [1, 2, 3]) if (k >= n && !(`K${n}` in marks)) marks[`K${n}`] = min;
+      if (EM.canColonize(s)) {
+        const r = EM.colonize(s);
+        marks[`colonize:${s.chapter}`] = min;
+        ascensions.push({ at: min, took: min - runStart, gain: 0, n: 0, colonized: r.chapter });
+        runStart = min;
+        patentShop(s);
+        shop(s);
+      }
+      if (s.empire.patents >= 1) patentShop(s);
+    }
     if (P.canAscend(s) && P.legacyGain(s) >= Math.max(1, s.legacy.earned / 2) && ascensions.length < runs) {
       const gain = P.ascend(s);
       ascensions.push({ at: min, took: min - runStart, gain, n: s.legacy.ascensions, sat: runSat / runSteps });
@@ -191,7 +232,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const seeds = Number(args.seeds ?? 5);
   const crises = args.crises ?? 'play';
   const runs = Number(args.runs ?? 1);
-  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null, play: args.play ?? 'active' };
+  const special = { challenge: args.challenge ?? null, tier: Number(args.tier ?? 1), daily: args.daily ?? null, play: args.play ?? 'active', chapter: args.chapter ?? 'earth', career: 'career' in args };
   const what = special.challenge ? ` · desafio ${special.challenge} ${special.tier}` : special.daily ? ` · semente ${special.daily}` : '';
   console.log(`Simulação: ${minutes} min, ${seeds} seeds, crises=${crises}, jogo ${special.play}, até ${runs} ascensão(ões)${what}\n`);
   for (let seed = 1; seed <= seeds; seed++) {

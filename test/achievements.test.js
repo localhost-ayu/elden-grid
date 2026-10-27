@@ -78,7 +78,7 @@ test('cada conquista soma ACHIEVEMENT_BONUS à produção', () => {
 test('conquistas sobrevivem à ascensão', () => {
   const s = newState();
   s.earned = 3e10;
-  s.owned.antimatter = 1;
+  s.region = 4; // atende o País: fecha a partida
   s.achievements = { a_mwh: 10 };
   assert.ok(ascend(s) > 0);
   assert.ok(hasAchievement(s, 'a_mwh'));

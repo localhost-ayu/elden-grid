@@ -2,7 +2,7 @@
 // só aparecem como "requer".
 import { GENERATORS } from '../../data/generators.js';
 import { TECHS } from '../../data/research.js';
-import { bought, capacity, excessRate, rpRate } from '../../core/engine.js';
+import { bought, capacity, excessRate, rpRate, chapterTechs, techCost } from '../../core/engine.js';
 import { buyTech } from '../../core/actions.js';
 import { C, paint } from '../theme.js';
 import { fmt, visibleLength } from '../format.js';
@@ -23,9 +23,12 @@ export function describe(t) {
     case 'unlock': return `destrava ${GENERATORS.find((g) => g.unlock === t.id)?.name ?? 'novo gerador'}`;
     case 'battery': return `solar à noite +${Math.round(t.add * 100)}% da capacidade`;
     case 'capacity': return `capacidade da rede x${t.mult}`;
-    case 'launch': return `janela de lançamento +${t.add} s`;
+    case 'launch': return `janelas de lançamento +${t.add} s`;
     case 'feed': return `Kugelblitz precisa de ${Math.round((1 - t.mult) * 100)}% menos alimentação`;
     case 'vacuumFloor': return `vácuo nunca abaixo de x${t.floor}`;
+    case 'lunarFloor': return `Hélio-3 à noite +${Math.round(t.add * 100)}%`;
+    case 'haul': return `cargas de asteroides chegam por +${t.add} s`;
+    case 'autoRegion': return 'expande a região sozinho (rede cheia e dinheiro)';
     case 'forecast': return `previsão ${Math.round((1 - t.mult) * 100)}% mais precisa`;
     case 'excess': return `excedente da rede vale +${Math.round(t.add * 100)}% do preço`;
     case 'auto': return `auto-compra do gerador mais barato (${t.interval < 1 ? `${Math.round(1 / t.interval)}/s` : `1 a cada ${t.interval} s`})`;
@@ -54,7 +57,12 @@ export function flattenTree(techs = TECHS) {
   walk(roots, '');
   return out;
 }
-const TREE = flattenTree();
+// Uma árvore por capítulo: as pesquisas gerais e as do capítulo (calculada uma vez).
+const TREES = new Map();
+const treeOf = (s) => {
+  if (!TREES.has(s.chapter)) TREES.set(s.chapter, flattenTree(chapterTechs(s)));
+  return TREES.get(s.chapter);
+};
 
 function status(s, t) {
   if (bought(s, t.id)) return 'done';
@@ -68,7 +76,7 @@ function row(s, node, selected, width) {
   const t = node.tech;
   const st = status(s, t);
   const left = `${selected ? '›' : ' '} ${node.prefix}${ICON[st]} ${t.name}`;
-  const cost = (fmt(t.cost) + ' PP').padStart(9);
+  const cost = (fmt(techCost(s, t)) + ' PP').padStart(9);
   let right = st === 'locked' ? 'requer: ' + missing(s, t).map(techName).join(', ') : describe(t);
   // Ramos fundos (a Fronteira fica 8 níveis abaixo da raiz) empurram a coluna do custo.
   const nameCol = Math.max(NAME_COL, visibleLength(left) + 1);
@@ -77,7 +85,7 @@ function row(s, node, selected, width) {
   const text = `${left.padEnd(nameCol)}${cost}  ${right}`;
   const style = st === 'done' ? C.dim + C.green
     : st === 'locked' ? C.dim
-    : s.rp >= t.cost ? C.mag : '';
+    : s.rp >= techCost(s, t) ? C.mag : '';
   return ' ' + paint(style + (selected ? C.bold : ''), text);
 }
 
@@ -90,11 +98,11 @@ function detail(s, t) {
   let state;
   if (st === 'done') state = paint(C.green, 'pesquisada ✓');
   else if (st === 'locked') state = paint(C.yellow, 'requer: ' + missing(s, t).map(techName).join(', '));
-  else if (s.rp >= t.cost) state = paint(C.mag, 'disponível — Enter pesquisa');
+  else if (s.rp >= techCost(s, t)) state = paint(C.mag, 'disponível — Enter pesquisa');
   else {
     const rate = rpRate(s);
-    const eta = rate > 0 ? ` (~${Math.ceil((t.cost - s.rp) / rate)} s)` : '';
-    state = paint(C.dim, `faltam ${fmt(t.cost - s.rp)} PP${eta}`);
+    const eta = rate > 0 ? ` (~${Math.ceil((techCost(s, t) - s.rp) / rate)} s)` : '';
+    state = paint(C.dim, `faltam ${fmt(techCost(s, t) - s.rp)} PP${eta}`);
   }
   return [
     '   ' + paint(C.bold, t.name) + ' — ' + effect,
@@ -104,10 +112,12 @@ function detail(s, t) {
 
 export function render(ctx, height, width) {
   const s = ctx.state;
+  const TREE = treeOf(s);
   ctx.ui.sel = Math.max(0, Math.min(ctx.ui.sel ?? 0, TREE.length - 1));
-  const done = TECHS.filter((t) => bought(s, t.id)).length;
+  const all = chapterTechs(s);
+  const done = all.filter((t) => bought(s, t.id)).length;
   const top = [
-    '   ' + paint(C.bold, 'Árvore de pesquisa') + paint(C.dim, `  ${done}/${TECHS.length} concluídas`) +
+    '   ' + paint(C.bold, 'Árvore de pesquisa') + paint(C.dim, `  ${done}/${all.length} concluídas`) +
       paint(C.dim, `  ·  rede ${fmt(capacity(s))} kW (excedente a ${Math.round(excessRate(s) * 100)}%)`),
   ];
   if (s.labs === 0) top.push(paint(C.dim, '   Construa um Laboratório (aba Geradores) para gerar Pontos de Pesquisa.'));
@@ -118,6 +128,7 @@ export function render(ctx, height, width) {
 
 export function key(ctx, k) {
   const ui = ctx.ui;
+  const TREE = treeOf(ctx.state);
   if (k === 'up') { ui.sel = Math.max(0, (ui.sel ?? 0) - 1); return true; }
   if (k === 'down') { ui.sel = Math.min(TREE.length - 1, (ui.sel ?? 0) + 1); return true; }
   if (k === 'pageup') { ui.sel = Math.max(0, (ui.sel ?? 0) - 10); return true; }
@@ -128,6 +139,6 @@ export function key(ctx, k) {
   if (bought(s, t.id)) ctx.say(`${t.name} já foi pesquisada.`, 'info');
   else if (missing(s, t).length) ctx.say(`Requer: ${missing(s, t).map(techName).join(', ')}.`, 'err');
   else if (buyTech(s, t.id)) ctx.say(`Pesquisado: ${t.name}!`, 'ok');
-  else ctx.say(`Faltam ${fmt(t.cost - s.rp)} PP para ${t.name}.`, 'err');
+  else ctx.say(`Faltam ${fmt(techCost(s, t) - s.rp)} PP para ${t.name}.`, 'err');
   return true;
 }

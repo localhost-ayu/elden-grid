@@ -15,6 +15,8 @@ const ITEMS = [
   { label: 'Carregar slot', run: (ctx) => ctx.openSlots('load') },
   { label: 'Desafios', run: (ctx) => ctx.go('challenges') },
   { label: 'Opções', run: (ctx) => ctx.go('options') },
+  { label: 'Novidades', run: (ctx) => ctx.go('news') },
+  { label: 'Créditos', run: (ctx) => ctx.go('credits') },
   {
     label: 'Atualizar', shown: (ctx) => ctx.hasUpdate && ctx.updating !== 'pulled', enabled: (ctx) => !ctx.updating,
     run: (ctx) => ctx.selfUpdate((text, run) => { ctx.ui.confirm = { text, run }; }),
@@ -78,13 +80,9 @@ export function render(ctx, height, cols) {
   const ui = ctx.ui;
   initSel(ctx);
 
-  const lines = [
-    ...title(ctx.anim).map((l) => center(l, cols)),
-    '',
-    center(paint(C.yellow, TAGLINE), cols),
-    center(paint(C.dim, MOTTO), cols),
-    '',
-  ];
+  const tagline = center(paint(C.yellow, TAGLINE), cols);
+  const motto = center(paint(C.dim, MOTTO), cols);
+  const lines = [...title(ctx.anim).map((l) => center(l, cols)), '', tagline, motto, ''];
   // Itens alinhados à esquerda num bloco centralizado (fica mais limpo que centralizar
   // cada linha, que deixaria o marcador pulando de coluna). O marcador é o ✦ dos locais
   // de descanso do jogo homenageado.
@@ -100,8 +98,10 @@ export function render(ctx, height, cols) {
   if (ui.confirm) lines.push('', center(paint(C.yellow + C.bold, ui.confirm.text) + '  ' + paint(C.bold, '(S/N)'), cols));
   const version = versionLine(ctx);
   if (version) lines.push('', center(version, cols));
-  // Sem espaço (item Atualizar + pergunta em 80×24): tira linhas em branco, de cima.
+  // Sem espaço (9 itens, Atualizar e pergunta em 80×24): tira linhas em branco, de cima,
+  // e depois o lema e a frase de efeito.
   while (lines.length > height && lines.includes('')) lines.splice(lines.indexOf(''), 1);
+  for (const extra of [motto, tagline]) if (lines.length > height) lines.splice(lines.indexOf(extra), 1);
   const top = Math.max(0, Math.floor((height - lines.length) / 2));
   return [...Array(top).fill(''), ...lines];
 }

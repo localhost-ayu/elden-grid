@@ -14,6 +14,10 @@ import { reward, rewardMult } from './rewards.js';
 import { marketFactor, marketStep, batteryCap, addImpact } from './market.js';
 import { BATTERY, MARKET } from '../data/market.js';
 import { wearFactor, wearStep } from './wear.js';
+import { regionBase, regionPrice } from './regions.js';
+import { chapterScale } from '../data/chapters.js';
+import { patentValue } from './patents.js';
+import { COLONY } from '../data/empire.js';
 import { WEAR } from '../data/wear.js';
 
 export const bought = (s, id) => !!s.techs[id];
@@ -28,7 +32,9 @@ function mult(s, type, gen) {
 
 const boughtOf = (s, type) => TECHS.filter((t) => t.type === type && bought(s, t.id));
 // traits.js recebe as pesquisas já filtradas para não depender da árvore.
-const traitCtx = (s) => ({ battery: boughtOf(s, 'battery'), vacuumFloor: boughtOf(s, 'vacuumFloor') });
+const traitCtx = (s) => ({
+  battery: boughtOf(s, 'battery'), vacuumFloor: boughtOf(s, 'vacuumFloor'), lunarFloor: boughtOf(s, 'lunarFloor'), haul: boughtOf(s, 'haul'),
+});
 
 // `average` = média de longo prazo do ambiente, usada offline.
 export const genEnv = (s, g, average = false) => envFactor(s, g, traitCtx(s), average);
@@ -109,23 +115,31 @@ export const upkeep = (s) =>
 export const rpRate = (s) => s.labs * LAB.rpPerSec * mult(s, 'lab') * shopValue(s, 'lab', 1);
 // Preço do kWh oscila ±20% numa senoide lenta (dá vida ao contador de dinheiro).
 // priceBase é a média da oscilação; priceRising vem da derivada (a seta de tendência).
-export const priceBase = (s) => mult(s, 'price') * priceDecay(s) * (1 + reward(s, 'price'));
+export const priceBase = (s) => mult(s, 'price') * priceDecay(s) * (1 + reward(s, 'price')) * regionPrice(s);
 // Por cima disso, o mercado (core/market.js): demanda, surtos e o impacto das vendas.
 // Offline (average) o mercado fica neutro.
 export const price = (s, average = false) =>
   (1 + 0.2 * Math.sin(s.t / 15)) * priceBase(s) * eventMult(s, 'price') * marketFactor(s, average);
 export const priceRising = (s) => Math.cos(s.t / 15) > 0;
 
+// Império (2.0): x2 por colônia e a Produção Imperial da árvore de Patentes.
+export const empireMult = (s) => COLONY.mult ** s.empire.colonies.length * patentValue(s, 'imperial', 1);
+
+// Custo de uma pesquisa (Arquivo de Pesquisa barateia).
+export const techCost = (s, t) => t.cost * patentValue(s, 'archive', 1);
+
 // Multiplicadores que atravessam partidas (Legado, conquistas e desafios). A rede cresce junto com
 // eles: senão quem tem muito legado começa toda partida com a rede saturada (1000%+),
 // vendendo quase tudo com desconto. O gargalo volta a ser o que se constrói na partida.
-export const permanentMult = (s) => legacyMult(s) * achievementMult(s) * rewardMult(s);
+export const permanentMult = (s) => legacyMult(s) * achievementMult(s) * rewardMult(s) * empireMult(s);
 
+// A base é a demanda da região atendida (regions.js); pesquisas e transformadores somam
+// por cima. Rede Velha (desafio) rende menos nas regiões e nas pesquisas.
 export const capacity = (s) =>
-  GRID.baseCapacity * mult(s, 'capacity') ** rules(s).capacityExp * GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity') *
-  permanentMult(s) * (1 + reward(s, 'capacity'));
+  GRID.baseCapacity * (regionBase(s) / GRID.baseCapacity * mult(s, 'capacity')) ** rules(s).capacityExp *
+  GRID.transformer.capacityMult ** s.transformers * eventMult(s, 'capacity') * permanentMult(s) * (1 + reward(s, 'capacity'));
 export const transformerCost = (s) =>
-  Math.ceil(GRID.transformer.baseCost * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
+  Math.ceil(GRID.transformer.baseCost * chapterScale(s) * GRID.transformer.growth ** s.transformers * contractDiscount(s, 'transformers'));
 
 // Fração do preço paga pelo excedente: armazenamento (pesquisas 'excess') guarda parte
 // dele para vender depois.
@@ -137,6 +151,14 @@ export function sales(s, kw, average = false) {
   const excess = kw - full;
   return { full, excess, perSecond: (full + excess * excessRate(s)) * price(s, average) };
 }
+// Escala de Kardashev (Sagan) da produção em kW: K = (log10(watts) - 6) / 10. Abaixo de
+// 1 MW o número fica negativo; a UI só mostra a partir de K 0.
+export const kardashev = (kw) => (kw > 0 ? (Math.log10(kw * 1000) - 6) / 10 : -Infinity);
+
+// Potência da civilização (2.0): a do capítulo atual mais a que cada colônia tinha ao ser
+// deixada (ela segue produzindo). É o que a escala de Kardashev mede.
+export const civPower = (s) => power(s) + s.empire.colonies.reduce((sum, c) => sum + (c.kw ?? 0), 0);
+
 // Fração da capacidade em uso (1 = no limite; > 1 = saturada).
 export const gridLoad = (s) => power(s) / capacity(s);
 
@@ -190,9 +212,9 @@ function bulk(base, growth, owned, money, m, amount) {
 }
 
 export const genCost = (s, g) => unitCost(g.baseCost, g.growth, s.owned[g.id], genModMult(s, g, 'cost'));
-export const labCost = (s) => unitCost(LAB.baseCost, LAB.growth, s.labs, shopValue(s, 'cost', 1));
+export const labCost = (s) => unitCost(LAB.baseCost * chapterScale(s), LAB.growth, s.labs, shopValue(s, 'cost', 1));
 export const genBulk = (s, g, amount) => bulk(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost'), amount);
-export const labBulk = (s, amount) => bulk(LAB.baseCost, LAB.growth, s.labs, s.money, shopValue(s, 'cost', 1), amount);
+export const labBulk = (s, amount) => bulk(LAB.baseCost * chapterScale(s), LAB.growth, s.labs, s.money, shopValue(s, 'cost', 1), amount);
 export const genAffordable = (s, g) => maxAffordable(g.baseCost, g.growth, s.owned[g.id], s.money, genModMult(s, g, 'cost')).n;
 // Janela de lançamento (trait `launch`): null se a fonte não tem. Pesquisas 'launch'
 // alargam a janela.
@@ -204,9 +226,13 @@ export function genLaunch(s, g) {
 }
 // Dá para comprar agora (fora da janela de lançamento, não).
 export const genBuyable = (s, g) => genUnlocked(g, s) && (genLaunch(s, g)?.open ?? true);
-export const genUnlocked = (g, s) => (g.unlock === null || bought(s, g.unlock)) && !genDisabled(s, g);
+// Só as fontes do capítulo atual existem na partida (2.0).
+export const genUnlocked = (g, s) => g.chapter === s.chapter && (g.unlock === null || bought(s, g.unlock)) && !genDisabled(s, g);
 export const labUnlocked = (s) => s.totalEnergy >= LAB.unlockAt || s.labs > 0;
-export const techVisible = (t, s) => !bought(s, t.id) && t.req.every((r) => bought(s, r));
+// Pesquisas do capítulo atual mais as gerais (sem `chapter`).
+export const inChapter = (t, s) => !t.chapter || t.chapter === s.chapter;
+export const chapterTechs = (s) => TECHS.filter((t) => inChapter(t, s));
+export const techVisible = (t, s) => inChapter(t, s) && !bought(s, t.id) && t.req.every((r) => bought(s, r));
 
 // `average` = médias do ambiente (offline); nesse modo o calor não é simulado.
 // Retorna os ids de reatores que desligaram por superaquecimento.
@@ -267,6 +293,8 @@ export function tick(s, dt, average = false) {
   s.rp += rpRate(s) * dt;
   record(s, dt, average, { kw, sold, cost, net, shutdowns });
   if (!average) { autoSell(s, dt); marketStep(s, dt); wearStep(s, dt); }
+  // Colônias rendem Patentes por hora de jogo (online e offline).
+  if (s.empire.colonies.length) s.empire.patents += (COLONY.perHour * s.empire.colonies.length * dt) / 3600;
   if (crew) add(s, 'crewWages', crew);
   s.t += dt;
   return shutdowns;

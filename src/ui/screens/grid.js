@@ -14,11 +14,13 @@ import {
 import {
   HOT_GENERATORS, heatLevel, heatTarget, efficiency, isShutdown, shutdownLeft, coolingLevel, nextCooling,
 } from '../../core/heat.js';
-import { buyCooling, buyTransformer, cleanCost, fixCost, payClean, payFix, handClean, toggleCrew } from '../../core/actions.js';
+import { buyCooling, buyTransformer, expandRegion, expandCost, canExpand, cleanCost, fixCost, payClean, payFix, handClean, toggleCrew } from '../../core/actions.js';
 import { HISTORY_LEN } from '../../core/stats.js';
 import { COOLING } from '../../data/heat.js';
 import { C, paint, glyphs, GEN_COLOR } from '../theme.js';
 import { forecast, STEP } from '../../core/forecast.js';
+import { REGION_RULES } from '../../data/regions.js';
+import { nextRegion, regionName } from '../../core/regions.js';
 import { WEAR, WEAR_BY_GEN } from '../../data/wear.js';
 import { wearLevel, brokenCount, efficiency as wearEfficiency } from '../../core/wear.js';
 import { rand as marketRand } from '../../core/market.js';
@@ -39,7 +41,7 @@ export const help = (ctx) => {
   if (ctx.ui.hand) return 'setas na ordem para consertar  J cancela  M menu  Q sair';
   return VIEWS[ctx.ui.view ?? 0].id === 'wear'
     ? 'V visão  ↑↓ fonte  F paga  J faz à mão  A equipe  espaço gira  M menu  Q sair'
-    : 'V muda visão  T transformador  ↑↓ C resfriar  espaço gira  M menu  Q sair';
+    : 'V visão  N expandir  T transformador  ↑↓ C resfriar  espaço gira  Q sair';
 };
 
 const owned = (s) => GENERATORS.filter((g) => s.owned[g.id] > 0);
@@ -49,10 +51,16 @@ const heatColor = (h) => (h >= HEAT.shutdownAt ? C.red + C.bold : h > HEAT.warnA
 function header(s, view) {
   const tabs = VIEWS.map((v) => (v.id === view ? paint(C.inverse + C.bold, ` ${v.label} `) : ` ${v.label} `)).join('');
   const load = gridLoad(s);
+  const next = nextRegion(s);
+  let expand;
+  if (!next) expand = paint(C.green, 'última região do capítulo');
+  else if (!canExpand(s)) expand = paint(C.dim, `[N] ${next.name} pede ${fmt(next.need)} kW de produção`);
+  else expand = paint(s.money >= expandCost(s) ? C.yellow + C.bold : C.yellow, `[N] expandir para ${next.name}: $${fmt(expandCost(s))}`);
   return [
     '  ' + tabs + paint(C.dim, '   (V alterna)'),
-    '  ' + `Capacidade ${paint(C.bold, fmt(capacity(s)) + ' kW')} · uso ` + paint(loadColor(load), fmtPct(load)) +
-      paint(C.dim, ` · transformadores ${s.transformers}`) +
+    '  ' + paint(C.bold, regionName(s)) + ` · capacidade ${paint(C.bold, fmt(capacity(s)) + ' kW')} · uso ` + paint(loadColor(load), fmtPct(load)) +
+      paint(C.dim, ' · ') + expand,
+    '  ' + paint(C.dim, `transformadores ${s.transformers}`) +
       paint(s.money >= transformerCost(s) ? C.yellow : C.dim,
         ` · [T] +${Math.round((GRID.transformer.capacityMult - 1) * 100)}% por $${fmt(transformerCost(s))}`),
   ];
@@ -226,7 +234,7 @@ function chartView(s, height, history) {
 }
 
 // ---------- 5. previsão ----------
-const FORECAST_COLOR = { wind: C.cyan, sun: C.yellow, tide: C.blue, vacuum: C.mag, price: C.green };
+const FORECAST_COLOR = { wind: C.cyan, sun: C.yellow, tide: C.blue, lunar: C.yellow, jupiter: C.yellow, vacuum: C.mag, price: C.green };
 function forecastView(s, height) {
   const { err, series } = forecast(s);
   const out = [
@@ -406,6 +414,17 @@ export function key(ctx, k) {
   if (ui.hand) return handKey(ctx, k);
   if (k === 'v' || k === 'V') { ui.view = ((ui.view ?? 0) + 1) % VIEWS.length; return true; }
   if (VIEWS[ui.view ?? 0].id === 'wear' && wearKey(ctx, k)) return true;
+  if (k === 'n' || k === 'N') {
+    const next = nextRegion(s);
+    if (!next) ctx.say('Você já atende a última região deste capítulo.', 'info');
+    else if (!canExpand(s)) ctx.say(`${next.name} pede ${fmt(next.need)} kW de produção para dar a concessão.`, 'info');
+    else if (s.money < expandCost(s)) ctx.say(`Faltam $${fmt(expandCost(s) - s.money)} para a concessão de ${next.name}.`, 'err');
+    else {
+      expandRegion(s);
+      ctx.say(`Concessão: agora você atende ${next.name}! Rede ${fmt(capacity(s))} kW, kWh +${Math.round(REGION_RULES.pricePerRegion * 100)}%.`, 'ok', 8000);
+    }
+    return true;
+  }
   if (k === 't' || k === 'T') {
     const cost = transformerCost(s);
     if (buyTransformer(s)) ctx.say(`Transformador instalado: capacidade ${fmt(capacity(s))} kW.`, 'ok');

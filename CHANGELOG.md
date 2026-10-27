@@ -10,6 +10,94 @@ número e data. Mudanças de save registram a nova `saveVersion`.
 
 ## [Não lançado]
 
+## [2.0.0] - 2026-10-27
+
+Kardashev: do bairro à galáxia. A versão final: regiões, três capítulos, colonização e
+um fim de jogo no Tipo III.
+
+### Adicionado
+- **Escala de Kardashev** (fórmula de Sagan, com os watts reais): o cabeçalho mostra o K da
+  produção a partir de 1 MW (K 0), e as estatísticas guardam o recorde com o marco
+  passado (bairro, cidade, país, humanidade, Tipo I, II e III).
+- **Sistema Solar** (do Tipo I ao Tipo II): sete fontes — Enxame Orbital (janelas de
+  lançamento), **Hélio-3 Lunar** (só minera no dia lunar, um mês de 708 h de jogo),
+  **Usina em Mercúrio** (calor alto), **Mina de Asteroides** (cargas chegam em
+  ondas, x3), Kugelblitz (alimentação), **Dínamo de Júpiter** (ciclo longo) e **Star
+  Lifting** (calor no limite) —, com arte, upgrades e 17 pesquisas. Regiões: Órbita Baixa,
+  Lua, Marte, Cinturão, Júpiter e Sol. Cada partida do capítulo começa com 1 Enxame;
+  laboratório, transformador e baterias custam na escala do capítulo. A previsão mostra o
+  dia lunar e Júpiter.
+- **Galáxia** (do Tipo II ao Tipo III): seis fontes — Energia do Vácuo (flutuação),
+  **Motor de Penrose** (a rotação gasta rápido: manutenção é a recarga), **Fazenda de
+  Pulsar** (pulsos x4), **Esferas de Dyson** (janelas de lançamento grandes), **Coletor
+  de Quasar** (calor) e **Energia Escura** (rende mais quanto mais longa a partida, até
+  x5) —, com arte, upgrades e 15 pesquisas. Regiões: Estrelas Vizinhas, Bolha Local, Braço
+  de Órion, Disco e Núcleo Galáctico (Tipo III).
+- **Colonização** (2ª camada de prestígio), na visão **Império** da aba Legado (tecla `I`):
+  ao atender a última região do capítulo com pontos de legado suficientes nele, `C`
+  coloniza o próximo. O legado (pontos, loja, Monumento, ascensões) e a partida
+  recomeçam; conquistas, desafios e a carreira ficam. Rende **Patentes**, e o capítulo
+  deixado vira **colônia**: x1.5 na produção para sempre e 1 Patente por hora de jogo.
+- **Visita à Terra**: fora da Terra, `T` na aba Legado ascende e leva a próxima partida de
+  volta ao 1º capítulo, com o legado e a loja do capítulo de origem. Concluir a Terra de
+  novo (a condição de ascensão dela) paga +50% dos pontos daquela ascensão e devolve a
+  civilização ao capítulo de origem. Sem isso, quem colonizou nunca mais via a Terra.
+  Simulado: a partir do meio do Sistema Solar, a visita leva de 4 a 8 min.
+- **Árvore de Patentes**: Capital Inicial, Legado Fundador, Arquivo de Pesquisa (pesquisas
+  mais baratas), Concessões Imediatas e Produção Imperial.
+- Pontos de legado e o mínimo da partida acompanham a escala de dinheiro do capítulo.
+- Veteranos da 1.x (estoque da Fronteira ou a conquista Ponto Zero) podem colonizar o
+  Sistema Solar direto, e a Herança da Fronteira devolve unidades, upgrades e pesquisas.
+- Onze conquistas novas (122 no total), na categoria Regiões e Kardashev: da Cidade ao
+  Núcleo Galáctico, colonizar, Kardashev 1.5 e Patentes.
+- **Fim do jogo**: Kardashev 3.0 (uma civilização Tipo III) dá a conquista Escala Completa
+  e uma mensagem de fechamento; o jogo segue em modo livre.
+- Simulador: `--career` joga os capítulos em sequência (ascende, coloniza, compra
+  Patentes) e marca o Tipo I, II e III. Bot ocioso, sem legado: Terra colonizada em
+  ~13h20, Sistema Solar em ~20h40 e Tipo III em ~39–41 h. Colônias valem x1.5 e a
+  Produção Imperial vai até x2 (com mais, os capítulos seguintes passavam rápido demais).
+- O Kardashev mede a civilização: a produção do capítulo mais a das colônias. Cada
+  capítulo começa pequeno (Sistema Solar ~3×10^7 kW, Galáxia ~3×10^16 kW) e sobe ~16–18
+  ordens de grandeza.
+- Menu: **Novidades** mostra este changelog, da 1.0 até aqui (↑↓ PgUp PgDn rolam, ←→
+  pulam de versão), e **Créditos** traz quem fez, as inspirações e um obrigado por jogar.
+
+### Mudado
+- Evento Descoberta: o texto deixa claro que os 2 min de pesquisa chegam na hora, e a
+  faixa no topo não mostra mais um relógio (que fazia parecer um bônus de 2 min).
+- Crise com o minijogo em andamento: a faixa e o manual mostram o tempo do minijogo, em
+  vez de "equipe em 0:00" parado.
+- Loja do legado por capítulo: Começo Rápido 3–5 e Pesquisa Herdada liberam as fontes e
+  pesquisas do capítulo atual (no Sistema Solar, Hélio-3, Mercúrio, Asteroides e
+  Kugelblitz; na Galáxia, Penrose, Pulsar, Dyson e Quasar), e os textos acompanham.
+- Ao colonizar, um aviso lembra que o legado zerou e qual região fecha a 1ª partida do
+  capítulo.
+- Válvulas de alívio: a faixa verde (a meta) agora anda em todos os níveis de crise, devagar
+  no nível 0 e rápido e longe no 10. Antes ela só se movia do nível 6 em diante, e abaixo
+  disso bastava apertar no ritmo para segurar a pressão parada.
+- **Regiões atendidas**: a rede passa a ser a concessão da região (Bairro, Cidade, Região
+  Metropolitana, Estado, País, Continente, Planeta). Para assumir a próxima (aba Rede,
+  tecla `N`) é preciso produzir o que ela pede, na escala real (Cidade 10 MW, País 1 TW,
+  Planeta 10 PW = Kardashev Tipo I), e pagar a concessão (90 s dessa renda). Cada região
+  traz a capacidade-base da rede e +5% no kWh. O cabeçalho mostra a região no lugar de
+  "Rede" ("Estado 87%"). A pesquisa nova Concessões Automáticas expande sozinha, e a
+  auto-compra guarda o dinheiro de uma concessão disponível.
+- Pesquisas de capacidade valem x1.5 cada (antes x20 a x1000): o salto vem das regiões. A
+  Rede Velha (desafio) passa a valer para as regiões também. Save **v13**: a partida em
+  andamento recebe a região que cobre a capacidade que tinha.
+- **Capítulos**: Terra, Sistema Solar e Galáxia, em sequência. Cada fonte e cada pesquisa
+  de fonte pertence a um capítulo (a aba Geradores mostra só as do capítulo atual); as
+  pesquisas gerais (laboratório, automação, rede, mercado) valem em todos. Enxame e
+  Kugelblitz passam para o Sistema Solar; o Vácuo, para a Galáxia.
+- Desafios e semente do dia são partidas da Terra; metas dos níveis IV e V recalibradas
+  para $3T e $30T (com as regiões e sem as fontes dos outros capítulos).
+- O marco de ascensão passa a ser uma região: na Terra, atender o País (e, da 4ª ascensão
+  em diante, o Planeta), ou a árvore do capítulo completa.
+- Saves com Enxame, Kugelblitz ou Vácuo na Terra: unidades, upgrades e pesquisas deles
+  ficam guardados (aviso uma vez ao carregar) e voltam como Herança da Fronteira ao
+  colonizar o Sistema Solar. Conquistas de "todas as fontes/upgrades/pesquisas" contam as
+  do capítulo.
+
 ## [1.5.0] - 2026-10-22
 
 Operação: mercado vivo, baterias, contratos, previsão, manutenção e reputação.
@@ -246,7 +334,8 @@ Primeira versão pública.
 - Simulador de balanceamento (`npm run simulate`).
 - Licença PolyForm Noncommercial 1.0.0.
 
-[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v1.5.0...HEAD
+[Não lançado]: https://github.com/localhost-ayu/elden-grid/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/localhost-ayu/elden-grid/compare/v1.2.0...v1.3.0

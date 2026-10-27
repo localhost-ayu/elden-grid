@@ -2,6 +2,8 @@
 import { GENERATORS } from '../data/generators.js';
 import { newMarket } from './market.js';
 import { newWear } from './wear.js';
+import { CHAPTERS } from '../data/chapters.js';
+import { REGIONS } from '../data/regions.js';
 import { SCHEDULE } from '../data/events.js';
 import { newStats, mergeStats, isValidStats } from './records.js';
 
@@ -9,6 +11,8 @@ const HOT = GENERATORS.filter((g) => g.traits.some((tr) => tr.type === 'heat')).
 const hotDefaults = (make) => Object.fromEntries(HOT.map((id) => [id, make()]));
 
 // `seed` alimenta o sorteio dos eventos (core/events.js).
+export const newEmpire = () => ({ patents: 0, colonies: [], tree: {}, frontierStash: null, visit: null });
+
 export function newState(seed = 1) {
   return {
     money: 0,
@@ -22,6 +26,8 @@ export function newState(seed = 1) {
     heat: hotDefaults(() => ({ h: 0, off: 0 })), // off = desligado até s.t
     cooling: hotDefaults(() => 0),
     transformers: 0,
+    chapter: 'earth', // capítulo (data/chapters.js): Terra, Sistema Solar ou Galáxia
+    region: 0,      // região atendida (data/regions.js): base da capacidade da rede
     t: 0,           // tempo de jogo em segundos
     earned: 0,      // dinheiro ganho nesta partida (base do Legado; gastar não desconta)
     // Sobrevive à ascensão. earned = pontos já recebidos; points = não gastos.
@@ -34,6 +40,9 @@ export function newState(seed = 1) {
     events: { rng: seed >>> 0, next: SCHEDULE.first, effects: [], crisis: null, seen: 0 },
     market: newMarket(seed >>> 0), // demanda, surtos e impacto das vendas no preço
     wear: newWear(), // desgaste por fonte, unidades quebradas e a equipe de manutenção
+    // Camada acima do legado (2.0): Patentes, colônias, árvore de Patentes e o estoque da
+    // Fronteira de saves antigos (sobrevive à ascensão e à colonização).
+    empire: newEmpire(),
     stats: newStats(),  // esta partida
     career: newStats(), // todas as partidas (sobrevive à ascensão)
   };
@@ -53,7 +62,9 @@ export function newState(seed = 1) {
 //   v10 = state.run (fromSave preenche com null)
 //   v11 = pontos de legado pela raiz cúbica: legacy.lifetime é reajustado à curva nova
 //   v12 = state.market, state.wear (fromSave preenche)
-export const SAVE_VERSION = 12;
+//   v13 = state.region (a região equivalente à capacidade que as pesquisas davam),
+//         state.chapter e state.empire; a Fronteira da Terra vai para o estoque
+export const SAVE_VERSION = 13;
 
 const MIGRATIONS = {
   1: (raw) => {
@@ -88,6 +99,44 @@ const MIGRATIONS = {
     return { ...raw, saveVersion: 11, state: { ...raw.state, legacy: { ...L, lifetime: L.earned ** 3 * 5e7 } } };
   },
   11: (raw) => ({ ...raw, saveVersion: 12 }),
+  // 2.0: as pesquisas de capacidade passaram de x20…x1000 para x1.5, e o salto grande vem das
+  // regiões. A partida em andamento recebe a menor região que cobre a capacidade que ela
+  // tinha, para não acordar com a rede saturada. Números fixos da 1.5 e da 2.0.
+  12: (raw) => {
+    const OLD = { t_hv: 20, t_substation: 30, t_hvdc: 40, t_continental: 50, t_planetary: 60, t_orbitalgrid: 1000 };
+    const BASES = [1e3, 1e4, 1e5, 1e7, 1e8, 1e11, 1e12];
+    const techs = raw.state?.techs ?? {};
+    const owned = Object.keys(OLD).filter((id) => techs[id]);
+    const before = 150 * owned.reduce((m, id) => m * OLD[id], 1);
+    const now = 1.5 ** owned.length;
+    let region = BASES.findIndex((b) => b * now >= before * (1 - 1e-9));
+    if (region < 0) region = BASES.length - 1;
+    // Enxame, Kugelblitz e Vácuo eram da Terra e agora são de outros capítulos: unidades,
+    // upgrades, resfriamento e pesquisas deles saem da partida e vão para o estoque,
+    // devolvido como Herança da Fronteira ao colonizar o Sistema Solar.
+    const st = { ...raw.state, region, chapter: 'earth', empire: raw.state?.empire ?? { patents: 0, colonies: [], tree: {}, frontierStash: null } };
+    const FRONTIER = ['swarm', 'kugelblitz', 'vacuum'];
+    const FTECHS = ['t_orbital', 't_swarm2', 't_launch', 't_kugel', 't_kugel2', 't_feed', 't_vacuum', 't_vacuum2', 't_flywheel', 't_global3'];
+    const ownedF = FRONTIER.filter((id) => st.owned?.[id] > 0 || st.upgrades?.[id] > 0);
+    const techF = FTECHS.filter((id) => st.techs?.[id]);
+    if (ownedF.length || techF.length) {
+      st.empire = {
+        ...st.empire,
+        frontierStash: {
+          owned: Object.fromEntries(FRONTIER.map((id) => [id, st.owned?.[id] ?? 0])),
+          upgrades: Object.fromEntries(FRONTIER.map((id) => [id, st.upgrades?.[id] ?? 0])),
+          techs: techF,
+        },
+      };
+      st.owned = { ...st.owned, ...Object.fromEntries(FRONTIER.map((id) => [id, 0])) };
+      st.upgrades = { ...st.upgrades, ...Object.fromEntries(FRONTIER.map((id) => [id, 0])) };
+      st.techs = Object.fromEntries(Object.entries(st.techs ?? {}).filter(([id]) => !FTECHS.includes(id)));
+      st.heat = Object.fromEntries(Object.entries(st.heat ?? {}).filter(([id]) => !FRONTIER.includes(id)));
+      st.cooling = Object.fromEntries(Object.entries(st.cooling ?? {}).filter(([id]) => !FRONTIER.includes(id)));
+      if (st.wear?.level) st.wear = { ...st.wear, level: { ...st.wear.level, ...Object.fromEntries(FRONTIER.map((id) => [id, 0])) }, broken: (st.wear.broken ?? []).filter((b) => !FRONTIER.includes(b.gen)) };
+    }
+    return { ...raw, saveVersion: 13, state: st };
+  },
 };
 
 // Lança erro se não for um save: o storage trata isso como arquivo corrompido.
@@ -124,6 +173,7 @@ export function fromSave(raw) {
     contracts: { ...base.market.contracts, ...raw.market?.contracts },
   };
   s.wear = { ...base.wear, ...raw.wear, level: { ...base.wear.level, ...raw.wear?.level } };
+  s.empire = { ...base.empire, ...raw.empire };
   s.stats = mergeStats(base.stats, raw.stats);
   s.career = mergeStats(base.career, raw.career);
   // Um minijogo pela metade não sobrevive ao save: a crise volta ao alerta.
@@ -161,6 +211,11 @@ export function isValidState(s) {
   if (!Array.isArray(ev.effects) || !ev.effects.every((a) => a && typeof a.id === 'string' && (a.until === null || finite(a.until)))) return false;
   if (ev.crisis !== null && !(ev.crisis && typeof ev.crisis.id === 'string' && finite(ev.crisis.deadline))) return false;
   if (s.run !== null && !isValidRun(s.run)) return false;
+  if (!CHAPTERS.some((c) => c.id === s.chapter)) return false;
+  if (!count(s.region) || s.region >= REGIONS[s.chapter].length) return false;
+  const e = s.empire;
+  if (!e || !finite(e.patents) || e.patents < 0 || !Array.isArray(e.colonies) || !e.tree || typeof e.tree !== 'object') return false;
+  if (e.visit != null && !(CHAPTERS.some((c) => c.id === e.visit.home) && count(e.visit.bonus) && s.chapter === 'earth')) return false;
   const m = s.market;
   if (!m || !Number.isInteger(m.rng) || m.rng < 0 || m.rng > 0xffffffff) return false;
   if (![m.demand, m.target, m.retarget, m.surgeUntil, m.impact].every(finite) || m.impact < 0 || m.demand <= 0) return false;

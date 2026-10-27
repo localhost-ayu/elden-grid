@@ -46,6 +46,17 @@ function vacuumAvg(tr, floor) {
 }
 const maxFloor = (techs) => techs.reduce((m, t) => Math.max(m, t.floor), 0);
 
+// Dia lunar: senoide de período `period` (um mês lunar); de dia vai até `peak`, à noite
+// fica no piso (`floor` + pesquisas 'lunarFloor').
+export const lunarSun = (s, tr) => Math.max(0, Math.sin((TAU * s.t) / tr.period));
+export const lunarIsDay = (s, tr) => lunarSun(s, tr) > 0;
+
+// Cargas: nos últimos `window` s de cada `period` s, a carga chega (x boost).
+const haulPhase = (s, tr) => ((s.t % tr.period) + tr.period) % tr.period;
+export const haulArriving = (s, tr, extra = 0) => haulPhase(s, tr) >= tr.period - tr.window - extra;
+export const haulIn = (s, tr, extra = 0) =>
+  (haulArriving(s, tr, extra) ? tr.period - haulPhase(s, tr) : tr.period - tr.window - extra - haulPhase(s, tr));
+
 // Janela de lançamento: aberta nos primeiros `window` (+ `extra`) s de cada `period` s.
 const phase = (s, tr) => ((s.t % tr.period) + tr.period) % tr.period;
 export const launchOpen = (s, tr, extra = 0) => phase(s, tr) < tr.window + extra;
@@ -66,6 +77,23 @@ export const TRAITS = {
     avg: (tr) => (tr.min + tr.max) / 2,
   },
   tide: { factor: (s, tr) => tideLevel(s, tr), avg: () => 1 },
+  lunarDay: {
+    factor: (s, tr, ctx) => tr.floor + sumAdd(ctx.lunarFloor) + tr.peak * lunarSun(s, tr),
+    avg: (tr, ctx) => tr.floor + sumAdd(ctx.lunarFloor) + tr.peak / Math.PI,
+  },
+  haul: {
+    factor: (s, tr, ctx) => (haulArriving(s, tr, sumAdd(ctx.haul)) ? tr.boost : 1),
+    avg: (tr, ctx) => 1 + (tr.boost - 1) * (tr.window + sumAdd(ctx.haul)) / tr.period,
+  },
+  pulse: {
+    factor: (s, tr) => (haulArriving(s, tr) ? tr.boost : 1),
+    avg: (tr) => 1 + (tr.boost - 1) * tr.window / tr.period,
+  },
+  // Offline vale o ponto atual da partida (o relógio da partida não anda offline).
+  expansion: {
+    factor: (s, tr) => Math.min(tr.cap, 1 + s.stats.playTime / tr.hour),
+    avg: (tr, ctx, s) => Math.min(tr.cap, 1 + (s?.stats.playTime ?? 0) / tr.hour),
+  },
   // Em órbita a produção é fixa: a janela só limita quando se compra.
   launch: { factor: () => 1, avg: () => 1 },
   vacuum: {
@@ -81,7 +109,7 @@ export function envFactor(s, g, ctx, average = false) {
   let f = 1;
   for (const tr of g.traits) {
     const fx = TRAITS[tr.type];
-    if (fx) f *= average ? fx.avg(tr, ctx) : fx.factor(s, tr, ctx);
+    if (fx) f *= average ? fx.avg(tr, ctx, s) : fx.factor(s, tr, ctx);
   }
   return f;
 }

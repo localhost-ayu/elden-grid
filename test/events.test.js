@@ -240,8 +240,12 @@ test('nível da crise: parâmetros vão do fácil (0) ao difícil (máximo)', ()
   const hard = { t: MINIGAMES.timing.create(r, CRISIS.maxLevel), m: MINIGAMES.mash.create(r, CRISIS.maxLevel), q: MINIGAMES.sequence.create(r, CRISIS.maxLevel) };
   assert.ok(hard.t.width < easy.t.width && hard.t.speed > easy.t.speed && hard.t.need > easy.t.need);
   assert.ok(hard.m.band < easy.m.band && hard.m.hold > easy.m.hold && hard.m.leak > easy.m.leak);
-  assert.equal(easy.m.drift, 0);
-  assert.ok(hard.m.drift > 0, 'a faixa oscila no nível alto');
+  assert.ok(easy.m.drift > 0, 'a faixa anda desde o nível 0');
+  assert.ok(hard.m.drift > easy.m.drift && hard.m.driftSpeed > easy.m.driftSpeed, 'e anda mais e mais rápido no alto');
+  const g = MINIGAMES.mash.create(r, 0);
+  const c0 = g.center;
+  MINIGAMES.mash.step(g, 1);
+  assert.notEqual(g.center, c0, 'a meta se move sozinha');
   assert.ok(hard.q.seq.length > easy.q.seq.length);
   assert.equal(easy.q.hideAt, null);
   assert.ok(hard.q.hideAt > 0, 'a sequência some no nível alto');
@@ -284,7 +288,7 @@ test('ascender mantém a sorte correndo (não repete os eventos da 1ª partida)'
   rand(s);
   const rng = s.events.rng;
   s.earned = LEGACY.minRunEarned;
-  s.owned.antimatter = 1;
+  s.region = 4; // atende o País: fecha a partida
   assert.ok(ascend(s) > 0);
   assert.equal(s.events.rng, rng);
   assert.equal(s.events.crisis, null);

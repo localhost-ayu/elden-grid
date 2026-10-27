@@ -26,8 +26,8 @@ function run(s, seconds) {
   return shut;
 }
 
-test('reatores quentes: nuclear, fusão e antimatéria', () => {
-  assert.deepEqual(HOT_GENERATORS.map((g) => g.id), ['nuclear', 'fusion', 'antimatter']);
+test('reatores quentes: nuclear, fusão e antimatéria; Mercúrio e Star Lifting; Quasar', () => {
+  assert.deepEqual(HOT_GENERATORS.map((g) => g.id), ['nuclear', 'fusion', 'antimatter', 'mercury', 'starlift', 'quasar']);
 });
 
 test('alvo de calor: 0 sem unidades; base sem upgrades; sobe com produção; resfriamento divide', () => {
@@ -126,7 +126,7 @@ test('transformadores: capacidade multiplicada a cada um, custo crescente', () =
   assert.ok(buyTransformer(s));
   assert.ok(buyTransformer(s));
   assert.equal(s.transformers, 2);
-  assert.ok(Math.abs(capacity(s) - GRID.baseCapacity * m ** 2) < 1e-9);
+  assert.ok(Math.abs(capacity(s) - capacity(newState()) * m ** 2) < 1e-9);
   assert.equal(s.money, 1e9 - b - b * k);
   assert.equal(transformerCost(s), b * k * k);
 });

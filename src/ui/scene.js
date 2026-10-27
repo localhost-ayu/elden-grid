@@ -3,7 +3,7 @@
 import { GENERATORS, LAB } from '../data/generators.js';
 import { HEAT } from '../data/heat.js';
 import { genEnv, genLaunch, feedFactor, upgradeLevel, upgradeTrack } from '../core/engine.js';
-import { sunLevel, reservoirLevel, tideLevel } from '../core/traits.js';
+import { sunLevel, reservoirLevel, tideLevel, lunarIsDay } from '../core/traits.js';
 import { heatLevel, isHot, isShutdown } from '../core/heat.js';
 import { ART, ART_W, ART_H } from './art/index.js';
 import { C, paint, GEN_COLOR } from './theme.js';
@@ -24,6 +24,8 @@ function artInfo(s, g) {
     launch: !!genLaunch(s, g)?.open,
     fed: feedFactor(s, g),
     surge: trait(g, 'vacuum') ? genEnv(s, g) : 1,
+    day: trait(g, 'lunarDay') ? lunarIsDay(s, trait(g, 'lunarDay')) : true,
+    arriving: trait(g, 'haul') || trait(g, 'pulse') ? genEnv(s, g) > 1 : false,
   };
 }
 

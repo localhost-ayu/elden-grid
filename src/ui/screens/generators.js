@@ -1,10 +1,11 @@
-import { GENERATORS, LAB, PAGE_SIZE } from '../../data/generators.js';
+import { GENERATORS, LAB } from '../../data/generators.js';
+import { chapterIndex } from '../../data/chapters.js';
 import { TECHS } from '../../data/research.js';
 import {
   power, genPower, rpRate, genUnlocked, labUnlocked, genEnv, genBulk, labBulk, genAffordable, genLaunch, feedFactor,
   genModMult, milestones, nextMilestone, nextUpgrade, upgradeLevel, upgradeTrack,
 } from '../../core/engine.js';
-import { isDay, reservoirLevel, tideRising } from '../../core/traits.js';
+import { isDay, reservoirLevel, tideRising, lunarIsDay, haulIn } from '../../core/traits.js';
 import { heatLevel, isShutdown, shutdownLeft } from '../../core/heat.js';
 import { buyGenBulk, buyLabBulk, buyUpgrade } from '../../core/actions.js';
 import { autoAvailable, autoInterval, toggleAuto } from '../../core/automation.js';
@@ -14,21 +15,13 @@ import { fmt, visibleLength } from '../format.js';
 import { scrollWindow } from '../list.js';
 import { CARD_H, sceneCards, sceneRows } from '../scene.js';
 
-export const help = (ctx) => {
-  if (ctx.ui.scene) {
-    return pageCount(ctx.state) > 1
-      ? 'V volta à lista  ←→ página  0-9 comprar  B lote  espaço gira  M menu  Q sair'
-      : 'V volta à lista  0-9 comprar  B lote  espaço gira  Tab abas  M menu  Q sair';
-  }
-  return pageCount(ctx.state) > 1
-    ? '↑↓ Enter comprar  ←→ página  B lote  U upgrade  V cena  0-9 atalho  Q sair'
-    : '↑↓ Enter comprar  B lote  U upgrade  V cena  0-9 atalho  espaço gira  Q sair';
-};
+export const help = (ctx) => (ctx.ui.scene
+  ? 'V volta à lista  0-9 comprar  B lote  espaço gira  Tab abas  M menu  Q sair'
+  : '↑↓ Enter comprar  B lote  U upgrade  V cena  0-9 atalho  espaço gira  Q sair');
 
-// Páginas: a 1ª sempre; as seguintes quando têm alguma fonte liberada. As teclas 0–9 e a
-// lista valem para a página aberta (`ui.page`).
-export const pageCount = (s) => 1 + Math.max(0, ...GENERATORS.filter((g) => genUnlocked(g, s)).map((g) => g.page));
-const pageOf = (ctx) => (ctx.ui.page = Math.max(0, Math.min(ctx.ui.page ?? 0, pageCount(ctx.state) - 1)));
+// Cada capítulo é uma página de fontes (data/generators.js): a aba mostra a do capítulo
+// atual, e as teclas 0–9 valem para ela.
+const pageOf = (ctx) => chapterIndex(ctx.state.chapter);
 
 // Modo de lote é estado de UI por sessão: não vai para o save.
 const BULK = [1, 10, 100, 'max'];
@@ -40,11 +33,15 @@ const TRAIT_LABEL = {
   wind: (s, g) => `vento ${x(genEnv(s, g))}`,
   daylight: (s, g) => `${isDay(s) ? '☼ dia' : '☾ noite'} ${x(genEnv(s, g))}`,
   reservoir: (s, g, tr) => `reserv. ${Math.round(reservoirLevel(s, tr) * 100)}% ${x(genEnv(s, g))}`,
-  tide: (s, g, tr) => `maré ${tideRising(s, tr) ? '▲' : '▼'} ${x(genEnv(s, g))}`,
+  tide: (s, g, tr) => `${g.id === 'jupiter' ? 'magnetosfera' : 'maré'} ${tideRising(s, tr) ? '▲' : '▼'} ${x(genEnv(s, g))}`,
   // Por unidade, já com desconto de upgrades de eficiência.
   upkeep: (s, g, tr) => `-$${fmt(tr.money * genModMult(s, g, 'upkeep'))}/s`,
   heat: (s, g) => `calor ${Math.round(heatLevel(s, g) * 100)}%`,
   vacuum: (s, g) => `flutuação ${x(genEnv(s, g))}`,
+  lunarDay: (s, g, tr) => `${lunarIsDay(s, tr) ? 'dia' : 'noite'} lunar ${x(genEnv(s, g))}`,
+  haul: (s, g, tr) => (genEnv(s, g) > 1 ? `CARGA ${x(genEnv(s, g))}` : `carga em ${Math.ceil(haulIn(s, tr))}s`),
+  pulse: (s, g, tr) => (genEnv(s, g) > 1 ? `PULSO ${x(genEnv(s, g))}` : `pulso em ${Math.ceil(haulIn(s, tr))}s`),
+  expansion: (s, g) => `expansão ${x(genEnv(s, g))}`,
   feed: (s, g) => `alimentação ${Math.round(feedFactor(s, g) * 100)}%`,
   launch: (s, g) => {
     const w = genLaunch(s, g);
@@ -59,7 +56,7 @@ const condition = (s, g) => (isShutdown(s, g)
 // Versão de uma linha da cena, para quando não sobra altura para os cards. Com muitas
 // fontes, repete menos ícones por fonte até caber na largura; em último caso corta com "…".
 function plantRow(s, cols) {
-  const owned = GENERATORS.filter((g) => s.owned[g.id] > 0);
+  const owned = GENERATORS.filter((g) => g.chapter === s.chapter && s.owned[g.id] > 0);
   if (!owned.length && !s.labs) return ' ' + paint(C.dim, '(nenhuma usina ainda)');
   const room = cols - 2;
   let text = '';
@@ -76,7 +73,7 @@ function plantRow(s, cols) {
 // Itens compráveis visíveis agora na página. A seleção é por índice nesta lista, então
 // ela é recalculada a cada quadro (um gerador novo pode ter sido destravado). O
 // laboratório aparece em todas as páginas.
-function items(s, page = 0) {
+function items(s, page = chapterIndex(s.chapter)) {
   const list = GENERATORS.filter((g) => g.page === page && genUnlocked(g, s)).map((g) => ({ gen: g }));
   if (labUnlocked(s)) list.push({ lab: true });
   return list;
@@ -84,8 +81,7 @@ function items(s, page = 0) {
 
 const cols = (mark, key, name, qty, out, cost, cond) =>
   `${mark} ${key} ${name.padEnd(18)} ${qty.padEnd(5)} ${out.padStart(11)} ${cost.padStart(13)}  ${cond}`;
-const header = (amount, page, pages) =>
-  cols(' ', '   ', pages > 1 ? `fonte  pág ${page + 1}/${pages} ←→` : 'fonte', 'qtd', 'por unid.', `custo ${bulkLabel(amount)}`, 'condição');
+const header = (amount) => cols(' ', '   ', 'fonte', 'qtd', 'por unid.', `custo ${bulkLabel(amount)}`, 'condição');
 
 // Custo exibido: no MAX mostra quantas unidades entram ("x37 $1.2k"); sem saldo para
 // nenhuma, mostra o preço de 1 (apagado), para o jogador saber quanto falta.
@@ -143,12 +139,11 @@ function detail(s, it) {
 
 // Prévia da próxima fonte ainda bloqueada: mostra ao jogador o que perseguir.
 // Fontes desligadas por um desafio não entram: elas nunca vão abrir nesta partida.
-function teaser(s, page) {
-  const g = GENERATORS.find((x) => !genUnlocked(x, s) && !genDisabled(s, x));
+function teaser(s) {
+  const g = GENERATORS.find((x) => x.chapter === s.chapter && !genUnlocked(x, s) && !genDisabled(s, x));
   if (!g) return [];
   const tech = TECHS.find((t) => t.id === g.unlock);
-  const where = g.page === page ? '' : ` (pág. ${g.page + 1})`;
-  return [' ' + paint(C.dim, `${cols(' ', `[${g.key}]`, g.name, '', '', '', '').trimEnd()} — requer pesquisa: ${tech.name}${where}`)];
+  return [' ' + paint(C.dim, `${cols(' ', `[${g.key}]`, g.name, '', '', '', '').trimEnd()} — requer pesquisa: ${tech.name}`)];
 }
 
 function autoLine(s) {
@@ -162,16 +157,14 @@ function autoLine(s) {
 
 const clampSel = (ui, n) => (ui.sel = Math.max(0, Math.min(ui.sel ?? 0, n - 1)));
 
-// A cena inteira mostra a página aberta (←→ troca, como na lista).
+// A cena inteira mostra as usinas do capítulo atual.
 function sceneView(ctx, height, width) {
   const s = ctx.state;
   const page = pageOf(ctx);
-  const pages = pageCount(s);
   const types = sceneCards(s, page).length;
-  const where = pages > 1 ? ` · pág. ${page + 1}/${pages} ←→` : '';
-  const top = ' ' + paint(C.bold, 'Usinas') + paint(C.dim, `  ${fmt(power(s))} kW · ${types} ${types === 1 ? 'tipo' : 'tipos'}${where}  ·  V volta à lista`);
+  const top = ' ' + paint(C.bold, 'Usinas') + paint(C.dim, `  ${fmt(power(s))} kW · ${types} ${types === 1 ? 'tipo' : 'tipos'}  ·  V volta à lista`);
   ctx.ui.particleZone = null;
-  if (!types) return [top, '', paint(C.dim, '   Nenhuma usina ainda — compre a primeira turbina na lista (V).')];
+  if (!types) return [top, '', paint(C.dim, '   Nenhuma usina ainda — compre a primeira na lista (V).')];
   const rows = sceneRows(s, ctx.anim, width, Math.floor((height - 1) / CARD_H), page);
   ctx.ui.particleZone = { top: 1, height: rows.length };
   return [top, ...rows];
@@ -188,15 +181,14 @@ export function render(ctx, height, width) {
   const panel = detail(s, list[sel]);
   // Prioridade de altura: cabeçalho + lista + painel são essenciais; depois entram,
   // se couber, a prévia/aviso do lab e a cena (cards inteiros, ou a linha de ícones).
-  const extra = [...autoLine(s), ...teaser(s, page)];
+  const extra = [...autoLine(s), ...teaser(s)];
   if (!labUnlocked(s)) extra.push(paint(C.dim, `   Laboratório aparece após ${LAB.unlockAt} kWh produzidos.`));
   let room = height - 1 - panel.length - rows.length;
   const shownExtra = room >= extra.length ? extra : [];
   room -= shownExtra.length;
-  // Com mais de uma página, os cards acima da lista são os da página aberta.
-  const cardPage = pageCount(s) > 1 ? page : null;
-  const cardRows = sceneCards(s, cardPage).length ? Math.floor(room / CARD_H) : 0;
-  const scene = cardRows ? sceneRows(s, ctx.anim, width, cardRows, cardPage) : [];
+  // Os cards acima da lista são os do capítulo atual.
+  const cardRows = sceneCards(s, page).length ? Math.floor(room / CARD_H) : 0;
+  const scene = cardRows ? sceneRows(s, ctx.anim, width, cardRows, page) : [];
   const plant = !scene.length && room >= 1 ? [plantRow(s, width)] : [];
   const listRoom = height - 1 - panel.length - shownExtra.length - plant.length - scene.length;
   // As partículas de venda/manivela saem das usinas, nunca do meio da lista.
@@ -204,7 +196,7 @@ export function render(ctx, height, width) {
   ctx.ui.particleZone = zone ? { top: 0, height: zone } : null;
   return [
     ...scene, ...plant,
-    ' ' + paint(C.dim, header(amount, page, pageCount(s))),
+    ' ' + paint(C.dim, header(amount)),
     ...scrollWindow(rows, sel, listRoom),
     ...panel,
     ...shownExtra,
@@ -251,13 +243,6 @@ export function key(ctx, k) {
   const ui = ctx.ui;
   const page = pageOf(ctx);
   const list = items(ctx.state, page);
-  if (k === 'left' || k === 'right' || k === 'pageup' || k === 'pagedown') {
-    const pages = pageCount(ctx.state);
-    if (pages < 2) return false;
-    ui.page = (page + (k === 'left' || k === 'pageup' ? pages - 1 : 1)) % pages;
-    ui.sel = 0;
-    return true;
-  }
   if (k === 'up') { ui.sel = Math.max(0, (ui.sel ?? 0) - 1); return true; }
   if (k === 'down') { ui.sel = Math.min(list.length - 1, (ui.sel ?? 0) + 1); return true; }
   if (k === 'enter') { clampSel(ui, list.length); buy(ctx, list[ui.sel]); return true; }

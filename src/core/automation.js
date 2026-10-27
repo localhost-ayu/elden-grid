@@ -3,11 +3,12 @@
 import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import { bought, genCost, genBuyable } from './engine.js';
-import { buyGen } from './actions.js';
+import { buyGen, expandRegion, canExpand, expandCost } from './actions.js';
 import { shopValue, shopPerk } from './prestige.js';
 import { crank } from './actions.js';
 import { AUTO_CRANK_SECONDS } from '../data/legacy.js';
 import { add } from './records.js';
+import { patentValue } from './patents.js';
 
 // A automação mais rápida (pesquisa ou Legado) vence; null = nenhuma disponível.
 export function autoInterval(s) {
@@ -31,7 +32,12 @@ export function cheapestGen(s) {
 const MAX_PER_STEP = 50;
 
 // Não roda offline: o progresso offline só produz (ver engine.applyOffline).
+// Concessões Automáticas: expande a região assim que der (rede cheia e dinheiro).
+// Também pela árvore de Patentes (Concessões Imediatas).
+const autoRegion = (s) => TECHS.some((t) => t.type === 'autoRegion' && bought(s, t.id)) || !!patentValue(s, 'autoregion');
+
 export function autoStep(s, dt) {
+  if (autoRegion(s)) expandRegion(s);
   const iv = autoInterval(s);
   if (iv === null || !s.auto.buy) return 0;
   s.auto.clock += dt;
@@ -39,7 +45,9 @@ export function autoStep(s, dt) {
   while (s.auto.clock >= iv && n < MAX_PER_STEP) {
     s.auto.clock -= iv;
     const g = cheapestGen(s);
-    if (!g || !buyGen(s, g.id)) { s.auto.clock = 0; break; } // sem saldo: espera o próximo ciclo
+    // Com uma concessão disponível, a auto-compra guarda o dinheiro dela e gasta só o resto.
+    const reserve = canExpand(s) ? expandCost(s) : 0;
+    if (!g || s.money - genCost(s, g) < reserve || !buyGen(s, g.id)) { s.auto.clock = 0; break; } // sem saldo: espera
     n++;
   }
   if (n === MAX_PER_STEP) s.auto.clock = 0;

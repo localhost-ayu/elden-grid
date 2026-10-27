@@ -1,7 +1,7 @@
 // Roteador de telas. Não toca o terminal: recebe nomes de tecla (input.js) e devolve
 // linhas (para o screen.js), por isso dá para testar sem TTY.
 import { newState } from '../core/state.js';
-import { tick, power, genPower, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
+import { tick, power, civPower, genPower, kardashev, price, priceBase, priceRising, income, rpRate, applyOffline, gridLoad } from '../core/engine.js';
 import { autoStep, autoCrankStep } from '../core/automation.js';
 import { createHistory, sampleHistory } from '../core/stats.js';
 import { GENERATORS } from '../data/generators.js';
@@ -29,8 +29,11 @@ import * as offline from './screens/offline.js';
 import * as options from './screens/options.js';
 import * as challenges from './screens/challenges.js';
 import * as market from './screens/market.js';
+import * as news from './screens/news.js';
+import * as credits from './screens/credits.js';
 import { surging, rand as marketRand, repTier, repName } from '../core/market.js';
 import { breakdownStep, wearFactor } from '../core/wear.js';
+import { regionName } from '../core/regions.js';
 import { contractsStep, holdContracts } from '../core/contracts.js';
 import { contractTitle, rewardTitle } from './screens/market.js';
 import { MARKET, REPUTATION } from '../data/market.js';
@@ -66,6 +69,8 @@ const FULL = {
   offline: { screen: offline, title: 'Bem-vindo de volta' },
   options: { screen: options, title: 'Opções' },
   challenges: { screen: challenges, title: 'Desafios' },
+  news: { screen: news, title: 'Novidades' },
+  credits: { screen: credits, title: 'Créditos' },
 };
 
 export const CHALLENGE_SLOT = 'D';
@@ -86,7 +91,7 @@ const usable = (sl) => sl.status === 'ok' || sl.status === 'recovered';
 // O store também guarda o slot de Desafio, com n = 'D' (fora da lista dos slots 1–3).
 export function createApp({
   store, settings = {}, onSettings = () => {}, onQuit = () => {}, now = Date.now(), rng = Math.random,
-  noColor = false, copy = () => false, who = {}, updater = null, profile: profileStore = null,
+  noColor = false, copy = () => false, who = {}, updater = null, profile: profileStore = null, changelog = () => null,
 }) {
   const app = {
     state: null,  // jogo aberto (null = nenhum slot carregado ainda)
@@ -280,6 +285,13 @@ export function createApp({
     app.particles = createParticles();
     app.crisisOpen = false;
     remember(n);
+    // Save da 1.4/1.5 com fontes da Fronteira na Terra: explica uma vez para onde foram.
+    const stash = state.empire?.frontierStash;
+    if (stash && !stash.noticed) {
+      stash.noticed = true;
+      say('A Fronteira mudou de lugar na 2.0: Enxame, Kugelblitz e Vácuo agora são do Sistema Solar e da Galáxia.', 'info', 12000);
+      say('O que você tinha delas ficou guardado e volta como Herança da Fronteira ao colonizar o Sistema Solar.', 'info', 12000);
+    }
   }
 
   function loadSlot(n) {
@@ -340,6 +352,8 @@ export function createApp({
     history: app.history,
     say,
     go: (mode) => { app.mode = mode; },
+    // Lido do disco só quando a tela Novidades abre.
+    get changelog() { return (app.changelogText ??= changelog() ?? ''); },
     continueGame: () => loadSlot(continueTarget()),
     openSlots(purpose) {
       app.ui.slots = { purpose, sel: Math.max(0, (app.slot ?? 1) - 1) };
@@ -510,6 +524,12 @@ export function createApp({
           : `Reputação caiu para ${repName(app.state)}.`, tier > app.repTier ? 'ok' : 'err', 6000);
       }
       app.repTier = tier;
+      // Fim do jogo: Kardashev 3.0, uma vez. O jogo segue em modo livre.
+      if (!app.state.empire.ended && !app.state.run && kardashev(civPower(app.state)) >= 3) {
+        app.state.empire.ended = true;
+        say('Kardashev 3.0: uma civilização Tipo III. A galáxia inteira acende com a sua rede.', 'ok', 20000);
+        say('Do primeiro giro da manivela até aqui: obrigado por jogar! O jogo continua em modo livre.', 'ok', 20000);
+      }
       if (!app.state.events.crisis) app.crisisOpen = false;
       celebrate(checkAchievements(app.state));
       if (goalReached(app.state)) finishChallenge();
@@ -553,11 +573,16 @@ export function createApp({
       const def = eventDef(ev.crisis.id);
       const blink = Math.floor(animClock() / 500) % 2 === 0;
       // Sem a descrição: o relógio é o que não pode ser cortado.
-      text = `${glyphs().warn} ${def.name.toUpperCase()} · [X] manual de crise · equipe em ${fmtClock(Math.max(0, ev.crisis.deadline - s.t))}`;
+      // Com o minijogo rodando, o prazo da equipe não vale: mostra o tempo do minijogo.
+      const game = ev.crisis.game;
+      text = game?.status === 'playing'
+        ? `${glyphs().warn} ${def.name.toUpperCase()} · resolvendo · ${game.timeLeft.toFixed(0)} s no minijogo`
+        : `${glyphs().warn} ${def.name.toUpperCase()} · [X] manual de crise · equipe em ${fmtClock(Math.max(0, ev.crisis.deadline - s.t))}`;
       color = C.red + (blink ? C.bold : '');
     } else if (cur) {
       const def = eventDef(cur.id);
-      text = `${def.name} · ${def.desc} · ${fmtClock(cur.until - s.t)}`;
+      // Evento instantâneo (Descoberta): sem relógio, que faria parecer um bônus com duração.
+      text = def.rpSeconds ? `${def.name} · ${def.desc}` : `${def.name} · ${def.desc} · ${fmtClock(cur.until - s.t)}`;
       color = C.yellow;
     } else {
       text = `${REWARD.name} · produção x${REWARD.effects[0].mult} · ${fmtClock(reward.until - s.t)}`;
@@ -609,13 +634,13 @@ export function createApp({
     const badge = challengeBadge(s);
     let line = base + badges.join('') + badge;
     for (let drop = badges.length; visibleLength(line) > cols && drop > 0; drop--) line = base + badges.slice(0, drop - 1).join('') + badge;
-    return [
-      ` Dinheiro ${paint(C.green, '$' + fmt(app.shown.money))}  ` +
-      `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}  ` +
-      `Total ${paint(C.cyan, fmt(app.shown.energy) + ' kWh')}  ` +
-      priceText(s),
-      line,
-    ];
+    // 1ª linha: o total de energia sai primeiro quando falta largura.
+    const k = kardashev(civPower(s));
+    const scale = k >= 0 ? paint(C.mag, ` K${k.toFixed(2)}`) : '';
+    const head = ` Dinheiro ${paint(C.green, '$' + fmt(app.shown.money))}  ` + `Produção ${paint(C.cyan, fmt(power(s)) + ' kW')}${scale}  `;
+    const total = `Total ${paint(C.cyan, fmt(app.shown.energy) + ' kWh')}  `;
+    const first = visibleLength(head + total + priceText(s)) <= cols ? head + total + priceText(s) : head + priceText(s);
+    return [first, line];
   }
 
   function finishDaily(s) {
@@ -666,7 +691,7 @@ export function createApp({
   function gridText(s) {
     const load = gridLoad(s);
     const color = load > 1 ? C.red + C.bold : load > 0.85 ? C.yellow : C.green;
-    return 'Rede ' + paint(color, fmtPct(load));
+    return `${regionName(s, true)} ` + paint(color, fmtPct(load));
   }
 
   function messageLines() {

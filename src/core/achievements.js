@@ -6,7 +6,8 @@ import { GENERATORS } from '../data/generators.js';
 import { TECHS } from '../data/research.js';
 import { SHOP } from '../data/legacy.js';
 import { COOLING } from '../data/heat.js';
-import { bought, power, income, gridLoad, upgradeLevel, upgradeTrack } from './engine.js';
+import { bought, power, income, gridLoad, upgradeLevel, upgradeTrack, chapterTechs, kardashev, civPower } from './engine.js';
+import { chapterIndex } from '../data/chapters.js';
 import { HOT_GENERATORS, coolingLevel, heatLevel, isShutdown } from './heat.js';
 import { shopLevel } from './prestige.js';
 import { activeProfile, totalTiers } from './rewards.js';
@@ -14,6 +15,7 @@ import { challengeTier } from './profile.js';
 import { CHALLENGES } from '../data/challenges.js';
 import { repTier } from './market.js';
 
+const chapterGens = (s) => GENERATORS.filter((g) => g.chapter === s.chapter);
 const get = (obj, path) => path.split('.').reduce((o, k) => o?.[k], obj) ?? 0;
 const ratio = (v, at) => (at > 0 ? v / at : 0);
 // Menor é melhor (tempos): null = nunca aconteceu.
@@ -25,10 +27,12 @@ const PROGRESS = {
   run: (s, a) => ratio(get(s.stats, a.key), a.at),
   sum: (s, a) => ratio(Object.values(s.career[a.key]).reduce((x, y) => x + y, 0), a.at),
   owned: (s, a) => ratio(a.gen === 'any' ? Math.max(...Object.values(s.owned)) : s.owned[a.gen], a.at),
-  ownedAll: (s, a) => Math.min(...GENERATORS.map((g) => ratio(s.owned[g.id], a.at))),
+  ownedAll: (s, a) => Math.min(...chapterGens(s).map((g) => ratio(s.owned[g.id], a.at))),
   tech: (s, a) => (bought(s, a.tech) ? 1 : 0),
   techs: (s, a) => ratio(TECHS.filter((t) => bought(s, t.id)).length, a.at),
   upgradesMax: (s, a) => ratio(GENERATORS.filter((g) => upgradeLevel(s, g) >= upgradeTrack(g).length).length, a.at),
+  upgradesAll: (s) => ratio(chapterGens(s).filter((g) => upgradeLevel(s, g) >= upgradeTrack(g).length).length, chapterGens(s).length),
+  techsAll: (s) => ratio(chapterTechs(s).filter((t) => bought(s, t.id)).length, chapterTechs(s).length),
   transformers: (s, a) => ratio(s.transformers, a.at),
   coolingMax: (s) => (HOT_GENERATORS.some((g) => coolingLevel(s, g) >= COOLING.levels.length) ? 1 : 0),
   heat: (s, a) => Math.max(0, ...HOT_GENERATORS.filter((g) => s.owned[g.id] && !isShutdown(s, g)).map((g) => ratio(heatLevel(s, g), a.at))),
@@ -40,6 +44,9 @@ const PROGRESS = {
   shopMax: (s, a) => ratio(SHOP.filter((it) => shopLevel(s, it) >= it.costs.length).length, a.at),
   fastest: (s, a) => under(s.career.fastestRun, a.at),
   rep: (s, a) => ratio(repTier(s), a.at),
+  region: (s, a) => (chapterIndex(s.chapter) > chapterIndex(a.chapter) ? 1 : s.chapter === a.chapter ? ratio(s.region, a.at) : 0),
+  kardashev: (s, a) => Math.max(0, ratio(kardashev(civPower(s)), a.at)),
+  patents: (s, a) => ratio(s.empire.patents, a.at),
   fastWin: (s, a) => under(s.career.bestWin[a.game], a.at),
   without: (s, a) => (get(s.stats, a.key) === 0 ? ratio(s.stats.moneyEarned, a.at) : 0),
   count: (s, a) => ratio(Object.keys(s.achievements).length, a.at),
